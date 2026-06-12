@@ -16,6 +16,7 @@ collections:
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
       - { label: "Tytuł", name: "title", widget: "string" }
+      - { label: "Szablon", name: "layout", widget: "hidden", default: "post-layout.html" }
       - { label: "Data", name: "date", widget: "datetime" }
       - { label: "Zdjęcie wyróżniające", name: "image", widget: "image", required: false }
       - { label: "Treść", name: "body", widget: "markdown" }
