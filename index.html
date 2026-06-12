@@ -115,15 +115,26 @@
 
         .post-card:last-child { border-bottom: none; }
 
-        .post-image {
-            flex: 0 0 380px;
-            height: 300px;
-            border-radius: 6px;
-            border: 1px solid #111;
-            overflow: hidden;
-        }
+        /* Nowa, mniejsza i zgrabna miniaturka */
+.post-image {
+    flex: 0 0 180px; /* Zmniejszono szerokość z 380px do 180px */
+    height: 130px;   /* Zmniejszono wysokość z 300px do 130px */
+    border-radius: 4px;
+    border: 1px solid #111;
+    overflow: hidden;
+    cursor: pointer; /* Kursor zmienia się w rączkę, sugerując klikalność */
+    transition: transform 0.2s ease;
+}
 
-        .post-image img { width: 100%; height: 100%; object-fit: cover; }
+.post-image:hover {
+    transform: scale(1.02); /* Subtelne powiększenie po najechaniu */
+}
+
+.post-image img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
         
         .post-content { flex: 1; }
         
@@ -191,6 +202,55 @@
             .about-content { flex-direction: column; text-align: center; }
             .about-image { flex: none; width: 200px; height: 200px; }
         }
+        /* STYLIZACJA LIGHTBOXA (PÓŁPRZEZROCZYSTE TŁO) */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.95); /* Minimalistyczne, białe półprzezroczyste tło */
+    /* Jeśli wolisz ciemny klimat, odkomentuj linijkę poniżej, a powyższą usuń: */
+    /* background-color: rgba(0, 0, 0, 0.85); */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.lightbox-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lightbox-overlay img {
+    max-width: 85%;
+    max-height: 85%;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.lightbox-overlay.active img {
+    transform: scale(1);
+}
+
+/* Przycisk zamknięcia */
+.lightbox-close {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    color: #111;
+    cursor: pointer;
+    user-select: none;
+}
     </style>
 </head>
 <body>
@@ -219,10 +279,10 @@
                 {% for post in collections.posts %}
                     <article class="post-card">
                         {% if post.data.image %}
-                            <div class="post-image">
-                                <img src="{{ post.data.image }}" alt="{{ post.data.title }}">
-                            </div>
-                        {% endif %}
+    <div class="post-image" onclick="openLightbox('{{ post.data.image }}')">
+        <img src="{{ post.data.image }}" alt="{{ post.data.title }}">
+    </div>
+{% endif %}
                         <div class="post-content">
                             <h2><a href="{{ post.url }}">{{ post.data.title }}</a></h2>
                             <span class="date">{{ post.date | date: "%d.%m.%Y" }}</span>
@@ -343,6 +403,26 @@ Zapraszam do lektury. Robicie to na własną odpowiedzialność.
                 emptyMsg.style.display = "none";
             }
         }
+        function openLightbox(imageSrc) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    
+    lightboxImg.src = imageSrc;
+    lightbox.classList.add('active');
+    // Blokujemy przewijanie strony w tle pod zdjęciem
+    document.body.style.overflow = 'hidden'; 
+}
+
+function closeLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    lightbox.classList.remove('active');
+    // Przywracamy przewijanie strony
+    document.body.style.overflow = ''; 
+}
     </script>
+    <div id="lightbox" class="lightbox-overlay" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightboxImg" src="" alt="Powiększenie zdjęcia">
+</div>
 </body>
 </html>
