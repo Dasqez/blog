@@ -160,6 +160,46 @@
             .about-content { flex-direction: column; text-align: center; }
             .about-image { flex: none; width: 200px; height: 200px; }
         }
+        /* Kontener pojedynczego wpisu */
+.post-card {
+  margin-bottom: 2.5rem; /* Odstęp między wpisami */
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee; /* Delikatna linia oddzielająca wpisy */
+}
+
+/* Stylizacja tytułu wpisu */
+.post-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  font-family: serif; /* Ładna czcionka szeryfowa dla tytułów */
+}
+
+/* Usunięcie brzydkiego niebieskiego koloru i podkreślenia z linków */
+.post-title a {
+  color: #111; /* Elegancka, prawie czarna barwa */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* Subtelny efekt po najechaniu myszką na tytuł */
+.post-title a:hover {
+  color: #555; /* Kolor lekko bieleje, dając sygnał, że to link */
+  text-decoration: underline;
+}
+
+/* Stylizacja daty */
+.post-date {
+  font-size: 0.9rem;
+  color: #777; /* Szary, stonowany kolor dla daty */
+  margin-bottom: 1rem;
+}
+
+/* Stylizacja zajawki/treści */
+.post-excerpt {
+  font-size: 1.05rem;
+  line-height: 1.6; /* Większy odstęp między linijkami tekstu, lepiej się czyta */
+  color: #333;
+}
     </style>
 </head>
 <body>
