@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }} - Minimalistycznie Przez Życie</title>
+  </head>
+<body>
+
+  <header>
+    <h1><a href="/">Minimalistycznie Przez Życie</a></h1>
+    <p>Małe przygody w wielkim świecie</p>
+    <hr>
+  </header>
+
+  <main>
+    <article>
+      <h1>{{ title }}</h1>
+      <p class="post-date"><i>Opublikowano: {{ date }}</i></p>
+      
+      <div class="post-body">
+        {{ content }}
+      </div>
+    </article>
+    
+    <p><a href="/">&larr; Powrót do strony głównej</a></p>
+  </main>
+
+</body>
+</html>
