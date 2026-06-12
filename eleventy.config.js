@@ -17,7 +17,7 @@ export default function(eleventyConfig) {
 
   eleventyConfig.setFrontMatterParsingOptions({
   excerpt: true,
-  excerpt_separator: "" // To będzie Twój "przycisk stopu" w treści
+  excerpt_separator: `` // To będzie Twój "przycisk stopu" w treści
 });
 
   return {
