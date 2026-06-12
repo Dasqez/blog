@@ -11,7 +11,6 @@ layout: false
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     
     <style>
         /* Reset podstawowych styli */
@@ -188,27 +187,27 @@ layout: false
             </div>
 
             <main class="posts-list" id="postsList">
-    
-    {% for post in collections.blog %}
-    <div class="post-card">
-        {% if post.data.image %}
-        <div class="post-image">
-            <img src="{{ post.data.image }}" alt="{{ post.data.title }}">
-        </div>
-        {% endif %}
-        <div class="post-content">
-            <h2>{{ post.data.title }}</h2>
-            <span class="date">{{ post.date }}</span>
-            <div class="excerpt">
-                {{ post.templateContent }}
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <div class="empty-blog">Brak wpisów. Nowe artykuły pojawią się wkrótce!</div>
-    {% endfor %}
+                
+                {% for post in collections.blog %}
+                <div class="post-card">
+                    {% if post.data.image %}
+                    <div class="post-image">
+                        <img src="{{ post.data.image }}" alt="{{ post.data.title }}">
+                    </div>
+                    {% endif %}
+                    <div class="post-content">
+                        <h2>{{ post.data.title }}</h2>
+                        <span class="date">{{ post.date }}</span>
+                        <div class="excerpt">
+                            {{ post.templateContent }}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-blog">Brak wpisów. Nowe artykuły pojawią się wkrótce!</div>
+                {% endfor %}
 
-</main>
+            </main>
             <div id="noResultsMessage" class="no-results">Nie znaleziono wpisów spełniających kryteria.</div>
         </div>
 
@@ -222,7 +221,7 @@ layout: false
                     <p>Nazywam się D. Jestem autorem tego bloga, niesamowitą marudą i, po trosze, marzycielem. Mimo, że moje wypociny nie są najwyższych lotów i w przekazywaniu uczuć i myśli muszę korzystać z komputera, w moim umyśle jestem wolny.</p>
                     <p>„Minimalistycznie Przez Życie” to (nie)codziennik w postaci blogowej, w którym zamieszczam swoje wypociny powstałe w efekcie, niespodzianka, przepływu myśli. A że tych mam w nadmiarze, to czasami/często/rzadko/codziennie/raz na miesiąc/spadaj na drzewo*, płodzę z nich jakiś wpis. Niekiedy powstaje on szybko i bezboleśnie, innym razem płodzenie to przypomina rodzenie pięcioraczków bez cesarskiego cięcia. Ogólnie jest to moje miejsce w sieci, gdzie mogę spożytkować swoją frustrację gdy mnie mózg boli. Bo wbrew pozorom przepływ myśli boli.
 
-A z tymi wpisami to różnie bywa. Są one jak komety. Niektóre robią na niebie spektakularny rozpizd, inne przemykają bez echa, wychwycone okiem wytrawnych/przypadkowych obserwatorów. Tak też jest z moimi wpisami. Co poniektóre wypuszczają obfity warkocz i wybuchają fajerwerkami jak krowia kupa wysrana wprost  na rozregulowaną minę przeciwpiechotną. Inne spokojnie i w milczeniu przemykają obszar internetowego układu gwiezdnego – bez żadnych sensacji i innych atrakcji. Ale ważne, że są. Bo są ładne i (nie)codzienne.
+A z tymi wpisami to różnie bywa. Są one jak komety. Niektóre robią na niebie spektakularny rozpizd, inne przemykają bez echa, wychwycone okiem wytrawnych/przypadkowych obserwatorów. Tak też jest z moimi wpisami. Co poniektóre wypuszczają obfity warkocz i wybuchają fajerwerkami jak krowia kupa wysrana wprost na rozregulowaną minę przeciwpiechotną. Inne spokojnie i w milczeniu przemykają obszar internetowego układu gwiezdnego – bez żadnych sensacji i innych atrakcji. Ale ważne, że są. Bo są ładne i (nie)codzienne.
 
 Zapraszam do lektury. Robicie to na własną odpowiedzialność.
 
@@ -306,15 +305,12 @@ Zapraszam do lektury. Robicie to na własną odpowiedzialność.
             }
         }
 
-        // Aktywacja widgetu Netlify Identity
-        if (window.netlifyIdentity) {
-            window.netlifyIdentity.on("init", user => {
-                if (!user) {
-                    window.netlifyIdentity.on("login", () => {
-                        document.location.href = "/admin/";
-                    });
-                }
-            });
+        window.onload = function() {
+            const posts = document.getElementsByClassName('post-card');
+            const emptyMsg = document.querySelector('.empty-blog');
+            if(posts.length > 0 && emptyMsg) {
+                emptyMsg.style.display = "none";
+            }
         }
     </script>
 </body>
