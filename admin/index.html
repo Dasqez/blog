@@ -1,11 +1,42 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Panel Administratora</title>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  </head>
-  <body></body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Manager</title>
+  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+</head>
+<body>
+  <script>
+    // Inicjalizacja CMS z ręczną konfiguracją, aby uniknąć problemów z plikiem config.yml
+    CMS.init({
+      config: {
+        backend: {
+          name: 'github',
+          repo: 'Dasqez/blog',
+          branch: 'main',
+          base_url: 'https://blog.dave-pytel.workers.dev', // TUTAJ BĘDZIE TWÓJ WORKER (szczegóły niżej)
+          auth_endpoint: '/auth'
+        },
+        media_folder: 'images',
+        public_folder: '/images',
+        collections: [
+          {
+            name: 'blog',
+            label: 'Wpisy',
+            folder: '_posts',
+            create: true,
+            slug: '{{year}}-{{month}}-{{day}}-{{slug}}',
+            fields: [
+              { label: 'Tytuł', name: 'title', widget: 'string' },
+              { label: 'Data', name: 'date', widget: 'datetime' },
+              { label: 'Zdjęcie wyróżniające', name: 'image', widget: 'image', required: false },
+              { label: 'Treść', name: 'body', widget: 'markdown' }
+            ]
+          }
+        ]
+      }
+    });
+  </script>
+</body>
 </html>
