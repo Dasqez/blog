@@ -118,18 +118,23 @@
     cursor: pointer;
 }
 
-/* Opcjonalnie: Styl dla zdjęć wewnątrz tekstu, żeby ładnie współgrały z minimalizmem strony */
+/* Eleganckie okiełznanie zdjęć wewnątrz treści artykułu */
 .post-body img {
-    max-width: 100%;
-    height: auto;
+    max-width: 100%;    /* Zdjęcie nigdy nie wykroczy poza szerokość tekstu */
+    width: auto;        /* Zachowa swoje naturalne proporcje */
+    max-height: 500px;  /* Opcjonalnie: zabezpieczenie, żeby pionowe zdjęcia nie były za długie */
     display: block;
-    margin: 2rem auto;
-    border-radius: 4px;
+    margin: 2rem auto;  /* Centrowanie zdjęcia w tekście i ładne odstępy góra/dół */
+    border-radius: 6px; /* Spójne zaokrąglenie rogów, tak jak na głównej */
     border: 1px solid #111;
+    object-fit: contain; /* Gwarancja, że zdjęcie nie zostanie zniekształcone */
     transition: transform 0.2s ease;
+    cursor: pointer;
 }
+
+/* Subtelny efekt po najechaniu myszką, sugerujący klikalność */
 .post-body img:hover {
-    transform: scale(1.01); /* Delikatny efekt po najechaniu */
+    transform: scale(1.01);
 }
   </style>
 </head>
