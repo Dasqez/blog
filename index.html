@@ -110,6 +110,7 @@
             align-items: flex-start;
             padding-bottom: 50px;
             border-bottom: 1px solid #eee;
+            text-align: left;
         }
 
         .post-card:last-child { border-bottom: none; }
@@ -123,10 +124,40 @@
         }
 
         .post-image img { width: 100%; height: 100%; object-fit: cover; }
+        
         .post-content { flex: 1; }
-        .post-content h2 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
-        .post-content .date { font-family: 'Montserrat', sans-serif; font-size: 0.8rem; color: #666; margin-bottom: 20px; display: block; }
-        .post-content .excerpt { font-size: 1.05rem; color: #333; }
+        
+        .post-content h2 { 
+            font-size: 2rem; 
+            font-weight: 700; 
+            line-height: 1.2; 
+            margin-bottom: 12px; 
+        }
+
+        /* Usunięcie brzydkiego koloru linków w tytule wpisu */
+        .post-content h2 a {
+            color: #111111;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .post-content h2 a:hover {
+            color: #555555;
+            text-decoration: underline;
+        }
+
+        .post-content .date { 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.8rem; 
+            color: #666; 
+            margin-bottom: 20px; 
+            display: block; 
+        }
+        
+        .post-content .excerpt { 
+            font-size: 1.05rem; 
+            color: #333; 
+        }
 
         /* Sekcja O Mnie */
         .about-content { display: flex; gap: 40px; align-items: center; }
@@ -160,98 +191,6 @@
             .about-content { flex-direction: column; text-align: center; }
             .about-image { flex: none; width: 200px; height: 200px; }
         }
-        /* Kontener pojedynczego wpisu */
-.post-card {
-  margin-bottom: 2.5rem; /* Odstęp między wpisami */
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #eee; /* Delikatna linia oddzielająca wpisy */
-}
-
-/* Stylizacja tytułu wpisu */
-.post-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.8rem;
-  font-family: serif; /* Ładna czcionka szeryfowa dla tytułów */
-}
-
-/* Usunięcie brzydkiego niebieskiego koloru i podkreślenia z linków */
-.post-title a {
-  color: #111; /* Elegancka, prawie czarna barwa */
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-/* Subtelny efekt po najechaniu myszką na tytuł */
-.post-title a:hover {
-  color: #555; /* Kolor lekko bieleje, dając sygnał, że to link */
-  text-decoration: underline;
-}
-
-/* Stylizacja daty */
-.post-date {
-  font-size: 0.9rem;
-  color: #777; /* Szary, stonowany kolor dla daty */
-  margin-bottom: 1rem;
-}
-
-/* Stylizacja zajawki/treści */
-.post-excerpt {
-  font-size: 1.05rem;
-  line-height: 1.6; /* Większy odstęp między linijkami tekstu, lepiej się czyta */
-  color: #333;
-}
-        /* Reset i pełna szerokość kontenera posta - blokuje układ poziomy */
-.minimal-post-wrapper {
-  display: block !important;
-  width: 100% !important;
-  margin-bottom: 3rem !important;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid #f0f0f0;
-  text-align: left;
-}
-
-/* Tytuł wpisu - czarny, duży, elegancki */
-.minimal-title {
-  display: block !important;
-  font-family: Georgia, serif;
-  font-size: 1.8rem;
-  margin: 0 0 0.4rem 0 !important;
-  line-height: 1.3;
-}
-
-/* Wygląd linku w tytule - koniec z fioletowym i niebieskim kolorem */
-.minimal-title a {
-  color: #111111 !important;
-  text-decoration: none !important;
-  border-bottom: none !important;
-}
-
-/* Subtelne podkreślenie po najechaniu myszką */
-.minimal-title a:hover {
-  color: #555555 !important;
-  text-decoration: underline !important;
-}
-
-/* Data - mniejsza, szara, wyraźnie pod tytułem */
-.minimal-date {
-  display: block !important;
-  font-size: 0.85rem;
-  color: #888888 !important;
-  margin: 0 0 1rem 0 !important;
-}
-
-/* Treść - ładne odstępy i czysty tekst */
-.minimal-content {
-  display: block !important;
-  font-size: 1.05rem;
-  line-height: 1.6;
-  color: #222222;
-}
-
-/* Gdyby wewnątrz treści CMS wygenerował paragrafy, dbamy o ich reset */
-.minimal-content p {
-  margin: 0 0 1rem 0 !important;
-}
     </style>
 </head>
 <body>
@@ -266,7 +205,7 @@
             <ul>
                 <li><a onclick="switchPage('home')" id="nav-home" class="active">Główna</a></li>
                 <li><a onclick="switchPage('about')" id="nav-about">O mnie</a></li>
-                <li><a onclick="switchPage('contact')" id="nav-contact">Kontakt</a></li>
+                <li><a onclick="shiftPage('contact')" id="nav-contact" onclick="switchPage('contact')">Kontakt</a></li>
             </ul>
         </nav>
 
@@ -277,25 +216,24 @@
 
             <main class="posts-list" id="postsList">
                 
-               {% for post in collections.posts %}
-  <div class="minimal-post-wrapper">
-    
-    <h2 class="minimal-title">
-      <a href="{{ post.url }}">{{ post.data.title }}</a>
-    </h2>
-    
-    <div class="minimal-date">
-      {{ post.date | date: "%d.%m.%Y" }}
-    </div>
-    
-    <div class="minimal-content">
-      {{ post.templateContent }}
-    </div>
-
-  </div>
-{% else %}
-  <p class="empty-blog">Brak wpisów. Nowe artykuły pojawią się wkrótce!</p>
-{% endfor %}
+                {% for post in collections.posts %}
+                    <article class="post-card">
+                        {% if post.data.image %}
+                            <div class="post-image">
+                                <img src="{{ post.data.image }}" alt="{{ post.data.title }}">
+                            </div>
+                        {% endif %}
+                        <div class="post-content">
+                            <h2><a href="{{ post.url }}">{{ post.data.title }}</a></h2>
+                            <span class="date">{{ post.date | date: "%d.%m.%Y" }}</span>
+                            <div class="excerpt">
+                                {{ post.templateContent }}
+                            </div>
+                        </div>
+                    </article>
+                {% else %}
+                    <p class="empty-blog">Brak wpisów. Nowe artykuły pojawią się wkrótce!</p>
+                {% endfor %}
 
             </main>
             <div id="noResultsMessage" class="no-results">Nie znaleziono wpisów spełniających kryteria.</div>
@@ -353,7 +291,8 @@ Zapraszam do lektury. Robicie to na własną odpowiedzialność.
             navLinks.forEach(link => link.classList.remove('active'));
             
             document.getElementById('page-' + pageId).classList.add('active-section');
-            document.getElementById('nav-' + pageId).classList.add('active');
+            const targetNav = document.getElementById('nav-' + pageId);
+            if(targetNav) targetNav.classList.add('active');
             
             window.scrollTo(0, 0);
         }
@@ -370,11 +309,14 @@ Zapraszam do lektury. Robicie to na własną odpowiedzialność.
             if(posts.length === 0) return;
 
             for (let i = 0; i < posts.length; i++) {
-                const title = posts[i].getElementsByTagName('h2')[0].innerText.toLowerCase();
-                const excerpt = posts[i].getElementsByClassName('excerpt')[0].innerText.toLowerCase();
+                const titleElement = posts[i].getElementsByTagName('h2')[0];
+                const excerptElement = posts[i].getElementsByClassName('excerpt')[0];
+                
+                const title = titleElement ? titleElement.innerText.toLowerCase() : "";
+                const excerpt = excerptElement ? excerptElement.innerText.toLowerCase() : "";
                 
                 if (title.includes(filter) || excerpt.includes(filter)) {
-                    posts[i].style.display = "";
+                    posts[i].style.display = "flex";
                     hasResults = true;
                 } else {
                     posts[i].style.display = "none";
