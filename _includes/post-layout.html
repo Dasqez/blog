@@ -120,14 +120,15 @@
 
 /* Eleganckie okiełznanie zdjęć wewnątrz treści artykułu */
 .post-body img {
-    max-width: 100%;    /* Zdjęcie nigdy nie wykroczy poza szerokość tekstu */
-    width: auto;        /* Zachowa swoje naturalne proporcje */
-    max-height: 500px;  /* Opcjonalnie: zabezpieczenie, żeby pionowe zdjęcia nie były za długie */
-    display: block;
-    margin: 2rem auto;  /* Centrowanie zdjęcia w tekście i ładne odstępy góra/dół */
-    border-radius: 6px; /* Spójne zaokrąglenie rogów, tak jak na głównej */
+    max-width: 100% !important;    /* Bezwzględna maksymalna szerokość tekstu */
+    width: auto !important;         /* Wymuszenie zachowania proporcji */
+    height: auto !important;        /* Nadpisanie domyślnych wymiarów z CMS */
+    max-height: 450px !important;  /* Maksymalna wysokość, by zdjęcie nie zalało ekranu */
+    display: block !important;
+    margin: 2rem auto !important;  /* Wyśrodkowanie i marginesy */
+    border-radius: 6px; 
     border: 1px solid #111;
-    object-fit: contain; /* Gwarancja, że zdjęcie nie zostanie zniekształcone */
+    object-fit: contain !important; /* Gwarancja braku zniekształceń */
     transition: transform 0.2s ease;
     cursor: pointer;
 }
