@@ -1,14 +1,6 @@
-module.exports = function(eleventyConfig) {
+export default function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("admin");
   eleventyConfig.addPassthroughCopy("moje-foto.jpeg");
-  
-  // To jest ten brakujący filtr daty:
-  eleventyConfig.addFilter("dateFilter", function(dateVal) {
-    if (!dateVal) return "";
-    return new Date(dateVal).toLocaleDateString('pl-PL', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    });
-  });
 
   return {
     dir: {
@@ -16,4 +8,4 @@ module.exports = function(eleventyConfig) {
       output: "_site"
     }
   };
-};
+}
