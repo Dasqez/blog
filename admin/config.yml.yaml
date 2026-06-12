@@ -1,8 +1,8 @@
 backend:
   name: github
-  repo: TWÓJ_LOGIN_GITHUB/NAZWA_REPOZYTORIUM
+  repo: Dasquez/blog
   branch: main
-  base_url: https://bramka-oauth.TWOJA-NAZWA.workers.dev
+  base_url: https://bramka-oauth.dave-pytel.workers.dev # Podmień na pełny adres nowego Workera
 
 media_folder: "/"
 public_folder: "/"
