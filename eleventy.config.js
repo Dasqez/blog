@@ -15,6 +15,11 @@ export default function(eleventyConfig) {
     return collectionApi.getFilteredByGlob("_posts/*.md").reverse();
   });
 
+  eleventyConfig.setFrontMatterParsingOptions({
+  excerpt: true,
+  excerpt_separator: "" // To będzie Twój "przycisk stopu" w treści
+});
+
   return {
     dir: {
       input: ".",
