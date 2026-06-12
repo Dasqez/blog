@@ -5,6 +5,8 @@ export default function(eleventyConfig) {
   // Przekazywanie pojedynczego pliku (jeśli jest w katalogu głównym)
   eleventyConfig.addPassthroughCopy("moje-foto.jpeg");
 
+  eleventyConfig.addPassthroughCopy("favicon.png");
+
   // KLUCZOWE: Przekazywanie całego folderu assets wraz z obrazkami z CMS
   eleventyConfig.addPassthroughCopy("images");
 
