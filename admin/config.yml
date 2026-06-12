@@ -1,0 +1,21 @@
+backend:
+  name: github
+  repo: Dasqez/blog
+  branch: main
+  base_url: https://bramka-oauth.dave-pytel.workers.dev
+  auth_endpoint: /auth
+
+media_folder: "images"
+public_folder: "/images"
+
+collections:
+  - name: "blog"
+    label: "Wpisy"
+    folder: "_posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Tytuł", name: "title", widget: "string" }
+      - { label: "Data", name: "date", widget: "datetime" }
+      - { label: "Zdjęcie wyróżniające", name: "image", widget: "image", required: false }
+      - { label: "Treść", name: "body", widget: "markdown" }
