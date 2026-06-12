@@ -1,9 +1,11 @@
 export default function(eleventyConfig) {
+  // Przekazywanie folderu panelu administratora
   eleventyConfig.addPassthroughCopy("admin");
+
+  // Przekazywanie pojedynczego pliku (jeśli jest w katalogu głównym)
   eleventyConfig.addPassthroughCopy("moje-foto.jpeg");
 
-  module.exports = function(eleventyConfig) {
-  // Ta linijka jest kluczowa:
+  // KLUCZOWE: Przekazywanie całego folderu assets wraz z obrazkami z CMS
   eleventyConfig.addPassthroughCopy("images");
 
   // AUTOMATYCZNE TWORZENIE KOLEKCJI Z FOLDERU _POSTS
