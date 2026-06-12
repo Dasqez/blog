@@ -1,0 +1,321 @@
+---
+layout: false
+---
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalistycznie Przez Życie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    
+    <style>
+        /* Reset podstawowych styli */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Lora', serif;
+            color: #111111;
+            background-color: #ffffff;
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        .container {
+            max-width: 940px;
+            margin: 0 auto;
+            padding-bottom: 60px;
+        }
+
+        /* Nagłówek i podtytuł */
+        header {
+            text-align: center;
+            padding: 60px 0 30px 0;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            color: #555;
+            letter-spacing: 0.5px;
+        }
+
+        /* Nawigacja */
+        nav {
+            border-top: 1px solid #111;
+            border-bottom: 1px solid #111;
+            padding: 15px 0;
+            margin-bottom: 40px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #111;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        nav ul li a:hover, nav ul li a.active { color: #666; }
+
+        /* Sekcja Wyszukiwarki */
+        .search-container {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px 15px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            border: 1px solid #111;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        /* Widoczność sekcji */
+        .page-section { display: none; }
+        .page-section.active-section { display: block; }
+
+        /* Lista wpisów */
+        .posts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+
+        .post-card {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            padding-bottom: 50px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .post-card:last-child { border-bottom: none; }
+
+        .post-image {
+            flex: 0 0 380px;
+            height: 300px;
+            border-radius: 6px;
+            border: 1px solid #111;
+            overflow: hidden;
+        }
+
+        .post-image img { width: 100%; height: 100%; object-fit: cover; }
+        .post-content { flex: 1; }
+        .post-content h2 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+        .post-content .date { font-family: 'Montserrat', sans-serif; font-size: 0.8rem; color: #666; margin-bottom: 20px; display: block; }
+        .post-content .excerpt { font-size: 1.05rem; color: #333; }
+
+        /* Sekcja O Mnie */
+        .about-content { display: flex; gap: 40px; align-items: center; }
+        .about-image { flex: 0 0 300px; height: 300px; border-radius: 50%; overflow: hidden; border: 1px solid #111; }
+        .about-image img { width: 100%; height: 100%; object-fit: cover; }
+        .about-text h2 { font-size: 2.2rem; margin-bottom: 20px; }
+        .about-text p { font-size: 1.1rem; color: #333; margin-bottom: 15px; white-space: pre-line; }
+
+        /* Sekcja Kontakt */
+        .contact-container { max-width: 600px; margin: 0 auto; text-align: center; }
+        .contact-container h2 { font-size: 2.2rem; margin-bottom: 20px; }
+        .contact-info { font-size: 1.1rem; margin-bottom: 40px; color: #333; }
+        .contact-info p { margin-bottom: 10px; }
+
+        /* Ikonki Social Media */
+        .social-icons { display: flex; justify-content: center; gap: 30px; margin-top: 20px; }
+        .social-icons a { color: #111; font-size: 2rem; transition: color 0.2s ease, transform 0.2s ease; }
+        .social-icons a:hover { color: #666; transform: scale(1.1); }
+
+        /* Komunikaty statusu */
+        .no-results { text-align: center; font-size: 1.2rem; color: #666; margin-top: 40px; display: none; }
+        .empty-blog { text-align: center; font-size: 1.2rem; color: #666; margin-top: 40px; font-style: italic; }
+
+        /* Responsywność */
+        @media (max-width: 768px) {
+            header h1 { font-size: 2.2rem; }
+            nav ul { gap: 20px; }
+            .post-card { flex-direction: column; gap: 20px; }
+            .post-image { flex: none; width: 100%; height: 240px; }
+            .post-content h2 { font-size: 1.6rem; }
+            .about-content { flex-direction: column; text-align: center; }
+            .about-image { flex: none; width: 200px; height: 200px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Minimalistycznie Przez Życie</h1>
+            <p>Małe przygody w wielkim świecie</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a onclick="switchPage('home')" id="nav-home" class="active">Główna</a></li>
+                <li><a onclick="switchPage('about')" id="nav-about">O mnie</a></li>
+                <li><a onclick="switchPage('contact')" id="nav-contact">Kontakt</a></li>
+            </ul>
+        </nav>
+
+        <div id="page-home" class="page-section active-section">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj wpisów..." onkeyup="searchPosts()">
+            </div>
+
+            <main class="posts-list" id="postsList">
+                
+                {% for post in collections.blog %}
+                <div class="post-card">
+                    {% if post.data.image %}
+                    <div class="post-image">
+                        <img src="{{ post.data.image }}" alt="{{ post.data.title }}">
+                    </div>
+                    {% endif %}
+                    <div class="post-content">
+                        <h2>{{ post.data.title }}</h2>
+                        <span class="date">{{ post.date | dateFilter }}</span>
+                        <div class="excerpt">
+                            {{ post.templateContent }}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-blog">Brak wpisów. Nowe artykuły pojawią się wkrótce!</div>
+                {% endfor %}
+
+            </main>
+            <div id="noResultsMessage" class="no-results">Nie znaleziono wpisów spełniających kryteria.</div>
+        </div>
+
+        <div id="page-about" class="page-section">
+            <div class="about-content">
+                <div class="about-image">
+                    <img src="moje-foto.jpeg" alt="Moje zdjęcie">
+                </div>
+                <div class="about-text">
+                    <h2>Cześć, miło Cię poznać!</h2>
+                    <p>Nazywam się D. Jestem autorem tego bloga, niesamowitą marudą i, po trosze, marzycielem. Mimo, że moje wypociny nie są najwyższych lotów i w przekazywaniu uczuć i myśli muszę korzystać z komputera, w moim umyśle jestem wolny.</p>
+                    <p>„Minimalistycznie Przez Życie” to (nie)codziennik w postaci blogowej, w którym zamieszczam swoje wypociny powstałe w efekcie, niespodzianka, przepływu myśli. A że tych mam w nadmiarze, to czasami/często/rzadko/codziennie/raz na miesiąc/spadaj na drzewo*, płodzę z nich jakiś wpis. Niekiedy powstaje on szybko i bezboleśnie, innym razem płodzenie to przypomina rodzenie pięcioraczków bez cesarskiego cięcia. Ogólnie jest to moje miejsce w sieci, gdzie mogę spożytkować swoją frustrację gdy mnie mózg boli. Bo wbrew pozorom przepływ myśli boli.
+
+A z tymi wpisami to różnie bywa. Są one jak komety. Niektóre robią na niebie spektakularny rozpizd, inne przemykają bez echa, wychwycone okiem wytrawnych/przypadkowych obserwatorów. Tak też jest z moimi wpisami. Co poniektóre wypuszczają obfity warkocz i wybuchają fajerwerkami jak krowia kupa wysrana wprost  na rozregulowaną minę przeciwpiechotną. Inne spokojnie i w milczeniu przemykają obszar internetowego układu gwiezdnego – bez żadnych sensacji i innych atrakcji. Ale ważne, że są. Bo są ładne i (nie)codzienne.
+
+Zapraszam do lektury. Robicie to na własną odpowiedzialność.
+
+* – niepotrzebne skreślić</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-contact" class="page-section">
+            <div class="contact-container">
+                <h2>Kontakt</h2>
+                <div class="contact-info">
+                    <p>Masz pytania? Chcesz nawiązać współpracę? Napisz do mnie!</p>
+                    <p><strong>Email:</strong> kontakt@twojadomena.pl</p>
+                    <p><strong>Telefon:</strong> +48 123 456 789</p>
+                </div>
+                
+                <h3>Znajdziesz mnie również tutaj:</h3>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/dasqez" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/dasqez/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.x.com/Dasqez" target="_blank" title="X (Twitter)">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="28" viewBox="0 0 512 512" fill="currentColor">
+                            <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchPage(pageId) {
+            const sections = document.querySelectorAll('.page-section');
+            sections.forEach(section => section.classList.remove('active-section'));
+            
+            const navLinks = document.querySelectorAll('nav ul li a');
+            navLinks.forEach(link => link.classList.remove('active'));
+            
+            document.getElementById('page-' + pageId).classList.add('active-section');
+            document.getElementById('nav-' + pageId).classList.add('active');
+            
+            window.scrollTo(0, 0);
+        }
+
+        function searchPosts() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const postsList = document.getElementById('postsList');
+            const posts = postsList.getElementsByClassName('post-card');
+            const noResults = document.getElementById('noResultsMessage');
+            const emptyMsg = document.querySelector('.empty-blog');
+            let hasResults = false;
+
+            if(posts.length === 0) return;
+
+            for (let i = 0; i < posts.length; i++) {
+                const title = posts[i].getElementsByTagName('h2')[0].innerText.toLowerCase();
+                const excerpt = posts[i].getElementsByClassName('excerpt')[0].innerText.toLowerCase();
+                
+                if (title.includes(filter) || excerpt.includes(filter)) {
+                    posts[i].style.display = "";
+                    hasResults = true;
+                } else {
+                    posts[i].style.display = "none";
+                }
+            }
+
+            if (hasResults) {
+                noResults.style.display = "none";
+                if(emptyMsg) emptyMsg.style.display = "none";
+            } else {
+                if(filter === "") {
+                    noResults.style.display = "none";
+                    if(emptyMsg) emptyMsg.style.display = "block";
+                } else {
+                    noResults.style.display = "block";
+                    if(emptyMsg) emptyMsg.style.display = "none";
+                }
+            }
+        }
+
+        // Aktywacja widgetu Netlify Identity
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", user => {
+                if (!user) {
+                    window.netlifyIdentity.on("login", () => {
+                        document.location.href = "/admin/";
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

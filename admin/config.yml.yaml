@@ -1,0 +1,19 @@
+backend:
+  name: github
+  repo: TWÓJ_LOGIN_GITHUB/NAZWA_REPOZYTORIUM
+  branch: main
+  base_url: https://bramka-oauth.TWOJA-NAZWA.workers.dev
+
+media_folder: "/"
+public_folder: "/"
+
+collections:
+  - name: "blog"
+    label: "Wpisy"
+    folder: "posts"
+    create: true
+    fields:
+      - { label: "Tytuł", name: "title", widget: "string" }
+      - { label: "Data", name: "date", widget: "datetime" }
+      - { label: "Zdjęcie wpisu", name: "image", widget: "image", required: false }
+      - { label: "Treść", name: "body", widget: "markdown" }
