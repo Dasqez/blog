@@ -3,7 +3,9 @@ title: O tym, jak pieprzyłem się z tą stroną.
 layout: post-layout.html
 date: 2026-06-12T19:17:00.000+02:00
 ---
-Dzień dobry. Pierwszy wpis. Narodzony w bólach, w wiele dni, ~~przy pomocy kilku mocnych drinków rudej z colą~~, metodą prób i błędów. Ale może po kolei. Pomysł na bloga nie jest nowy. Ba, posiadałem już jedną tego typu stronę. Biedną, na WordPressie, stworzoną lata temu i zgubioną gdzieś po drodze. Zgubioną = jakiś kutas mi ją zajebał. Niemniej, chodząc przez ostatni rok na terapię doszedłem do wniosku, że to może być bardzo pomocne dla mojej durnej bańki, żeby powrócić do pisania wysrywów w necie.`` I tak oto pomysł się urodził. A skoro jest pomysł, to teraz trzeba go wcielić w życie. Kierowałem się kilkoma banalnymi zasadami:
+Dzień dobry. Pierwszy wpis. Narodzony w bólach, w wiele dni, ~~przy pomocy kilku mocnych drinków rudej z colą~~, metodą prób i błędów. Ale może po kolei. Pomysł na bloga nie jest nowy. Ba, posiadałem już jedną tego typu stronę. Biedną, na WordPressie, stworzoną lata temu i zgubioną gdzieś po drodze. Zgubioną = jakiś kutas mi ją zajebał. Niemniej, chodząc przez ostatni rok na terapię doszedłem do wniosku, że to może być bardzo pomocne dla mojej durnej bańki, żeby powrócić do pisania wysrywów w necie. I tak oto pomysł się urodził. A skoro jest pomysł, to teraz trzeba go wcielić w życie.
+
+Kierowałem się kilkoma banalnymi zasadami:
 
 1. Żadnego WordPressa. Miałem, przerobiłem, nie chcem.
 2. Żadnego gotowego szablonu. Strona miała powstać całkowicie od zera.
