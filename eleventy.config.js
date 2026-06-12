@@ -12,7 +12,7 @@ export default function(eleventyConfig) {
 
   // AUTOMATYCZNE TWORZENIE KOLEKCJI Z FOLDERU _POSTS
   eleventyConfig.addCollection("posts", function(collectionApi) {
-    return collectionApi.getFilteredByGlob("_posts/*.md");
+    return collectionApi.getFilteredByGlob("_posts/*.md").reverse();
   });
 
   return {
