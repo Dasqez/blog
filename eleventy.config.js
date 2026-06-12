@@ -16,9 +16,9 @@ export default function(eleventyConfig) {
   });
 
   eleventyConfig.setFrontMatterParsingOptions({
-  excerpt: true,
-  excerpt_separator: ""
-});
+    excerpt: true,
+    excerpt_separator: "" // Tutaj musi być dokładnie to, co w pliku .md
+  });
 
   return {
     dir: {
