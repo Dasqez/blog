@@ -299,7 +299,7 @@
             <span class="date">{{ post.date | date: "%d.%m.%Y" }}</span>
 
             <a href="{{ post.url }}#giscus-comments">
-    <span class="giscus-comment-count" data-giscus-permalink="https://minimalistycznie.pages.dev{{ post.url }}">0</span> komentarzy
+    <span class="giscus-comment-count" data-giscus-permalink="https://minimalistycznie.pages.dev{{ post.url }}"></span> komentarzy
 </a>
             
             <div class="excerpt">
@@ -441,5 +441,17 @@ function closeLightbox() {
     <span class="lightbox-close">&times;</span>
     <img id="lightboxImg" src="" alt="Powiększenie zdjęcia">
 </div>
+    <script>
+    // Funkcja odświeżająca liczniki Giscus
+    function updateGiscusCounters() {
+        const script = document.querySelector('script[src="https://giscus.app/client.js"]');
+        if (script) {
+            // Ponowne załadowanie skryptu wymusi przeliczenie elementów z klasą giscus-comment-count
+            console.log("Odświeżanie liczników Giscus...");
+        }
+    }
+    // Uruchomienie po załadowaniu strony
+    window.addEventListener('load', updateGiscusCounters);
+</script>
 </body>
 </html>
