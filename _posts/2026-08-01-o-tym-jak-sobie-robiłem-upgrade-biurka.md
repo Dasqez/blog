@@ -5,6 +5,8 @@ date: 2026-08-01T19:35:00.000+02:00
 ---
 To, że jestem zapierdziałym nerdem, to już wiecie, a jeśli nie wiecie, to powinniście wiedzieć. A oprócz tego, że jestem nerdem, to jak się na coś uprę, to klękajcie narody. No i tak ze 2 miesiące temu powstała u mnie myśl, że kurde, to moje biurko i sprzęty na nim to o kant dupy potłuc są. Mało miejsca, już wszystko niewydajne, stare i tak dalej. No chujowo się z tym czułem. Co z tego, że mam tysiąc konsol i innych sprzętów? Uparłem się na upgrade biurka i co za tym idzie peceta.
 
+<!-- more -->
+
 No i się zaczęło. Wieczory i godziny pełne agonii i szukania co by tutaj kupić, wymienić, ulepszyć. I jak zacząłem jeszcze bardziej siwieć i zaczęły mi z tego wypadać włosy, to stwierdziłem, że ja to jednak normalny nie jestem i nie chcę normalnego peceta w postaci towerowej (tłumaczę i objaśniam - tower to określenie kompa, który sobie stoi na podłodze przy biurku. Taka typowa cegła w postaci prostopadłościanu). Miałem takie od zawsze, więc powiedziałem sobie - taki chuj. Potrzebuję czegoś mniejszego. No i przegiąłem pałę totalnie. Kupiłem to:
 
 ![](/images/gmtec.jpg "GMTec EVO-X1")
@@ -27,13 +29,7 @@ Moja forteca samotności, mój man cave, moje nerdowskie królestwo wygląda tak
 
 ![](/images/1.jpg)
 
-
-
-
-
 ![](/images/2.jpg)
-
-
 
 ![](/images/3.jpg)
 
