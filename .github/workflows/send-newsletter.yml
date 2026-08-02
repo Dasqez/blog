@@ -1,0 +1,64 @@
+name: Wyślij newsletter po publikacji wpisu
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "_posts/**"
+
+permissions:
+  contents: read
+
+jobs:
+  send-newsletter:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Ustaw Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Zainstaluj zależności
+        run: npm ci
+
+      - name: Sprawdź budowę Eleventy
+        run: npm run build
+
+      - name: Znajdź nowe wpisy
+        id: posts
+        shell: bash
+        run: |
+          POST_FILES=$(git diff --diff-filter=A --name-only HEAD^ HEAD -- "_posts/*.md")
+
+          if [ -z "$POST_FILES" ]; then
+            echo "Nie dodano nowego wpisu."
+            echo "has_posts=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Wykryte nowe wpisy:"
+          echo "$POST_FILES"
+
+          {
+            echo "files<<EOF"
+            echo "$POST_FILES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "has_posts=true" >> "$GITHUB_OUTPUT"
+
+      - name: Wyślij newsletter
+        if: steps.posts.outputs.has_posts == 'true'
+        env:
+          POST_FILES: ${{ steps.posts.outputs.files }}
+          SITE_URL: https://minimalistycznie.pages.dev
+          NEWSLETTER_WORKER_URL: ${{ vars.NEWSLETTER_WORKER_URL }}
+          NEWSLETTER_TRIGGER_SECRET: ${{ secrets.NEWSLETTER_TRIGGER_SECRET }}
+        run: node scripts/send-newsletter.mjs
