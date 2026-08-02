@@ -1,0 +1,94 @@
+/* Sekcja Newsletter */
+        .newsletter-section {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 45px 30px;
+            border-top: 1px solid #111;
+            border-bottom: 1px solid #111;
+            text-align: center;
+        }
+
+        .newsletter-section h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+        }
+
+        .newsletter-section p {
+            max-width: 620px;
+            margin: 0 auto 25px;
+            color: #444;
+            font-size: 1.05rem;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 12px;
+            max-width: 620px;
+            margin: 0 auto;
+        }
+
+        .newsletter-form input[type="email"] {
+            flex: 1;
+            min-width: 0;
+            padding: 13px 15px;
+            border: 1px solid #111;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .newsletter-form input[type="email"]:focus {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+        }
+
+        .newsletter-form button {
+            padding: 13px 22px;
+            border: 1px solid #111;
+            border-radius: 4px;
+            background: #111;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            cursor: pointer;
+        }
+
+        .newsletter-form button:hover { background: #333; }
+        .newsletter-form button:disabled { opacity: 0.6; cursor: wait; }
+
+        .newsletter-message {
+            min-height: 24px;
+            margin-top: 16px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .newsletter-message.success { color: #176b2c; }
+        .newsletter-message.error { color: #a40000; }
+
+        .newsletter-honeypot {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            clip: rect(1px, 1px, 1px, 1px) !important;
+            white-space: nowrap !important;
+        }
+
+
+@media (max-width: 768px) {
+    .newsletter-section {
+        padding: 35px 20px;
+    }
+
+    .newsletter-form {
+        flex-direction: column;
+    }
+
+    .newsletter-form button {
+        width: 100%;
+    }
+}
