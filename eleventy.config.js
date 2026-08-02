@@ -2,13 +2,17 @@ export default function(eleventyConfig) {
   // Przekazywanie folderu panelu administratora
   eleventyConfig.addPassthroughCopy("admin");
 
-  // Przekazywanie pojedynczego pliku (jeśli jest w katalogu głównym)
+  // Przekazywanie pojedynczego pliku
   eleventyConfig.addPassthroughCopy("moje-foto.jpeg");
 
   eleventyConfig.addPassthroughCopy("favicon.png");
 
-  // KLUCZOWE: Przekazywanie całego folderu assets wraz z obrazkami z CMS
+  // Przekazywanie obrazków
   eleventyConfig.addPassthroughCopy("images");
+
+  // DODAJ TE DWIE LINIE
+  eleventyConfig.addPassthroughCopy("css");
+  eleventyConfig.addPassthroughCopy("js");
 
   // AUTOMATYCZNE TWORZENIE KOLEKCJI Z FOLDERU _POSTS
   eleventyConfig.addCollection("posts", function(collectionApi) {
@@ -17,7 +21,7 @@ export default function(eleventyConfig) {
 
   eleventyConfig.setFrontMatterParsingOptions({
     excerpt: true,
-    excerpt_separator: "<!-- more -->" // Tutaj musi być dokładnie to, co w pliku .md
+    excerpt_separator: "<!-- more -->"
   });
 
   return {
