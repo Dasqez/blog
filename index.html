@@ -179,6 +179,87 @@
         .about-text h2 { font-size: 2.2rem; margin-bottom: 20px; }
         .about-text p { font-size: 1.1rem; color: #333; margin-bottom: 15px; white-space: pre-line; }
 
+
+        /* Sekcja Newsletter */
+        .newsletter-section {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 45px 30px;
+            border-top: 1px solid #111;
+            border-bottom: 1px solid #111;
+            text-align: center;
+        }
+
+        .newsletter-section h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+        }
+
+        .newsletter-section p {
+            max-width: 620px;
+            margin: 0 auto 25px;
+            color: #444;
+            font-size: 1.05rem;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 12px;
+            max-width: 620px;
+            margin: 0 auto;
+        }
+
+        .newsletter-form input[type="email"] {
+            flex: 1;
+            min-width: 0;
+            padding: 13px 15px;
+            border: 1px solid #111;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .newsletter-form input[type="email"]:focus {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+        }
+
+        .newsletter-form button {
+            padding: 13px 22px;
+            border: 1px solid #111;
+            border-radius: 4px;
+            background: #111;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            cursor: pointer;
+        }
+
+        .newsletter-form button:hover { background: #333; }
+        .newsletter-form button:disabled { opacity: 0.6; cursor: wait; }
+
+        .newsletter-message {
+            min-height: 24px;
+            margin-top: 16px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .newsletter-message.success { color: #176b2c; }
+        .newsletter-message.error { color: #a40000; }
+
+        .newsletter-honeypot {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            clip: rect(1px, 1px, 1px, 1px) !important;
+            white-space: nowrap !important;
+        }
+
         /* Sekcja Kontakt */
         .contact-container { max-width: 600px; margin: 0 auto; text-align: center; }
         .contact-container h2 { font-size: 2.2rem; margin-bottom: 20px; }
@@ -203,6 +284,8 @@
             .post-content h2 { font-size: 1.6rem; }
             .about-content { flex-direction: column; text-align: center; }
             .about-image { flex: none; width: 200px; height: 200px; }
+            .newsletter-form { flex-direction: column; }
+            .newsletter-form button { width: 100%; }
         }
         /* STYLIZACJA LIGHTBOXA (PÓŁPRZEZROCZYSTE TŁO) */
 .lightbox-overlay {
@@ -276,6 +359,7 @@
                 <li><a onclick="switchPage('home')" id="nav-home" class="active">Główna</a></li>
                 <li><a onclick="switchPage('about')" id="nav-about">O mnie</a></li>
                 <li><a onclick="switchPage('contact')" id="nav-contact">Kontakt</a></li>
+                <li><a onclick="switchPage('newsletter')" id="nav-newsletter">Newsletter</a></li>
             </ul>
         </nav>
 
@@ -328,6 +412,7 @@ Zapraszam do lektury. Robicie to na własną odpowiedzialność.
 * – niepotrzebne skreślić</p>
                 </div>
             </div>
+
         </div>
 
         <div id="page-contact" class="page-section">
@@ -349,6 +434,38 @@ Zapraszam do lektury. Robicie to na własną odpowiedzialność.
                     </a>
                 </div>
             </div>
+        </div>
+
+        <div id="page-newsletter" class="page-section">
+            <section class="newsletter-section" aria-labelledby="newsletter-title">
+                <h2 id="newsletter-title">Newsletter</h2>
+                <p>
+                    Chcesz wiedzieć, kiedy pojawi się nowy wpis? Zostaw adres e-mail.
+                    Nie wysyłam reklam ani spamu — tylko informację o nowym artykule.
+                </p>
+
+                <form id="newsletterForm" class="newsletter-form" novalidate>
+                    <label for="newsletterEmail" class="newsletter-honeypot">Adres e-mail</label>
+                    <input
+                        type="email"
+                        id="newsletterEmail"
+                        name="email"
+                        placeholder="Twój adres e-mail"
+                        autocomplete="email"
+                        required
+                    >
+
+                    <div class="newsletter-honeypot" aria-hidden="true">
+                        <label for="newsletterWebsite">Nie wypełniaj tego pola</label>
+                        <input type="text" id="newsletterWebsite" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <button type="submit" id="newsletterButton">Zapisz mnie</button>
+                </form>
+
+                <div id="newsletterMessage" class="newsletter-message" role="status" aria-live="polite"></div>
+            </section>
+
         </div>
 
     </div>
@@ -431,6 +548,66 @@ function closeLightbox() {
     // Przywracamy przewijanie strony
     document.body.style.overflow = ''; 
 }
+
+
+        const NEWSLETTER_WORKER_URL = "https://newsletter.dave-pytel.workers.dev/newsletter"; // Zaktualizowany URL do Cloudflare Worker
+        const newsletterForm = document.getElementById("newsletterForm");
+
+        if (newsletterForm) {
+            newsletterForm.addEventListener("submit", async function(event) {
+                event.preventDefault();
+
+                const emailInput = document.getElementById("newsletterEmail");
+                const websiteInput = document.getElementById("newsletterWebsite");
+                const button = document.getElementById("newsletterButton");
+                const message = document.getElementById("newsletterMessage");
+                const email = emailInput.value.trim();
+
+                message.textContent = "";
+                message.className = "newsletter-message";
+
+                if (websiteInput.value.trim() !== "") {
+                    return;
+                }
+
+                if (!emailInput.checkValidity()) {
+                    message.textContent = "Wpisz poprawny adres e-mail.";
+                    message.classList.add("error");
+                    emailInput.focus();
+                    return;
+                }
+
+                button.disabled = true;
+                button.textContent = "Zapisywanie...";
+
+                try {
+                    const response = await fetch(NEWSLETTER_WORKER_URL, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ email: email })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok || result.success !== true) {
+                        throw new Error(result.message || "Nie udało się zapisać do newslettera.");
+                    }
+
+                    message.textContent = result.message;
+                    message.classList.add("success");
+                    newsletterForm.reset();
+                } catch (error) {
+                    message.textContent = error.message || "Wystąpił błąd. Spróbuj ponownie za chwilę.";
+                    message.classList.add("error");
+                } finally {
+                    button.disabled = false;
+                    button.textContent = "Zapisz mnie";
+                }
+            });
+        }
+
     </script>
     <div id="lightbox" class="lightbox-overlay" onclick="closeLightbox()">
     <span class="lightbox-close">&times;</span>
