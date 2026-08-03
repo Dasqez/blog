@@ -12,4 +12,4 @@ Jeżeli widzisz ten wpis na blogu i dostałeś wiadomość e-mail, cały mechani
 
 ______________________________
 
-Test zapisu z własnego panelu.
+Test zapisu z własnego panelu. Test drugi z poprawioną obslugą SHA
