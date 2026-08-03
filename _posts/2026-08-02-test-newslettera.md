@@ -9,3 +9,7 @@ To jest test pełnej automatyzacji newslettera.
 <!-- more -->
 
 Jeżeli widzisz ten wpis na blogu i dostałeś wiadomość e-mail, cały mechanizm działa poprawnie.
+
+______________________________
+
+Test zapisu z własnego panelu.
