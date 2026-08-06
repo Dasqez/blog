@@ -11,19 +11,23 @@ const ADMIN_UPDATE_POST_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/post/update";
 
 const ADMIN_CREATE_POST_API_URL =
-  "https://newsletter.dave-pytel.workers.dev/admin/post/create";
+  "https://newsletter.dave-pytel.workers.dev/admin/post/create";  
 
 const ADMIN_DELETE_POST_API_URL =
-  "https://newsletter.dave-pytel.workers.dev/admin/post/delete";
+  "https://newsletter.dave-pytel.workers.dev/admin/post/delete";  
 
 const ADMIN_UPLOAD_IMAGE_API_URL =
-  "https://newsletter.dave-pytel.workers.dev/admin/upload-image";
+  "https://newsletter.dave-pytel.workers.dev/admin/upload-image";  
 
 const ADMIN_MEDIA_API_URL =
-  "https://newsletter.dave-pytel.workers.dev/admin/media";
+  "https://newsletter.dave-pytel.workers.dev/admin/media";  
 
 const ADMIN_DELETE_MEDIA_API_URL =
-  "https://newsletter.dave-pytel.workers.dev/admin/media/delete";
+  "https://newsletter.dave-pytel.workers.dev/admin/media/delete";  
+
+const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV091";
+const EDITOR_AUTOSAVE_INTERVAL_MS = 30000;
+const EDITOR_AUTOSAVE_TOAST_DURATION_MS = 3000;
 
 /* =========================================================
    ELEMENTY INTERFEJSU
@@ -60,9 +64,9 @@ const lastUpdated = document.getElementById("lastUpdated");
 const globalMessage = document.getElementById("globalMessage");
 const viewTitle = document.getElementById("viewTitle");
 const editorOverlay =
-  document.getElementById(
-    "editorOverlay"
-  );
+    document.getElementById(
+        "editorOverlay"
+    );
 const postsList = document.getElementById("postsList");
 const postsSearchInput = document.getElementById("postsSearchInput");
 const previewTitle = document.getElementById("previewTitle");
@@ -76,7 +80,7 @@ const reloadPostsButton =
   document.getElementById("reloadPostsButton");
 const newPostButton = document.getElementById("newPostButton");
 const closeEditorButton =
-  document.getElementById("closeEditorButton");
+    document.getElementById("closeEditorButton");  
 
 const editorPanel = document.getElementById("editorPanel");
 const editorTitle = document.getElementById("editorTitle");
@@ -90,13 +94,13 @@ const markdownPreview =
 const editorStatistics =
   document.getElementById("editorStatistics");
 const markdownToolbarButtons =
-  document.querySelectorAll("[data-markdown-action]");
+  document.querySelectorAll("[data-markdown-action]");  
 const savePostButton =
   document.getElementById("savePostButton");
 const uploadImageButton =
   document.getElementById("uploadImageButton");
 const imageUploadInput =
-  document.getElementById("imageUploadInput");
+  document.getElementById("imageUploadInput");  
 const cancelEditButton =
   document.getElementById("cancelEditButton");
 
@@ -114,55 +118,55 @@ const openViewButtons = document.querySelectorAll(
 );
 
 const mediaSidebar =
-  document.getElementById(
-    "mediaSidebar"
-  );
+    document.getElementById(
+        "mediaSidebar"
+    );
 
 const mediaPreviewImage =
-  document.getElementById(
-    "mediaPreviewImage"
-  );
+    document.getElementById(
+        "mediaPreviewImage"
+    );
 
 const mediaName =
-  document.getElementById(
-    "mediaName"
-  );
+    document.getElementById(
+        "mediaName"
+    );
 
 const mediaUrl =
-  document.getElementById(
-    "mediaUrl"
-  );
+    document.getElementById(
+        "mediaUrl"
+    );
 
 const mediaSize =
-  document.getElementById(
-    "mediaSize"
-  );
+    document.getElementById(
+        "mediaSize"
+    );
 
 const closeMediaSidebar =
-  document.getElementById(
-    "closeMediaSidebar"
-  );
+    document.getElementById(
+        "closeMediaSidebar"
+    );
 
 const insertMediaButton =
-  document.getElementById(
-    "insertMediaButton"
-  );
+    document.getElementById(
+        "insertMediaButton"
+    );
 
 const deleteMediaButton =
-  document.getElementById(
-    "deleteMediaButton"
-  );
+    document.getElementById(
+        "deleteMediaButton"
+    );
 
 const copyMediaName =
-  document.getElementById("copyMediaName");
+    document.getElementById("copyMediaName");
 
 const copyMediaUrl =
-  document.getElementById("copyMediaUrl");
+    document.getElementById("copyMediaUrl");
 
 const downloadMediaButton =
-  document.getElementById(
+document.getElementById(
     "downloadMediaButton"
-  );
+);
 
 /* =========================================================
    STAN APLIKACJI
@@ -189,6 +193,10 @@ let selectedMediaCard = null;
 let mediaTypeFilter = "all";
 let mediaSortOrder = "newest";
 let editorSuspendedForMedia = false;
+let editorBaseline = "";
+let lastSavedDraftValues = "";
+let editorDraftToastTimeout = null;
+let editorAutosaveTimeout = null;
 
 /* =========================================================
    LISTENERY
@@ -199,78 +207,78 @@ deleteMediaButton?.addEventListener(
   deleteSelectedMedia
 );
 
-insertMediaButton?.addEventListener("click", () => {
+   insertMediaButton?.addEventListener("click", () => {
 
-  if (!selectedMedia) return;
+    if (!selectedMedia) return;
 
-  if (!hasActiveEditorSession()) {
-    showMessage(
-      globalMessage,
-      "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
-      "error"
+    if (!hasActiveEditorSession()) {
+      showMessage(
+        globalMessage,
+        "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
+        "error"
+      );
+      return;
+    }
+
+    const imageUrl =
+        getMediaUrl(selectedMedia);
+
+    insertImageMarkdown(
+        imageUrl,
+        selectedMedia.name.replace(/\.[^.]+$/, "")
     );
-    return;
-  }
 
-  const imageUrl =
-    getMediaUrl(selectedMedia);
-
-  insertImageMarkdown(
-    imageUrl,
-    selectedMedia.name.replace(/\.[^.]+$/, "")
-  );
-
-  closeMediaPanel();
-  restoreEditorAfterMedia();
+    closeMediaPanel();
+    restoreEditorAfterMedia();
 
 });
 
-downloadMediaButton?.addEventListener(
-  "click",
-  () => {
+   downloadMediaButton?.addEventListener(
+    "click",
+    () => {
 
-    if (!selectedMedia)
-      return;
+        if (!selectedMedia)
+            return;
 
-    const a =
-      document.createElement("a");
+        const a =
+            document.createElement("a");
 
-    a.href =
-      getMediaUrl(selectedMedia, true);
+        a.href =
+            getMediaUrl(selectedMedia, true);
 
-    a.download =
-      selectedMedia.name;
+        a.download =
+            selectedMedia.name;
 
-    document.body.appendChild(a);
+        document.body.appendChild(a);
 
-    a.click();
+        a.click();
 
-    a.remove();
+        a.remove();
 
-  }
+    }
 );
 
-copyMediaName?.addEventListener("click", () => {
+   copyMediaName?.addEventListener("click", () => {
 
-  copyToClipboard(
-    mediaName.value,
-    copyMediaName
-  );
+    copyToClipboard(
+        mediaName.value,
+        copyMediaName
+    );
 
 });
 
 copyMediaUrl?.addEventListener("click", () => {
 
-  copyToClipboard(
-    mediaUrl.value,
-    copyMediaUrl
-  );
+    copyToClipboard(
+        mediaUrl.value,
+        copyMediaUrl
+    );
 
 });
 
-closeMediaSidebar?.addEventListener(
-  "click",
-  closeMediaPanel
+   closeMediaSidebar?.addEventListener(
+    "click",
+    closeMediaPanel
 );
 
 mediaSearchInput?.addEventListener(
@@ -322,7 +330,7 @@ markdownPreview?.addEventListener(
   handlePreviewImageClick
 );
 
-loginForm.addEventListener("submit", async (event) => {
+   loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const secret = secretInput.value.trim();
@@ -427,7 +435,7 @@ deletePostButton.addEventListener("click", async () => {
     editedPost = null;
     postsLoaded = false;
 
-    closePostEditor();
+    closePostEditor({ force: true });
     resetPostPreview();
 
     await loadPosts(true);
@@ -454,6 +462,34 @@ deletePostButton.addEventListener("click", async () => {
 cancelEditButton.addEventListener("click", () => {
   closePostEditor();
 });
+
+window.addEventListener("beforeunload", (event) => {
+  if (!hasUnsavedEditorChanges()) {
+    return;
+  }
+
+  event.preventDefault();
+  event.returnValue = "";
+});
+
+function scheduleEditorAutosave() {
+  window.clearTimeout(editorAutosaveTimeout);
+
+  if (!hasActiveEditorSession()) {
+    return;
+  }
+
+  editorAutosaveTimeout = window.setTimeout(() => {
+    saveEditorDraft();
+  }, EDITOR_AUTOSAVE_INTERVAL_MS);
+}
+
+[editorTitle, editorSlug, editorDate, editorLayout, editorBody].forEach(
+  (field) => {
+    field.addEventListener("input", scheduleEditorAutosave);
+    field.addEventListener("change", scheduleEditorAutosave);
+  }
+);
 
 savePostButton.addEventListener("click", async () => {
 
@@ -492,9 +528,11 @@ savePostButton.addEventListener("click", async () => {
 
       postsLoaded = false;
 
+      clearEditorDraft();
+
       await loadPosts(true);
 
-      closePostEditor();
+      closePostEditor({ force: true });
 
       showMessage(
         globalMessage,
@@ -608,7 +646,7 @@ savePostButton.addEventListener("click", async () => {
     if (!response.ok || result.success !== true) {
       throw new Error(
         result.message ||
-        "Nie udało się zapisać wpisu."
+          "Nie udało się zapisać wpisu."
       );
     }
 
@@ -622,9 +660,11 @@ savePostButton.addEventListener("click", async () => {
 
     postsLoaded = false;
 
+    clearEditorDraft();
+
     await loadPosts(true);
 
-    closePostEditor();
+    closePostEditor({ force: true });
 
     showMessage(
       globalMessage,
@@ -800,13 +840,13 @@ function insertImageMarkdown(url, altText = "Obraz") {
 
   const before =
     start > 0 &&
-      currentValue[start - 1] !== "\n"
+    currentValue[start - 1] !== "\n"
       ? "\n\n"
       : "";
 
   const after =
     end < currentValue.length &&
-      currentValue[end] !== "\n"
+    currentValue[end] !== "\n"
       ? "\n\n"
       : "\n";
 
@@ -830,25 +870,25 @@ function insertImageMarkdown(url, altText = "Obraz") {
 }
 
 closeEditorButton.addEventListener(
-  "click",
-  closePostEditor
+    "click",
+    closePostEditor
 );
 
 document.addEventListener("keydown", (event) => {
 
-  if (
-    event.key === "Escape" &&
-    !editorPanel.hidden
-  ) {
-    closePostEditor();
-  }
+    if (
+        event.key === "Escape" &&
+        !editorPanel.hidden
+    ) {
+        closePostEditor();
+    }
 
 });
 
 
 editorOverlay.addEventListener(
-  "click",
-  closePostEditor
+    "click",
+    closePostEditor
 );
 
 /* =========================================================
@@ -897,7 +937,7 @@ async function loadDashboardData() {
     if (!response.ok || result.success !== true) {
       throw new Error(
         result.message ||
-        "Nie udało się pobrać danych."
+          "Nie udało się pobrać danych."
       );
     }
 
@@ -982,7 +1022,9 @@ function openView(viewName) {
     if (viewName === "media") {
       suspendEditorForMedia();
     } else {
-      closePostEditor();
+      if (!closePostEditor()) {
+        return;
+      }
     }
   }
 
@@ -992,7 +1034,9 @@ function openView(viewName) {
       editorPanel.hidden = false;
       editorSuspendedForMedia = false;
     } else {
-      closePostEditor();
+      if (!closePostEditor()) {
+        return;
+      }
     }
   }
 
@@ -1059,7 +1103,7 @@ async function loadPosts(forceRefresh = false) {
     if (!response.ok || result.success !== true) {
       throw new Error(
         result.message ||
-        "Nie udało się pobrać wpisów."
+          "Nie udało się pobrać wpisów."
       );
     }
 
@@ -1144,26 +1188,26 @@ function renderPosts() {
 }
 
 function filterPosts() {
-  activeSearchResultIndex = -1;
+    activeSearchResultIndex = -1;
 
-  const search =
-    postsSearchInput.value
-      .trim()
-      .toLowerCase();
+    const search =
+        postsSearchInput.value
+            .trim()
+            .toLowerCase();
 
-  document
-    .querySelectorAll(".post-item")
-    .forEach((item) => {
+    document
+        .querySelectorAll(".post-item")
+        .forEach((item) => {
 
-      const text =
-        item.textContent.toLowerCase();
+            const text =
+                item.textContent.toLowerCase();
 
-      item.style.display =
-        text.includes(search)
-          ? ""
-          : "none";
+            item.style.display =
+                text.includes(search)
+                    ? ""
+                    : "none";
 
-    });
+        });
 
 }
 
@@ -1239,7 +1283,7 @@ async function openPostEditor(post) {
     if (!response.ok || result.success !== true) {
       throw new Error(
         result.message ||
-        "Nie udało się pobrać wpisu."
+          "Nie udało się pobrać wpisu."
       );
     }
 
@@ -1262,6 +1306,8 @@ async function openPostEditor(post) {
     editorBody.value =
       result.post.body || "";
 
+    setEditorBaseline();
+    restoreEditorDraft();
     renderMarkdownPreview();
 
     editorOverlay.hidden = false;
@@ -1301,6 +1347,8 @@ function createNewPost() {
     formatEditorDate(new Date());
   editorLayout.value = "post-layout.html";
   editorBody.value = "";
+  setEditorBaseline();
+  restoreEditorDraft();
   renderMarkdownPreview();
 
   editorOverlay.hidden = false;
@@ -1329,10 +1377,25 @@ function createNewPost() {
   editorTitle.focus();
 }
 
-function closePostEditor() {
+function closePostEditor(options = {}) {
+  const force = options?.force === true;
+
+  if (!force && hasUnsavedEditorChanges()) {
+    const confirmed = window.confirm(
+      "Masz niezapisane zmiany. Czy na pewno chcesz zamknąć edytor? Wersja robocza pozostanie zapisana w tej przeglądarce."
+    );
+
+    if (!confirmed) {
+      return false;
+    }
+
+    saveEditorDraft();
+  }
+
   editorOverlay.hidden = true;
   editorPanel.hidden = true;
   editorSuspendedForMedia = false;
+  window.clearTimeout(editorAutosaveTimeout);
 
   editedPost = null;
   isCreatingNewPost = false;
@@ -1343,14 +1406,196 @@ function closePostEditor() {
   editorDate.value = "";
   editorLayout.value = "";
   editorBody.value = "";
+  editorBaseline = "";
   renderMarkdownPreview();
 
   savePostButton.disabled = true;
   savePostButton.textContent = "Zapisz";
+
+  return true;
 }
 
 function hasActiveEditorSession() {
   return isCreatingNewPost || Boolean(editedPost) || editorSuspendedForMedia;
+}
+
+function getEditorValues() {
+  return {
+    title: editorTitle.value,
+    slug: editorSlug.value,
+    date: editorDate.value,
+    layout: editorLayout.value,
+    body: editorBody.value,
+  };
+}
+
+function serializeEditorValues() {
+  return JSON.stringify(getEditorValues());
+}
+
+function setEditorBaseline() {
+  editorBaseline = serializeEditorValues();
+}
+
+function hasUnsavedEditorChanges() {
+  return Boolean(
+    hasActiveEditorSession() &&
+    editorBaseline &&
+    serializeEditorValues() !== editorBaseline
+  );
+}
+
+function getCurrentEditorIdentity() {
+  return {
+    mode: isCreatingNewPost ? "new" : "existing",
+    path: isCreatingNewPost ? null : editedPost?.path || null,
+  };
+}
+
+function readEditorDraft() {
+  try {
+    const storedDraft = localStorage.getItem(EDITOR_DRAFT_STORAGE_KEY);
+    return storedDraft ? JSON.parse(storedDraft) : null;
+  } catch (error) {
+    console.warn("Nie udało się odczytać wersji roboczej.", error);
+    return null;
+  }
+}
+
+function saveEditorDraft() {
+  if (!hasUnsavedEditorChanges()) {
+    return false;
+  }
+
+  const identity = getCurrentEditorIdentity();
+  const serializedValues = serializeEditorValues();
+
+  if (serializedValues === lastSavedDraftValues) {
+    return false;
+  }
+
+  try {
+    localStorage.setItem(
+      EDITOR_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        version: "0.9.1",
+        savedAt: new Date().toISOString(),
+        ...identity,
+        ...getEditorValues(),
+      })
+    );
+    lastSavedDraftValues = serializedValues;
+    showEditorDraftSavedToast();
+    return true;
+  } catch (error) {
+    console.warn("Nie udało się zapisać wersji roboczej.", error);
+    return false;
+  }
+}
+
+function showEditorDraftSavedToast() {
+  let toast = document.getElementById("editorDraftSavedToast");
+
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "editorDraftSavedToast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    Object.assign(toast.style, {
+      position: "fixed",
+      right: "24px",
+      bottom: "24px",
+      zIndex: "2147483647",
+      maxWidth: "calc(100vw - 48px)",
+      padding: "12px 16px",
+      borderRadius: "8px",
+      background: "#1f2937",
+      color: "#ffffff",
+      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.24)",
+      fontSize: "14px",
+      lineHeight: "1.4",
+      opacity: "0",
+      transform: "translateY(8px)",
+      transition: "opacity 180ms ease, transform 180ms ease",
+      pointerEvents: "none",
+      visibility: "visible",
+    });
+    document.body.appendChild(toast);
+  }
+
+  toast.textContent = "Wersja robocza została zapisana";
+  toast.style.display = "block";
+  toast.style.visibility = "visible";
+
+  window.clearTimeout(editorDraftToastTimeout);
+  window.requestAnimationFrame(() => {
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+  });
+
+  editorDraftToastTimeout = window.setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(8px)";
+    window.setTimeout(() => {
+      if (toast.style.opacity === "0") {
+        toast.style.display = "none";
+      }
+    }, 180);
+  }, EDITOR_AUTOSAVE_TOAST_DURATION_MS);
+}
+
+function clearEditorDraft() {
+  try {
+    const draft = readEditorDraft();
+    const identity = getCurrentEditorIdentity();
+    const belongsToCurrentEditor =
+      !draft ||
+      (draft.mode === identity.mode &&
+        (identity.mode === "new" || draft.path === identity.path));
+
+    if (!belongsToCurrentEditor) {
+      return;
+    }
+
+    localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
+    lastSavedDraftValues = "";
+  } catch (error) {
+    console.warn("Nie udało się usunąć wersji roboczej.", error);
+  }
+}
+
+function restoreEditorDraft() {
+  const draft = readEditorDraft();
+
+  if (!draft) {
+    return;
+  }
+
+  const identity = getCurrentEditorIdentity();
+  const matchesCurrentEditor =
+    draft.mode === identity.mode &&
+    (identity.mode === "new" || draft.path === identity.path);
+
+  if (!matchesCurrentEditor) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Znaleziono niezapisaną wersję roboczą. Przywrócić?"
+  );
+
+  if (!confirmed) {
+    clearEditorDraft();
+    return;
+  }
+
+  editorTitle.value = draft.title || "";
+  editorSlug.value = draft.slug || "";
+  editorDate.value = draft.date || "";
+  editorLayout.value = draft.layout || "post-layout.html";
+  editorBody.value = draft.body || "";
+  slugEditedManually = Boolean(editorSlug.value);
+  lastSavedDraftValues = serializeEditorValues();
 }
 
 function suspendEditorForMedia() {
@@ -1523,6 +1768,18 @@ function editorDateToJekyll(value) {
    ========================================================= */
 
 function logout() {
+  if (hasUnsavedEditorChanges()) {
+    const confirmed = window.confirm(
+      "Masz niezapisane zmiany. Czy na pewno chcesz się wylogować? Wersja robocza pozostanie zapisana w tej przeglądarce."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    saveEditorDraft();
+  }
+
   adminSecret = "";
 
   sessionStorage.removeItem(
@@ -1541,7 +1798,7 @@ function logout() {
   postsLoaded = false;
   isCreatingNewPost = false;
 
-  closePostEditor();
+  closePostEditor({ force: true });
   setConnectionState("loading");
 
   showMessage(
@@ -1656,39 +1913,39 @@ function handleEditorShortcuts(event) {
 
 async function copyToClipboard(text, button) {
 
-  if (!text) {
-    return;
-  }
+    if (!text) {
+        return;
+    }
 
-  try {
+    try {
 
-    await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(text);
 
-    const oldHtml = button?.innerHTML;
+        const oldHtml = button?.innerHTML;
 
-    if (button) button.innerHTML =
-      '<i class="fa-solid fa-check"></i>';
+        if (button) button.innerHTML =
+            '<i class="fa-solid fa-check"></i>';
 
-    button?.classList.add("success");
+        button?.classList.add("success");
 
-    setTimeout(() => {
+        setTimeout(() => {
 
-      if (button) button.innerHTML = oldHtml;
+            if (button) button.innerHTML = oldHtml;
 
-      button?.classList.remove("success");
+            button?.classList.remove("success");
 
-    }, 1200);
+        }, 1200);
 
-  }
-  catch {
+    }
+    catch {
 
-    alert("Nie udało się skopiować.");
+        alert("Nie udało się skopiować.");
 
-  }
+    }
 
 }
 
-function handlePreviewImageClick(event) {
+   function handlePreviewImageClick(event) {
   const image = event.target.closest("img");
 
   if (!image || !markdownPreview.contains(image)) {
@@ -1732,7 +1989,7 @@ function clearPreviewImageSelection() {
   selectedPreviewImage = null;
 }
 
-function setConnectionState(state) {
+   function setConnectionState(state) {
   connectionStatus.classList.remove(
     "connected",
     "error"
@@ -1821,84 +2078,68 @@ function renderMarkdownPreview() {
     breaks: true,
     gfm: true,
   });
-
+  
 
   const renderedTitle = title
     ? `<h1>${escapePreviewHtml(title)}</h1>`
     : "";
 
   const sanitizedHtml = DOMPurify.sanitize(
-    `${renderedTitle}${renderedBody}`
-  );
+  `${renderedTitle}${renderedBody}`
+);
 
-  const previewContainer =
-    document.createElement("div");
+const previewContainer =
+  document.createElement("div");
 
-  previewContainer.innerHTML = sanitizedHtml;
+previewContainer.innerHTML = sanitizedHtml;
 
-  previewContainer
-    .querySelectorAll("img")
-    .forEach((image) => {
-      const imageSource =
-        image.getAttribute("src") || "";
+previewContainer
+  .querySelectorAll("img")
+  .forEach((image) => {
+    const imageSource =
+      image.getAttribute("src") || "";
 
-      image.dataset.editorSrc = imageSource;
+    image.dataset.editorSrc = imageSource;
 
-      if (imageSource.startsWith("/")) {
-        const isLocalDevelopment =
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1";
+    if (imageSource.startsWith("/")) {
+      image.src =
+        `https://minimalistycznie.pages.dev${imageSource}`;
+    }
 
-        const displayImageUrl =
-          isLocalDevelopment
-            ? buildGitHubRawMediaUrl(
-              imageSource
-            )
-            : new URL(
-              imageSource,
-              "https://minimalistycznie.pages.dev"
-            ).href;
+    image.loading = "lazy";
 
-        image.src =
-          addMediaCacheVersion(
-            displayImageUrl
-          );
-      }
+    const wrapper =
+      document.createElement("figure");
 
-      image.loading = "lazy";
+    wrapper.className =
+      "preview-image-wrapper";
+    wrapper.style.margin = "1.5em auto";
 
-      const wrapper =
-        document.createElement("figure");
+    const declaredWidth = Number.parseInt(image.getAttribute("width"), 10);
+    if (Number.isFinite(declaredWidth) && declaredWidth > 0) {
+      wrapper.style.width = `${declaredWidth}px`;
+      wrapper.style.maxWidth = "100%";
+      image.style.width = "100%";
+      image.style.height = "auto";
+    }
 
-      wrapper.className =
-        "preview-image-wrapper";
-      wrapper.style.margin = "1.5em auto";
+    const resizeHandle =
+      document.createElement("span");
 
-      const declaredWidth = Number.parseInt(image.getAttribute("width"), 10);
-      if (Number.isFinite(declaredWidth) && declaredWidth > 0) {
-        wrapper.style.width = `${declaredWidth}px`;
-        wrapper.style.maxWidth = "100%";
-        image.style.width = "100%";
-        image.style.height = "auto";
-      }
+    resizeHandle.className =
+      "preview-image-resize-handle";
 
-      const resizeHandle =
-        document.createElement("span");
+    resizeHandle.setAttribute(
+      "aria-hidden",
+      "true"
+    );
 
-      resizeHandle.className =
-        "preview-image-resize-handle";
+    image.replaceWith(wrapper);
+    wrapper.append(image, resizeHandle);
+  });
 
-      resizeHandle.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-
-      image.replaceWith(wrapper);
-      wrapper.append(image, resizeHandle);
-    });
-
-  markdownPreview.innerHTML =
-    previewContainer.innerHTML;
+markdownPreview.innerHTML =
+  previewContainer.innerHTML;
 }
 
 function updateEditorStatistics(markdown) {
@@ -1994,7 +2235,7 @@ async function deleteSelectedMedia() {
     ) {
       throw new Error(
         result.message ||
-        "Nie udało się usunąć obrazu."
+          "Nie udało się usunąć obrazu."
       );
     }
 
@@ -2229,26 +2470,26 @@ function handlePostsSearchKeyboard(event) {
   }
 
   if (event.key === "Enter") {
-    event.preventDefault();
+  event.preventDefault();
 
-    const selectedItem =
-      activeSearchResultIndex >= 0
-        ? visiblePosts[activeSearchResultIndex]
-        : visiblePosts[0];
+  const selectedItem =
+    activeSearchResultIndex >= 0
+      ? visiblePosts[activeSearchResultIndex]
+      : visiblePosts[0];
 
-    document
-      .querySelectorAll(".post-item")
-      .forEach((item) => {
-        item.classList.remove("keyboard-active");
-      });
+  document
+    .querySelectorAll(".post-item")
+    .forEach((item) => {
+      item.classList.remove("keyboard-active");
+    });
 
-    activeSearchResultIndex = -1;
+  activeSearchResultIndex = -1;
 
-    selectedItem.click();
-    postsSearchInput.blur();
+  selectedItem.click();
+  postsSearchInput.blur();
 
-    return;
-  }
+  return;
+}
 }
 
 function highlightSearchResult(items, activeIndex) {
@@ -2301,7 +2542,7 @@ async function uploadImageFile(file) {
   if (!response.ok || result.success !== true) {
     throw new Error(
       result.message ||
-      `Nie udało się wysłać obrazu "${file.name}".`
+        `Nie udało się wysłać obrazu "${file.name}".`
     );
   }
 
@@ -2428,7 +2669,7 @@ async function loadMedia(forceRefresh = false) {
     ) {
       throw new Error(
         result.message ||
-        "Nie udało się pobrać obrazów."
+          "Nie udało się pobrać obrazów."
       );
     }
 
@@ -2473,7 +2714,7 @@ function renderMedia() {
       .trim()
       .toLowerCase();
 
-  const filteredItems =
+    const filteredItems =
     mediaItems.filter((item) => {
       const matchesSearch = String(item.name || "")
         .toLowerCase()
@@ -2540,29 +2781,12 @@ function renderMedia() {
       document.createElement("img");
 
     image.src =
-      addMediaCacheVersion(
-        getMediaUrl(item, true),
-        item.sha
-      );
+      getMediaUrl(item, true);
 
     image.alt =
       item.name || "Obraz";
 
     image.loading = "lazy";
-
-    image.addEventListener(
-      "error",
-      () => {
-        console.error(
-          "Błąd miniatury:",
-          item.name,
-          image.src
-        );
-      },
-      {
-        once: true,
-      }
-    );
 
     const details =
       document.createElement("span");
@@ -2594,17 +2818,17 @@ function renderMedia() {
 
     card.addEventListener("click", () => {
 
-      if (selectedMediaCard) {
+    if (selectedMediaCard) {
         selectedMediaCard.classList.remove("active");
-      }
+    }
 
-      selectedMediaCard = card;
+    selectedMediaCard = card;
 
-      card.classList.add("active");
+    card.classList.add("active");
 
-      openMediaSidebar(item);
+    openMediaSidebar(item);
 
-    });
+});
 
     mediaGrid.appendChild(card);
   });
@@ -2628,24 +2852,12 @@ function openMediaSidebar(item) {
 
   selectedMedia = item;
 
-  const originalImageUrl =
+  const imageUrl =
     getMediaUrl(item, true);
 
-  const displayImageUrl =
-    addMediaCacheVersion(
-      originalImageUrl,
-      item.sha
-    );
-
-  const mediaType =
-    document.getElementById(
-      "mediaType"
-    );
-
-  const mediaDimensions =
-    document.getElementById(
-      "mediaDimensions"
-    );
+  mediaPreviewImage.src = imageUrl;
+  mediaPreviewImage.alt =
+    item.name || "Podgląd obrazu";
 
   mediaName.value =
     item.name || "";
@@ -2655,6 +2867,14 @@ function openMediaSidebar(item) {
 
   mediaSize.textContent =
     formatFileSize(item.size);
+
+  const mediaType =
+    document.getElementById("mediaType");
+
+  const mediaDimensions =
+    document.getElementById(
+      "mediaDimensions"
+    );
 
   if (mediaType) {
     mediaType.textContent =
@@ -2666,10 +2886,6 @@ function openMediaSidebar(item) {
       "Ładowanie…";
   }
 
-  /*
-   * Najpierw ustawiamy obsługę zdarzeń,
-   * dopiero potem przypisujemy src.
-   */
   mediaPreviewImage.onload = () => {
     if (mediaDimensions) {
       mediaDimensions.textContent =
@@ -2681,24 +2897,9 @@ function openMediaSidebar(item) {
   mediaPreviewImage.onerror = () => {
     if (mediaDimensions) {
       mediaDimensions.textContent =
-        "Nie udało się załadować";
+        "Brak danych";
     }
-
-    console.error(
-      "Nie udało się załadować obrazu:",
-      displayImageUrl
-    );
   };
-
-  mediaPreviewImage.alt =
-    item.name || "Podgląd obrazu";
-
-  mediaPreviewImage.removeAttribute(
-    "src"
-  );
-
-  mediaPreviewImage.src =
-    displayImageUrl;
 
   mediaSidebar.hidden = false;
 }
@@ -2734,63 +2935,16 @@ function getMediaUrl(item, absolute = false) {
     item.url ||
     item.relativeUrl ||
     item.publicUrl ||
-    (
-      item.path
-        ? `/${String(item.path).replace(/^\/+/, "")}`
-        : ""
-    );
+    (item.path
+      ? `/${String(item.path).replace(/^\/+/, "")}`
+      : "");
 
-  /*
-   * Do Markdowna i zapisu wpisu zawsze zwracamy
-   * czystą, względną ścieżkę.
-   */
   if (!absolute) {
-    return (
-      relativeUrl ||
-      item.absoluteUrl ||
-      item.downloadUrl ||
-      item.download_url ||
-      ""
-    );
+    return relativeUrl || item.absoluteUrl || item.downloadUrl || item.download_url || "";
   }
 
-  const isLocalDevelopment =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-
-  /*
-   * Firefox może blokować osadzanie zasobów
-   * z Pages podczas pracy na localhost.
-   *
-   * Lokalnie korzystamy więc z raw.githubusercontent.com,
-   * który zwraca obraz z właściwym typem MIME.
-   */
-  if (isLocalDevelopment) {
-    const rawUrl =
-      item.downloadUrl ||
-      item.download_url ||
-      "";
-
-    if (rawUrl) {
-      return rawUrl;
-    }
-
-    if (relativeUrl) {
-      return buildGitHubRawMediaUrl(
-        relativeUrl
-      );
-    }
-  }
-
-  /*
-   * W opublikowanym panelu preferujemy adres bloga,
-   * ponieważ wtedy obrazy są ładowane z tej samej domeny.
-   */
   const explicitAbsoluteUrl =
-    item.absoluteUrl ||
-    item.downloadUrl ||
-    item.download_url ||
-    "";
+    item.absoluteUrl || item.downloadUrl || item.download_url || "";
 
   if (explicitAbsoluteUrl) {
     return explicitAbsoluteUrl;
@@ -2798,63 +2952,10 @@ function getMediaUrl(item, absolute = false) {
 
   return relativeUrl
     ? new URL(
-      relativeUrl,
-      "https://minimalistycznie.pages.dev"
-    ).href
+        relativeUrl,
+        "https://minimalistycznie.pages.dev"
+      ).href
     : "";
-}
-
-function buildGitHubRawMediaUrl(
-  relativeUrl
-) {
-  const cleanPath =
-    String(relativeUrl || "")
-      .replace(/^https?:\/\/[^/]+/i, "")
-      .replace(/^\/+/, "");
-
-  if (!cleanPath) {
-    return "";
-  }
-
-  return (
-    "https://raw.githubusercontent.com/" +
-    "Dasqez/blog/main/" +
-    cleanPath
-  );
-}
-
-function addMediaCacheVersion(
-  url,
-  version = ""
-) {
-  if (!url) {
-    return "";
-  }
-
-  try {
-    const parsedUrl =
-      new URL(
-        url,
-        window.location.origin
-      );
-
-    parsedUrl.searchParams.set(
-      "v",
-      version || Date.now().toString()
-    );
-
-    return parsedUrl.href;
-  } catch {
-    const separator =
-      url.includes("?") ? "&" : "?";
-
-    return (
-      `${url}${separator}v=` +
-      encodeURIComponent(
-        version || Date.now().toString()
-      )
-    );
-  }
 }
 
 function closeMediaPanel() {
@@ -3075,10 +3176,8 @@ function beginPreviewResize(event) {
   selectPreviewImage(image);
   const bounds = wrapper.getBoundingClientRect();
   const containerWidth = markdownPreview.getBoundingClientRect().width;
-  previewResizeSession = {
-    wrapper, image, startX: event.clientX, startWidth: bounds.width,
-    minWidth: Math.min(120, containerWidth), maxWidth: Math.max(120, containerWidth)
-  };
+  previewResizeSession = { wrapper, image, startX: event.clientX, startWidth: bounds.width,
+    minWidth: Math.min(120, containerWidth), maxWidth: Math.max(120, containerWidth) };
   handle.setPointerCapture?.(event.pointerId);
 }
 
@@ -3130,7 +3229,7 @@ function initializeMediaV3() {
       document.getElementById("mediaFullscreenDialog").close();
     }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" && selectedMedia &&
-      !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) {
+        !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) {
       event.preventDefault();
       copyToClipboard(getMediaUrl(selectedMedia), copyMediaUrl || selectedMediaCard);
     }
