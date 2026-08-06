@@ -2,6 +2,8 @@ export default function(eleventyConfig) {
   // Przekazywanie folderu panelu administratora
   eleventyConfig.addPassthroughCopy("admin");
 
+  eleventyConfig.addPassthroughCopy("admin/js");
+
   // Przekazywanie pojedynczego pliku
   eleventyConfig.addPassthroughCopy("moje-foto.jpeg");
 

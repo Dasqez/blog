@@ -1,11 +1,1086 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menedżer Zawartości</title>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Panel — Minimalistycznie Przez Życie</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Montserrat:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  >
+
+  <link rel="stylesheet" href="/css/panel.css">
 </head>
+
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+  <!-- EKRAN LOGOWANIA -->
+  <section class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <p class="login-brand">
+        Minimalistycznie Przez Życie
+      </p>
+
+      <div class="login-symbol">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+
+      <h1>Panel administratora</h1>
+
+      <p class="login-description">
+        Wklej klucz administratora, aby uzyskać dostęp do panelu.
+        Klucz pozostanie zapisany wyłącznie w pamięci tej karty.
+      </p>
+
+      <form id="loginForm">
+        <label for="adminSecret">
+          Klucz administratora
+        </label>
+
+        <input
+          type="password"
+          id="adminSecret"
+          placeholder="Wklej ADMIN_API_SECRET"
+          autocomplete="off"
+          required
+        >
+
+        <button type="submit" id="loginButton">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          Otwórz panel
+        </button>
+      </form>
+
+      <p
+        class="form-message"
+        id="loginMessage"
+        role="status"
+      ></p>
+
+      <a href="/" class="login-back-link">
+        <i class="fa-solid fa-arrow-left"></i>
+        Wróć na bloga
+      </a>
+    </div>
+  </section>
+
+  <!-- WŁAŚCIWY PANEL -->
+  <div class="admin-app" id="adminApp" hidden>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-brand">
+          <span>MPŻ</span>
+          <strong>Panel</strong>
+        </a>
+
+        <button
+          type="button"
+          class="mobile-close"
+          id="mobileCloseButton"
+          aria-label="Zamknij menu"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Menu administratora">
+
+        <button
+          type="button"
+          class="nav-item active"
+          data-view="dashboard"
+        >
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-item"
+          data-view="posts"
+        >
+          <i class="fa-regular fa-file-lines"></i>
+          <span>Wpisy</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-item"
+          data-view="newsletter"
+        >
+          <i class="fa-regular fa-envelope"></i>
+          <span>Newsletter</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-item"
+          data-view="media"
+        >
+          <i class="fa-regular fa-image"></i>
+          <span>Media</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-item"
+          data-view="settings"
+        >
+          <i class="fa-solid fa-sliders"></i>
+          <span>Ustawienia</span>
+        </button>
+      </nav>
+
+      
+      <div class="sidebar-footer">
+        <a href="/" class="sidebar-link">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          Otwórz blog
+        </a>
+
+        <button
+          type="button"
+          class="sidebar-link logout-link"
+          id="logoutButton"
+        >
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          Wyloguj
+        </button>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+
+      <header class="topbar">
+        <div class="topbar-left">
+          <button
+            type="button"
+            class="menu-button"
+            id="menuButton"
+            aria-label="Otwórz menu"
+          >
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <div>
+            <p class="topbar-kicker">
+              Minimalistycznie Przez Życie
+            </p>
+
+            <h1 id="viewTitle">Dashboard</h1>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <span class="connection-status" id="connectionStatus">
+            <span class="status-dot"></span>
+            Łączenie…
+          </span>
+
+          <button
+            type="button"
+            class="icon-button"
+            id="refreshButton"
+            title="Odśwież dane"
+          >
+            <i class="fa-solid fa-rotate"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+
+        <!-- DASHBOARD -->
+        <section
+          class="panel-view active-view"
+          id="view-dashboard"
+          data-title="Dashboard"
+        >
+          <div class="page-intro">
+            <div>
+              <p class="section-kicker">Podsumowanie</p>
+              <h2>Witaj w panelu</h2>
+              <p>
+                Tutaj znajdziesz najważniejsze informacje dotyczące bloga
+                i newslettera.
+              </p>
+            </div>
+
+            <p class="last-update" id="lastUpdated">
+              Dane nie zostały jeszcze pobrane.
+            </p>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Wszyscy zapisani</span>
+                <i class="fa-solid fa-users"></i>
+              </div>
+
+              <strong id="totalSubscribers">—</strong>
+              <p>Wszystkie adresy w bazie</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Aktywni</span>
+                <i class="fa-regular fa-circle-check"></i>
+              </div>
+
+              <strong id="activeSubscribers">—</strong>
+              <p>Potwierdzone subskrypcje</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Oczekujący</span>
+                <i class="fa-regular fa-clock"></i>
+              </div>
+
+              <strong id="pendingSubscribers">—</strong>
+              <p>Niepotwierdzone adresy</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Newslettery</span>
+                <i class="fa-regular fa-paper-plane"></i>
+              </div>
+
+              <strong id="totalNewsletters">—</strong>
+              <p>Liczba zakończonych wysyłek</p>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="content-card">
+              <div class="card-heading">
+                <div>
+                  <p class="section-kicker">Newsletter</p>
+                  <h3>Stan wysyłek</h3>
+                </div>
+
+                <button
+                  type="button"
+                  class="text-button"
+                  data-open-view="newsletter"
+                >
+                  Zobacz szczegóły
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+
+              <dl class="summary-list">
+                <div>
+                  <dt>Łącznie dostarczono</dt>
+                  <dd id="sentDeliveries">—</dd>
+                </div>
+
+                <div>
+                  <dt>Błędy dostarczeń</dt>
+                  <dd id="failedDeliveries">—</dd>
+                </div>
+
+                <div>
+                  <dt>Oczekujące dostarczenia</dt>
+                  <dd id="pendingDeliveries">—</dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="content-card">
+              <div class="card-heading">
+                <div>
+                  <p class="section-kicker">Ostatnia aktywność</p>
+                  <h3>Najnowsze zdarzenia</h3>
+                </div>
+              </div>
+
+              <div class="activity-list">
+                <div class="activity-item">
+                  <span class="activity-icon">
+                    <i class="fa-regular fa-user"></i>
+                  </span>
+
+                  <div>
+                    <strong>Ostatni zapis</strong>
+                    <p id="latestSubscription">—</p>
+                  </div>
+                </div>
+
+                <div class="activity-item">
+                  <span class="activity-icon">
+                    <i class="fa-regular fa-envelope"></i>
+                  </span>
+
+                  <div>
+                    <strong>Ostatni newsletter</strong>
+                    <p id="latestNewsletter">—</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+       <!-- WPISY -->
+<section
+  class="panel-view"
+  id="view-posts"
+  data-title="Wpisy"
+>
+  <div class="page-intro">
+    <div>
+      <p class="section-kicker">Treść bloga</p>
+      <h2>Wszystkie wpisy</h2>
+      <p>
+        Wybierz wpis, aby zobaczyć jego podstawowe informacje.
+      </p>
+    </div>
+
+    <div class="posts-actions">
+      <button
+        id="newPostButton"
+        type="button"
+        class="primary-button"
+      >
+        <i class="fa-solid fa-plus"></i>
+        Nowy wpis
+      </button>
+
+      <button
+        type="button"
+        class="secondary-button"
+        id="reloadPostsButton"
+      >
+        <i class="fa-solid fa-rotate"></i>
+        Odśwież wpisy
+      </button>
+    </div>
+  </div>
+
+  <section class="posts-panel">
+    <aside class="posts-sidebar">
+      <h2>Wpisy</h2>
+
+      <div class="posts-search">
+
+  <i class="fa-solid fa-magnifying-glass"></i>
+
+  <input
+    id="postsSearchInput"
+    type="text"
+    placeholder="Szukaj wpisu..."
+    autocomplete="off"
+  >
+
+</div>
+
+      <div id="postsList" class="posts-list">
+        Ładowanie wpisów...
+      </div>
+    </aside>
+
+    <article class="post-preview">
+      <p class="section-kicker">Podgląd wpisu</p>
+
+      <h2 id="previewTitle">
+        Wybierz wpis
+      </h2>
+
+      <p id="previewDate" class="post-date"></p>
+
+      <p id="previewExcerpt">
+        Po kliknięciu wpisu zobaczysz tutaj jego opis.
+      </p>
+
+      <div class="preview-buttons">
+        <a
+          id="openPostButton"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-button"
+          hidden
+        >
+          Otwórz wpis
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </a>
+
+        <button
+          id="editPostButton"
+          type="button"
+          disabled
+        >
+          Edytuj
+        </button>
+
+        <button
+          id="deletePostButton"
+          type="button"
+          disabled
+        >
+          Usuń
+        </button>
+      </div>
+    </article>
+  </section>
+</section>
+
+<aside
+  id="editorPanel"
+  class="editor-drawer"
+  hidden
+>
+
+  <div class="editor-header">
+
+    <h2>Edycja wpisu</h2>
+
+    <button
+      id="closeEditorButton"
+      class="editor-close"
+      type="button"
+      title="Zamknij"
+    >
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+  </div>
+
+  <div class="editor-meta">
+
+    <div class="editor-field">
+      <label for="editorTitle">Tytuł</label>
+      <input
+        type="text"
+        id="editorTitle"
+      >
+    </div>
+
+    <div class="editor-field">
+      <label for="editorSlug">Slug</label>
+      <input
+        type="text"
+        id="editorSlug"
+        placeholder="np. jak-zbudowalem-wlasny-cms"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="editor-field">
+      <label for="editorDate">Data</label>
+      <input
+        type="text"
+        id="editorDate"
+      >
+    </div>
+
+    <div class="editor-field">
+      <label for="editorLayout">Layout</label>
+      <input
+        type="text"
+        id="editorLayout"
+      >
+    </div>
+
+  </div>
+
+  <label>Treść i podgląd</label>
+
+  <div
+    class="markdown-toolbar"
+    aria-label="Narzędzia Markdown"
+  >
+
+    <button
+      type="button"
+      data-markdown-action="bold"
+      title="Pogrubienie"
+    >
+      <i class="fa-solid fa-bold"></i>
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="italic"
+      title="Kursywa"
+    >
+      <i class="fa-solid fa-italic"></i>
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="heading"
+      title="Nagłówek"
+    >
+      H2
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="quote"
+      title="Cytat"
+    >
+      <i class="fa-solid fa-quote-left"></i>
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="unordered-list"
+      title="Lista punktowana"
+    >
+      <i class="fa-solid fa-list-ul"></i>
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="ordered-list"
+      title="Lista numerowana"
+    >
+      <i class="fa-solid fa-list-ol"></i>
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="link"
+      title="Link"
+    >
+      <i class="fa-solid fa-link"></i>
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="image"
+      title="Obraz"
+    >
+      <i class="fa-regular fa-image"></i>
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="code"
+      title="Kod"
+    >
+      <i class="fa-solid fa-code"></i>
+    </button>
+
+    <button
+      type="button"
+      data-markdown-action="separator"
+      title="Separator"
+    >
+      <i class="fa-solid fa-minus"></i>
+    </button>
+
+    <button
+      id="uploadImageButton"
+      type="button"
+      class="markdown-toolbar-button"
+      title="Dodaj obraz"
+      aria-label="Dodaj obraz"
+    >
+      <i class="fa-regular fa-image"></i>
+    </button>
+
+    <input
+      id="imageUploadInput"
+      type="file"
+      accept="image/*"
+      hidden
+    >
+
+  </div>
+
+  <div class="markdown-workspace">
+
+    <div class="markdown-editor-column">
+
+      <div class="markdown-column-heading">
+        <span>Markdown</span>
+        <span id="editorStatistics">
+          0 słów · 0 znaków
+        </span>
+      </div>
+
+      <textarea
+        id="editorBody"
+        rows="24"
+        placeholder="Zacznij pisać treść wpisu..."
+      ></textarea>
+
+    </div>
+
+    <div class="markdown-preview-column">
+
+      <div class="markdown-column-heading">
+        <span>Podgląd</span>
+        <span>Na żywo</span>
+      </div>
+
+      <article
+        id="markdownPreview"
+        class="markdown-preview"
+      >
+        <p class="markdown-preview-empty">
+          Podgląd pojawi się podczas pisania.
+        </p>
+      </article>
+
+    </div>
+
+  </div>
+
+  <div class="editor-actions">
+
+    <button
+      id="savePostButton"
+      type="button"
+      disabled
+    >
+      Zapisz
+    </button>
+
+    <button
+      id="cancelEditButton"
+      type="button"
+    >
+      Anuluj
+    </button>
+
+  </div>
+
+</aside>
+
+        <!-- NEWSLETTER -->
+        <section
+          class="panel-view"
+          id="view-newsletter"
+          data-title="Newsletter"
+        >
+          <div class="page-intro">
+            <div>
+              <p class="section-kicker">Newsletter</p>
+              <h2>Statystyki wysyłek</h2>
+              <p>
+                Podsumowanie subskrybentów oraz dostarczonych wiadomości.
+              </p>
+            </div>
+          </div>
+
+          <div class="stats-grid newsletter-stats">
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Wszyscy</span>
+                <i class="fa-solid fa-users"></i>
+              </div>
+
+              <strong id="newsletterTotalSubscribers">—</strong>
+              <p>Łączna liczba adresów</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Aktywni</span>
+                <i class="fa-regular fa-circle-check"></i>
+              </div>
+
+              <strong id="newsletterActiveSubscribers">—</strong>
+              <p>Potwierdzone adresy</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Dostarczono</span>
+                <i class="fa-regular fa-envelope"></i>
+              </div>
+
+              <strong id="newsletterSentDeliveries">—</strong>
+              <p>Łączna liczba wiadomości</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Błędy</span>
+                <i class="fa-regular fa-circle-xmark"></i>
+              </div>
+
+              <strong id="newsletterFailedDeliveries">—</strong>
+              <p>Nieudane dostarczenia</p>
+            </article>
+          </div>
+
+          <article class="content-card information-card">
+            <span class="information-symbol">
+              <i class="fa-solid fa-shield-halved"></i>
+            </span>
+
+            <div>
+              <h3>Dane pobierane bezpośrednio z D1</h3>
+
+              <p>
+                Panel komunikuje się z zabezpieczonym endpointem
+                Cloudflare Workera. Klucz administratora nie jest
+                zapisywany w repozytorium ani w trwałej pamięci przeglądarki.
+              </p>
+            </div>
+          </article>
+        </section>
+
+        <!-- MEDIA -->
+        <section
+          class="panel-view"
+          id="view-media"
+          data-title="Media"
+          aria-labelledby="mediaViewTitle"
+        >
+
+    <div class="page-intro">
+
+        <div>
+
+            <span class="section-kicker">
+                Biblioteka
+            </span>
+
+            <h2 id="mediaViewTitle">Biblioteka mediów</h2>
+
+            <p>
+                Dodawaj obrazy, wyszukuj je i wstawiaj bezpośrednio do wpisów.
+            </p>
+
+        </div>
+
+        <div class="posts-actions">
+
+            <button
+                id="mediaUploadButton"
+                class="primary-button"
+                type="button"
+            >
+                <i class="fa-solid fa-upload"></i>
+                Dodaj obrazy
+            </button>
+
+        </div>
+
+    </div>
+
+          <div class="media-toolbar">
+            <label class="media-search" for="mediaSearchInput">
+
+        <i class="fa-solid fa-magnifying-glass"></i>
+
+              <input
+                id="mediaSearchInput"
+                type="search"
+                placeholder="Szukaj obrazów…"
+                autocomplete="off"
+              >
+            </label>
+
+            <div
+              id="mediaV3Controls"
+              class="media-v3-controls"
+              aria-label="Filtrowanie i sortowanie mediów"
+            >
+              <label for="mediaTypeFilter">
+                <span>Typ</span>
+                <select id="mediaTypeFilter">
+                  <option value="all">Wszystkie</option>
+                  <option value="jpg">JPG</option>
+                  <option value="jpeg">JPEG</option>
+                  <option value="png">PNG</option>
+                  <option value="webp">WebP</option>
+                  <option value="gif">GIF</option>
+                  <option value="svg">SVG</option>
+                  <option value="avif">AVIF</option>
+                </select>
+              </label>
+
+              <label for="mediaSortOrder">
+                <span>Sortowanie</span>
+                <select id="mediaSortOrder">
+                  <option value="newest">Najnowsze</option>
+                  <option value="oldest">Najstarsze</option>
+                  <option value="name-asc">Nazwa A–Z</option>
+                  <option value="name-desc">Nazwa Z–A</option>
+                  <option value="size-desc">Największe</option>
+                  <option value="size-asc">Najmniejsze</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div
+            id="mediaDropzone"
+            class="media-dropzone"
+            role="button"
+            tabindex="0"
+            aria-controls="mediaFileInput"
+          >
+
+        <i class="fa-regular fa-images"></i>
+
+        <h3>
+            Przeciągnij obrazy tutaj
+        </h3>
+
+        <p>
+            lub wybierz wiele plików z dysku
+        </p>
+
+        <button
+            id="mediaChooseButton"
+            class="secondary-button"
+            type="button"
+        >
+            Wybierz pliki
+        </button>
+
+        <input
+            id="mediaFileInput"
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+        >
+
+            <p
+              id="mediaUploadStatus"
+              class="media-upload-status"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
+
+    <div
+        id="mediaGrid"
+        class="media-grid"
+    >
+
+        <div class="media-placeholder">
+
+            <i class="fa-regular fa-image"></i>
+
+            <strong>
+                Ładowanie biblioteki…
+            </strong>
+
+            <span>
+                Obrazy pojawią się tutaj automatycznie.
+            </span>
+
+        </div>
+
+    </div>
+
+        </section>
+
+        <!-- USTAWIENIA -->
+        <section
+          class="panel-view"
+          id="view-settings"
+          data-title="Ustawienia"
+        >
+          <div class="empty-view">
+            <i class="fa-solid fa-sliders"></i>
+            <h2>Ustawienia</h2>
+            <p>
+              Tutaj pojawią się ustawienia bloga, autora i newslettera.
+            </p>
+          </div>
+        </section>
+
+        <p
+          class="global-message"
+          id="globalMessage"
+          role="status"
+        ></p>
+      </div>
+    </main>
+
+<aside
+    id="mediaSidebar"
+    class="media-sidebar"
+    hidden
+>
+
+    <div class="media-sidebar-header">
+
+        <h2>Szczegóły obrazu</h2>
+
+        <button
+            id="closeMediaSidebar"
+            class="editor-close"
+            type="button"
+        >
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+    </div>
+
+    <div class="media-preview-box">
+
+        <img
+            id="mediaPreviewImage"
+            class="media-preview-image"
+            alt=""
+        >
+
+        <button
+          id="mediaFullscreenButton"
+          class="secondary-button media-fullscreen-button"
+          type="button"
+        >
+          <i class="fa-solid fa-expand"></i>
+          Pełny ekran
+        </button>
+
+    </div>
+
+    <div class="media-info">
+
+        <label>Nazwa pliku</label>
+
+        <div class="media-copy-field">
+
+            <input
+                id="mediaName"
+                readonly
+            >
+
+            <button
+                id="copyMediaName"
+                type="button"
+            >
+                <i class="fa-regular fa-copy"></i>
+            </button>
+
+        </div>
+
+        <label>URL</label>
+
+        <div class="media-copy-field">
+
+            <input
+                id="mediaUrl"
+                readonly
+            >
+
+            <button
+                id="copyMediaUrl"
+                type="button"
+            >
+                <i class="fa-regular fa-copy"></i>
+            </button>
+
+        </div>
+
+        <div
+            id="mediaMeta"
+            class="media-meta"
+        >
+
+            <div>
+
+                <span>Rozmiar</span>
+
+                <strong id="mediaSize"></strong>
+
+            </div>
+
+            <div>
+
+                <span>Typ</span>
+
+                <strong id="mediaType"></strong>
+
+            </div>
+
+            <div>
+
+                <span>Wymiary</span>
+
+                <strong id="mediaDimensions"></strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="media-actions">
+
+        <button
+            id="insertMediaButton"
+            class="primary-button"
+            type="button"
+        >
+            <i class="fa-solid fa-plus"></i>
+            Wstaw
+        </button>
+
+        <button
+            id="downloadMediaButton"
+            class="secondary-button"
+            type="button"
+        >
+            <i class="fa-solid fa-download"></i>
+            Pobierz
+        </button>
+
+        <button
+            id="deleteMediaButton"
+            class="secondary-button danger-button"
+            type="button"
+        >
+            <i class="fa-regular fa-trash-can"></i>
+            Usuń
+        </button>
+
+    </div>
+
+</aside>
+
+    <div
+    id="editorOverlay"
+    class="editor-overlay"
+    hidden
+></div>
+  </div>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"
+  defer
+></script>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"
+  defer
+></script>
+
+<script src="/js/panel.js" defer></script>
+
+<script type="module" src="./js/app.js"></script>
+
 </body>
 </html>

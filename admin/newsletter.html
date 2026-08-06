@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Newsletter — Panel administratora</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Montserrat:wght@400;600&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="/css/admin-newsletter.css">
+</head>
+
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <p class="admin-kicker">Minimalistycznie Przez Życie</p>
+      <h1>Newsletter</h1>
+      <p class="admin-description">
+        Statystyki subskrybentów i wysłanych wiadomości.
+      </p>
+    </header>
+
+    <section class="login-panel" id="loginPanel">
+      <h2>Dostęp administratora</h2>
+
+      <p>
+        Wklej klucz <code>ADMIN_API_SECRET</code>. Klucz zostanie zapisany
+        tylko w pamięci tej karty przeglądarki.
+      </p>
+
+      <form id="adminLoginForm">
+        <label for="adminSecret">Klucz administratora</label>
+
+        <input
+          type="password"
+          id="adminSecret"
+          autocomplete="off"
+          required
+        >
+
+        <button type="submit">Otwórz panel</button>
+      </form>
+
+      <p class="status-message" id="loginMessage" role="status"></p>
+    </section>
+
+    <section class="dashboard" id="dashboard" hidden>
+      <div class="dashboard-toolbar">
+        <p id="lastUpdated">Dane nie zostały jeszcze pobrane.</p>
+
+        <div class="toolbar-actions">
+          <button type="button" id="refreshButton">
+            Odśwież
+          </button>
+
+          <button type="button" id="logoutButton" class="secondary">
+            Wyloguj
+          </button>
+        </div>
+      </div>
+
+      <section class="stats-grid" aria-label="Podsumowanie newslettera">
+        <article class="stat-card">
+          <span class="stat-label">Wszyscy zapisani</span>
+          <strong id="totalSubscribers">—</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-label">Aktywni</span>
+          <strong id="activeSubscribers">—</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-label">Oczekujący</span>
+          <strong id="pendingSubscribers">—</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-label">Wysłane newslettery</span>
+          <strong id="totalNewsletters">—</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-label">Łącznie dostarczono</span>
+          <strong id="sentDeliveries">—</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-label">Błędy dostarczeń</span>
+          <strong id="failedDeliveries">—</strong>
+        </article>
+      </section>
+
+      <section class="details-grid">
+        <article class="detail-card">
+          <h2>Ostatni zapis</h2>
+          <p id="latestSubscription">—</p>
+        </article>
+
+        <article class="detail-card">
+          <h2>Ostatni newsletter</h2>
+          <p id="latestNewsletter">—</p>
+        </article>
+
+        <article class="detail-card">
+          <h2>Oczekujące dostarczenia</h2>
+          <p id="pendingDeliveries">—</p>
+        </article>
+      </section>
+
+      <p class="status-message" id="dashboardMessage" role="status"></p>
+    </section>
+  </main>
+
+  <script src="/js/admin-newsletter.js" defer></script>
+</body>
+</html>
