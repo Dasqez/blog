@@ -9,6 +9,7 @@ export default function(eleventyConfig) {
 
   // Przekazywanie obrazków
   eleventyConfig.addPassthroughCopy("images");
+  eleventyConfig.addPassthroughCopy("assets");
 
   // DODAJ TE DWIE LINIE
   eleventyConfig.addPassthroughCopy("css");
