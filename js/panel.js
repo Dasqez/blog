@@ -207,31 +207,7 @@ deleteMediaButton?.addEventListener(
   deleteSelectedMedia
 );
 
-   insertMediaButton?.addEventListener("click", () => {
-
-    if (!selectedMedia) return;
-
-    if (!hasActiveEditorSession()) {
-      showMessage(
-        globalMessage,
-        "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
-        "error"
-      );
-      return;
-    }
-
-    const imageUrl =
-        getMediaUrl(selectedMedia);
-
-    insertImageMarkdown(
-        imageUrl,
-        selectedMedia.name.replace(/\.[^.]+$/, "")
-    );
-
-    closeMediaPanel();
-    restoreEditorAfterMedia();
-
-});
+insertMediaButton?.addEventListener("click", insertSelectedMediaToEditor);
 
    downloadMediaButton?.addEventListener(
     "click",
@@ -2768,14 +2744,33 @@ function renderMedia() {
     card.draggable = true;
     card.title = "Kliknij, aby wybrać; przeciągnij do edytora";
     card.dataset.mediaName = item.name || "";
+    card._mediaItem = item;
 
     card.addEventListener("dragstart", (event) => {
+      if (!hasActiveEditorSession()) {
+        event.preventDefault();
+        showMessage(
+          globalMessage,
+          "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
+          "error"
+        );
+        return;
+      }
+
+      selectMediaCard(card, item);
       const url = getMediaUrl(item);
       const alt = String(item.name || "Obraz").replace(/\.[^.]+$/, "");
       event.dataTransfer.effectAllowed = "copy";
       event.dataTransfer.setData("text/plain", `![${alt}](${url})`);
       event.dataTransfer.setData("application/x-panel-media", JSON.stringify({ url, alt }));
+
+      window.requestAnimationFrame(() => {
+        restoreEditorAfterMedia();
+        editorBody?.classList.add("is-media-drop-target");
+      });
     });
+
+    card.addEventListener("dragend", clearMediaDropTarget);
 
     const image =
       document.createElement("img");
@@ -2816,22 +2811,54 @@ function renderMedia() {
       details
     );
 
-    card.addEventListener("click", () => {
+    card.addEventListener("click", () => selectMediaCard(card, item));
 
-    if (selectedMediaCard) {
-        selectedMediaCard.classList.remove("active");
-    }
-
-    selectedMediaCard = card;
-
-    card.classList.add("active");
-
-    openMediaSidebar(item);
-
-});
+    card.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      selectMediaCard(card, item);
+      insertSelectedMediaToEditor();
+    });
 
     mediaGrid.appendChild(card);
   });
+}
+
+function selectMediaCard(card, item, options = {}) {
+  selectedMediaCard?.classList.remove("active", "keyboard-active");
+  selectedMediaCard = card;
+  selectedMedia = item;
+  card.classList.add("active");
+
+  if (options.keyboard === true) {
+    card.classList.add("keyboard-active");
+    card.focus({ preventScroll: true });
+    card.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
+  openMediaSidebar(item);
+}
+
+function insertSelectedMediaToEditor() {
+  if (!selectedMedia) {
+    return false;
+  }
+
+  if (!hasActiveEditorSession()) {
+    showMessage(
+      globalMessage,
+      "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
+      "error"
+    );
+    return false;
+  }
+
+  insertImageMarkdown(
+    getMediaUrl(selectedMedia),
+    String(selectedMedia.name || "Obraz").replace(/\.[^.]+$/, "")
+  );
+  closeMediaPanel();
+  restoreEditorAfterMedia();
+  return true;
 }
 
 function openMediaSidebar(item) {
@@ -3209,18 +3236,117 @@ function insertDroppedMedia(event) {
     const position = editorBody.selectionStart ?? editorBody.value.length;
     editorBody.setSelectionRange(position, position);
     insertImageMarkdown(item.url, item.alt);
+    clearMediaDropTarget();
   } catch (error) {
     console.error("Nie udało się wstawić przeciągniętego obrazu.", error);
+    clearMediaDropTarget();
   }
 }
 
+function clearMediaDropTarget() {
+  editorBody?.classList.remove("is-media-drop-target", "is-media-drag-over");
+}
+
+function getVisibleMediaCards() {
+  return Array.from(mediaGrid?.querySelectorAll(".media-card") || []).filter(
+    (card) => window.getComputedStyle(card).display !== "none"
+  );
+}
+
+function getMediaCardInDirection(cards, currentIndex, key) {
+  if (key === "ArrowLeft") return cards[Math.max(0, currentIndex - 1)];
+  if (key === "ArrowRight") return cards[Math.min(cards.length - 1, currentIndex + 1)];
+
+  const currentRect = cards[currentIndex].getBoundingClientRect();
+  const direction = key === "ArrowUp" ? -1 : 1;
+  const candidates = cards
+    .map((card) => ({ card, rect: card.getBoundingClientRect() }))
+    .filter(({ rect }) => direction < 0 ? rect.top < currentRect.top : rect.top > currentRect.top)
+    .sort((a, b) => {
+      const rowA = Math.abs(a.rect.top - currentRect.top);
+      const rowB = Math.abs(b.rect.top - currentRect.top);
+      if (rowA !== rowB) return rowA - rowB;
+      return Math.abs(a.rect.left - currentRect.left) - Math.abs(b.rect.left - currentRect.left);
+    });
+
+  return candidates[0]?.card || cards[currentIndex];
+}
+
+function handleMediaKeyboard(event) {
+  const mediaView = document.getElementById("view-media");
+  if (!mediaView?.classList.contains("active-view")) return;
+
+  const activeElement = document.activeElement;
+  if (
+    ["INPUT", "TEXTAREA", "SELECT"].includes(activeElement?.tagName) ||
+    activeElement?.isContentEditable ||
+    document.querySelector("dialog[open]")
+  ) {
+    return;
+  }
+
+  const cards = getVisibleMediaCards();
+  if (!cards.length) return;
+
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+    event.preventDefault();
+    const currentIndex = Math.max(0, cards.indexOf(selectedMediaCard));
+    const nextCard = selectedMediaCard
+      ? getMediaCardInDirection(cards, currentIndex, event.key)
+      : cards[0];
+    selectMediaCard(nextCard, nextCard._mediaItem, { keyboard: true });
+    return;
+  }
+
+  if (event.key === "Enter" && selectedMedia) {
+    event.preventDefault();
+    insertSelectedMediaToEditor();
+    return;
+  }
+
+  if (event.key === "Delete" && selectedMedia) {
+    event.preventDefault();
+    deleteSelectedMedia();
+  }
+}
+
+function ensureMediaInteractionStyles() {
+  if (document.getElementById("mediaInteractionStyles")) return;
+  const style = document.createElement("style");
+  style.id = "mediaInteractionStyles";
+  style.textContent = `
+    .media-card.keyboard-active {
+      outline: 3px solid #2563eb !important;
+      outline-offset: 3px;
+    }
+    #editorBody.is-media-drop-target {
+      outline: 3px dashed #2563eb !important;
+      outline-offset: 4px;
+      background-color: rgba(37, 99, 235, 0.06) !important;
+    }
+    #editorBody.is-media-drag-over {
+      outline-style: solid !important;
+      background-color: rgba(37, 99, 235, 0.12) !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function initializeMediaV3() {
+  ensureMediaInteractionStyles();
   ensureMediaV3Controls();
   markdownPreview?.addEventListener("pointerdown", beginPreviewResize);
   document.addEventListener("pointermove", movePreviewResize);
   document.addEventListener("pointerup", finishPreviewResize);
   editorBody?.addEventListener("dragover", (event) => {
-    if (event.dataTransfer?.types.includes("application/x-panel-media")) event.preventDefault();
+    if (event.dataTransfer?.types.includes("application/x-panel-media")) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      editorBody.classList.add("is-media-drag-over");
+    }
+  });
+  editorBody?.addEventListener("dragleave", () => {
+    editorBody.classList.remove("is-media-drag-over");
   });
   editorBody?.addEventListener("drop", insertDroppedMedia);
   mediaPreviewImage?.addEventListener("dblclick", () => openMediaFullscreen());
@@ -3234,6 +3360,7 @@ function initializeMediaV3() {
       copyToClipboard(getMediaUrl(selectedMedia), copyMediaUrl || selectedMediaCard);
     }
   });
+  document.addEventListener("keydown", handleMediaKeyboard);
 }
 
 if (document.readyState === "loading") {
