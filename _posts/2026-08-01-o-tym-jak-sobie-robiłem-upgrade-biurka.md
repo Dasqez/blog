@@ -36,3 +36,4 @@ Moja forteca samotności, mój man cave, moje nerdowskie królestwo wygląda tak
 A wiecie jak fajnie się kodzi na takim monitorze? Nie wiecie ale się wkrótce dowiecie. Robię intensywny kurs Pytonga, w sensie Pythona, więc.. Dżoana, jak to czytasz to się szykuj. Będziesz testowała moją pierwszą aplikację xD
 
 Do następnego!
+Test toastu.
