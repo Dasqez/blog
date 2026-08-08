@@ -348,6 +348,41 @@
               </div>
             </article>
           </div>
+
+          <div class="dashboard-content-grid">
+            <article class="content-card">
+              <div class="card-heading">
+                <div><p class="section-kicker">Szybki start</p><h3>Najczęstsze działania</h3></div>
+              </div>
+              <div class="dashboard-quick-actions">
+                <button type="button" class="dashboard-action" id="dashboardNewPost">
+                  <i class="fa-solid fa-plus"></i><span><strong>Nowy wpis</strong><small>Otwórz pusty edytor</small></span>
+                </button>
+                <button type="button" class="dashboard-action" data-open-view="posts">
+                  <i class="fa-regular fa-file-lines"></i><span><strong>Wpisy</strong><small>Zarządzaj treścią bloga</small></span>
+                </button>
+                <button type="button" class="dashboard-action" data-open-view="pages">
+                  <i class="fa-regular fa-file-code"></i><span><strong>Strony</strong><small>Edytuj HTML i Liquid</small></span>
+                </button>
+                <button type="button" class="dashboard-action" data-open-view="media">
+                  <i class="fa-regular fa-images"></i><span><strong>Media</strong><small>Przeglądaj bibliotekę</small></span>
+                </button>
+              </div>
+            </article>
+
+            <article class="content-card">
+              <div class="card-heading">
+                <div><p class="section-kicker">Treść</p><h3>Ostatnio aktualizowane</h3></div>
+              </div>
+              <div id="dashboardRecentContent" class="dashboard-recent-content" aria-live="polite">
+                <p class="dashboard-empty">Dane zostaną pobrane po otwarciu dashboardu.</p>
+              </div>
+              <div class="dashboard-content-totals" aria-label="Podsumowanie treści">
+                <span><strong id="dashboardPostsCount">—</strong> wpisów</span>
+                <span><strong id="dashboardPagesCount">—</strong> stron</span>
+              </div>
+            </article>
+          </div>
         </section>
 
        <!-- WPISY -->
@@ -581,6 +616,17 @@
 
     <h2 id="editorHeading">Edycja wpisu</h2>
 
+    <div class="editor-header-actions">
+      <button
+        id="editorFullscreenButton"
+        class="editor-close"
+        type="button"
+        title="Pełny ekran"
+        aria-label="Przełącz pełny ekran edytora"
+      >
+        <i class="fa-solid fa-expand"></i>
+      </button>
+
     <button
       id="closeEditorButton"
       class="editor-close"
@@ -589,6 +635,7 @@
     >
       <i class="fa-solid fa-xmark"></i>
     </button>
+    </div>
 
   </div>
 
@@ -644,10 +691,36 @@
 
   <label>Treść i podgląd</label>
 
+  <div class="editor-context-bar">
+    <span id="editorFormatBadge" class="editor-format-badge">Markdown</span>
+    <div class="editor-view-switcher" role="group" aria-label="Tryb edytora">
+      <button type="button" data-editor-view="source" title="Tylko kod"><i class="fa-solid fa-code"></i><span>Kod</span></button>
+      <button type="button" data-editor-view="split" class="active" title="Kod i podgląd"><i class="fa-solid fa-table-columns"></i><span>Oba</span></button>
+      <button type="button" data-editor-view="preview" title="Tylko podgląd"><i class="fa-regular fa-eye"></i><span>Podgląd</span></button>
+    </div>
+    <span id="editorSaveStatus" class="editor-save-status is-saved" role="status" aria-live="polite">
+      <i class="fa-solid fa-check"></i> Zapisano
+    </span>
+  </div>
+
   <div
     class="markdown-toolbar"
     aria-label="Narzędzia Markdown"
   >
+
+    <button type="button" data-editor-history="undo" title="Cofnij (Ctrl+Z)" aria-label="Cofnij">
+      <i class="fa-solid fa-rotate-left"></i>
+    </button>
+
+    <button type="button" data-editor-history="redo" title="Ponów (Ctrl+Shift+Z)" aria-label="Ponów">
+      <i class="fa-solid fa-rotate-right"></i>
+    </button>
+
+    <span class="toolbar-separator" aria-hidden="true"></span>
+
+    <button type="button" id="editorFindButton" title="Znajdź i zamień (Ctrl+H)" aria-label="Znajdź i zamień">
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </button>
 
     <button
       type="button"
@@ -656,6 +729,11 @@
     >
       <i class="fa-solid fa-bold"></i>
     </button>
+
+    <button type="button" data-source-action="paragraph" title="Akapit HTML" hidden>&lt;p&gt;</button>
+    <button type="button" data-source-action="section" title="Sekcja HTML" hidden>&lt;section&gt;</button>
+    <button type="button" data-source-action="liquid-output" title="Zmienna Liquid" hidden>&#123;&#123; &#125;&#125;</button>
+    <button type="button" data-source-action="liquid-if" title="Warunek Liquid" hidden>&#123;% if %&#125;</button>
 
     <button
       type="button"
@@ -733,10 +811,10 @@
       id="uploadImageButton"
       type="button"
       class="markdown-toolbar-button"
-      title="Dodaj obraz"
-      aria-label="Dodaj obraz"
+      title="Wybierz obraz z biblioteki"
+      aria-label="Wybierz obraz z biblioteki"
     >
-      <i class="fa-regular fa-image"></i>
+      <i class="fa-regular fa-images"></i>
     </button>
 
     <input
@@ -748,22 +826,40 @@
 
   </div>
 
+  <div class="editor-find-bar" id="editorFindBar" hidden>
+    <label><span>Znajdź</span><input type="search" id="editorFindInput" autocomplete="off"></label>
+    <label><span>Zamień na</span><input type="text" id="editorReplaceInput" autocomplete="off"></label>
+    <span id="editorFindCount" class="editor-find-count">0 wyników</span>
+    <button type="button" id="editorFindPrevious" title="Poprzedni wynik" aria-label="Poprzedni wynik"><i class="fa-solid fa-chevron-up"></i></button>
+    <button type="button" id="editorFindNext" title="Następny wynik" aria-label="Następny wynik"><i class="fa-solid fa-chevron-down"></i></button>
+    <button type="button" id="editorReplaceOne">Zamień</button>
+    <button type="button" id="editorReplaceAll">Zamień wszystko</button>
+    <button type="button" id="editorFindClose" title="Zamknij" aria-label="Zamknij wyszukiwanie"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
   <div class="markdown-workspace">
 
     <div class="markdown-editor-column">
 
       <div class="markdown-column-heading">
-        <span>Markdown</span>
-        <span id="editorStatistics">
-          0 słów · 0 znaków
-        </span>
+        <span id="editorSourceLabel">Markdown</span>
+        <div class="editor-heading-tools">
+          <select id="editorOutline" aria-label="Przejdź do nagłówka" title="Nawigacja po nagłówkach">
+            <option value="">Nagłówki</option>
+          </select>
+          <span id="editorStatistics">0 słów · 0 znaków</span>
+        </div>
       </div>
 
-      <textarea
-        id="editorBody"
-        rows="24"
-        placeholder="Zacznij pisać treść wpisu..."
-      ></textarea>
+      <div class="source-editor" id="sourceEditor">
+        <pre id="editorHighlight" class="editor-highlight" aria-hidden="true"></pre>
+        <textarea
+          id="editorBody"
+          rows="24"
+          spellcheck="false"
+          placeholder="Zacznij pisać treść wpisu..."
+        ></textarea>
+      </div>
 
     </div>
 
@@ -771,7 +867,11 @@
 
       <div class="markdown-column-heading">
         <span>Podgląd</span>
-        <span>Na żywo</span>
+        <div class="preview-device-switcher" role="group" aria-label="Szerokość podglądu">
+          <button type="button" data-preview-device="desktop" class="active" title="Desktop" aria-pressed="true"><i class="fa-solid fa-desktop"></i></button>
+          <button type="button" data-preview-device="tablet" title="Tablet" aria-pressed="false"><i class="fa-solid fa-tablet-screen-button"></i></button>
+          <button type="button" data-preview-device="phone" title="Telefon" aria-pressed="false"><i class="fa-solid fa-mobile-screen-button"></i></button>
+        </div>
       </div>
 
       <article
@@ -782,6 +882,14 @@
           Podgląd pojawi się podczas pisania.
         </p>
       </article>
+
+      <iframe
+        id="sitePreviewFrame"
+        class="site-preview-frame"
+        title="Podgląd strony w layoucie bloga"
+        sandbox="allow-same-origin"
+        hidden
+      ></iframe>
 
     </div>
 

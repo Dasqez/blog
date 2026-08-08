@@ -88,6 +88,8 @@ const deletePostButton =
 const reloadPostsButton =
   document.getElementById("reloadPostsButton");
 const newPostButton = document.getElementById("newPostButton");
+const dashboardNewPost = document.getElementById("dashboardNewPost");
+const dashboardRecentContent = document.getElementById("dashboardRecentContent");
 const pagesList = document.getElementById("pagesList");
 const pagesSearchInput = document.getElementById("pagesSearchInput");
 const reloadPagesButton = document.getElementById("reloadPagesButton");
@@ -105,6 +107,27 @@ const editorSlug = document.getElementById("editorSlug");
 const editorDate = document.getElementById("editorDate");
 const editorLayout = document.getElementById("editorLayout");
 const editorBody = document.getElementById("editorBody");
+const editorHighlight = document.getElementById("editorHighlight");
+const sitePreviewFrame = document.getElementById("sitePreviewFrame");
+const editorFullscreenButton = document.getElementById("editorFullscreenButton");
+const editorSaveStatus = document.getElementById("editorSaveStatus");
+const editorFormatBadge = document.getElementById("editorFormatBadge");
+const editorSourceLabel = document.getElementById("editorSourceLabel");
+const previewDeviceButtons = document.querySelectorAll("[data-preview-device]");
+const editorHistoryButtons = document.querySelectorAll("[data-editor-history]");
+const sourceActionButtons = document.querySelectorAll("[data-source-action]");
+const editorViewButtons = document.querySelectorAll("[data-editor-view]");
+const editorFindButton = document.getElementById("editorFindButton");
+const editorFindBar = document.getElementById("editorFindBar");
+const editorFindInput = document.getElementById("editorFindInput");
+const editorReplaceInput = document.getElementById("editorReplaceInput");
+const editorFindCount = document.getElementById("editorFindCount");
+const editorFindPrevious = document.getElementById("editorFindPrevious");
+const editorFindNext = document.getElementById("editorFindNext");
+const editorReplaceOne = document.getElementById("editorReplaceOne");
+const editorReplaceAll = document.getElementById("editorReplaceAll");
+const editorFindClose = document.getElementById("editorFindClose");
+const editorOutline = document.getElementById("editorOutline");
 const editorHeading = document.getElementById("editorHeading");
 const editorTitleField = document.getElementById("editorTitleField");
 const editorSlugField = document.getElementById("editorSlugField");
@@ -224,6 +247,11 @@ let editorBaseline = "";
 let lastSavedDraftValues = "";
 let editorDraftToastTimeout = null;
 let editorAutosaveTimeout = null;
+let editorHistory = [];
+let editorHistoryIndex = -1;
+let applyingEditorHistory = false;
+let editorFindMatches = [];
+let editorFindIndex = -1;
 
 /* =========================================================
    LISTENERY
@@ -397,6 +425,11 @@ newPostButton.addEventListener("click", () => {
   createNewPost();
 });
 
+dashboardNewPost?.addEventListener("click", () => {
+  openView("posts");
+  createNewPost();
+});
+
 editPostButton.addEventListener("click", async () => {
   if (!selectedPost) {
     return;
@@ -501,12 +534,160 @@ function scheduleEditorAutosave() {
   }, EDITOR_AUTOSAVE_INTERVAL_MS);
 }
 
+function setEditorSaveStatus(state, label) {
+  if (!editorSaveStatus) return;
+  const icons = { saved: "check", editing: "circle", draft: "cloud-arrow-up", saving: "spinner fa-spin", error: "triangle-exclamation" };
+  editorSaveStatus.className = `editor-save-status is-${state}`;
+  editorSaveStatus.innerHTML = `<i class="fa-solid fa-${icons[state] || "circle"}"></i> ${label}`;
+}
+
+function resetEditorHistory() {
+  editorHistory = [editorBody.value];
+  editorHistoryIndex = 0;
+  updateEditorHistoryButtons();
+}
+
+function rememberEditorHistory(value = editorBody.value) {
+  if (applyingEditorHistory || editorHistory[editorHistoryIndex] === value) return;
+  editorHistory = editorHistory.slice(0, editorHistoryIndex + 1);
+  editorHistory.push(value);
+  if (editorHistory.length > 100) editorHistory.shift();
+  editorHistoryIndex = editorHistory.length - 1;
+  updateEditorHistoryButtons();
+}
+
+function updateEditorHistoryButtons() {
+  editorHistoryButtons.forEach((button) => {
+    button.disabled = button.dataset.editorHistory === "undo"
+      ? editorHistoryIndex <= 0
+      : editorHistoryIndex >= editorHistory.length - 1;
+  });
+}
+
+function moveEditorHistory(direction) {
+  const nextIndex = editorHistoryIndex + (direction === "undo" ? -1 : 1);
+  if (nextIndex < 0 || nextIndex >= editorHistory.length) return;
+  applyingEditorHistory = true;
+  editorHistoryIndex = nextIndex;
+  editorBody.value = editorHistory[editorHistoryIndex];
+  editorBody.dispatchEvent(new Event("input", { bubbles: true }));
+  applyingEditorHistory = false;
+  updateEditorHistoryButtons();
+  editorBody.focus();
+}
+
+function openEditorFind() {
+  if (!editorFindBar) return;
+  editorFindBar.hidden = false;
+  editorFindInput?.focus();
+  editorFindInput?.select();
+  refreshEditorFindMatches();
+}
+
+function closeEditorFind() {
+  if (editorFindBar) editorFindBar.hidden = true;
+  editorFindMatches = [];
+  editorFindIndex = -1;
+  editorBody.focus();
+}
+
+function refreshEditorFindMatches() {
+  const query = String(editorFindInput?.value || "");
+  editorFindMatches = [];
+  editorFindIndex = -1;
+  if (query) {
+    const source = editorBody.value.toLocaleLowerCase("pl");
+    const needle = query.toLocaleLowerCase("pl");
+    let position = 0;
+    while ((position = source.indexOf(needle, position)) !== -1) {
+      editorFindMatches.push({ start: position, end: position + query.length });
+      position += Math.max(1, query.length);
+    }
+  }
+  if (editorFindCount) editorFindCount.textContent = `${editorFindMatches.length} ${editorFindMatches.length === 1 ? "wynik" : "wyników"}`;
+  if (editorFindMatches.length) moveEditorFind(1);
+}
+
+function moveEditorFind(direction) {
+  if (!editorFindMatches.length) return;
+  editorFindIndex = (editorFindIndex + direction + editorFindMatches.length) % editorFindMatches.length;
+  const match = editorFindMatches[editorFindIndex];
+  editorBody.focus();
+  editorBody.setSelectionRange(match.start, match.end);
+  const lineHeight = Number.parseFloat(getComputedStyle(editorBody).lineHeight) || 24;
+  const line = editorBody.value.slice(0, match.start).split("\n").length - 1;
+  editorBody.scrollTop = Math.max(0, line * lineHeight - editorBody.clientHeight / 2);
+  if (editorFindCount) editorFindCount.textContent = `${editorFindIndex + 1} z ${editorFindMatches.length}`;
+}
+
+function replaceCurrentEditorMatch() {
+  if (editorFindIndex < 0 || !editorFindMatches.length) return;
+  const match = editorFindMatches[editorFindIndex];
+  editorBody.setRangeText(editorReplaceInput?.value || "", match.start, match.end, "end");
+  editorBody.dispatchEvent(new Event("input", { bubbles: true }));
+  refreshEditorFindMatches();
+}
+
+function replaceAllEditorMatches() {
+  const query = String(editorFindInput?.value || "");
+  if (!query || !editorFindMatches.length) return;
+  const replacement = editorReplaceInput?.value || "";
+  let nextValue = editorBody.value;
+  [...editorFindMatches].reverse().forEach(({ start, end }) => {
+    nextValue = `${nextValue.slice(0, start)}${replacement}${nextValue.slice(end)}`;
+  });
+  editorBody.value = nextValue;
+  editorBody.dispatchEvent(new Event("input", { bubbles: true }));
+  refreshEditorFindMatches();
+}
+
 [editorTitle, editorSlug, editorDate, editorLayout, editorBody].forEach(
   (field) => {
     field.addEventListener("input", scheduleEditorAutosave);
     field.addEventListener("change", scheduleEditorAutosave);
+    field.addEventListener("input", () => setEditorSaveStatus("editing", "Niezapisane zmiany"));
   }
 );
+
+editorBody.addEventListener("input", () => rememberEditorHistory());
+editorHistoryButtons.forEach((button) => button.addEventListener("click", () => moveEditorHistory(button.dataset.editorHistory)));
+previewDeviceButtons.forEach((button) => button.addEventListener("click", () => {
+  const device = button.dataset.previewDevice;
+  document.querySelector(".markdown-preview-column")?.setAttribute("data-preview-device", device);
+  previewDeviceButtons.forEach((item) => {
+    const active = item === button;
+    item.classList.toggle("active", active);
+    item.setAttribute("aria-pressed", String(active));
+  });
+}));
+sourceActionButtons.forEach((button) => button.addEventListener("click", () => applySourceAction(button.dataset.sourceAction)));
+editorViewButtons.forEach((button) => button.addEventListener("click", () => {
+  const mode = button.dataset.editorView || "split";
+  const workspace = document.querySelector(".markdown-workspace");
+  workspace?.classList.remove("view-source", "view-preview");
+  if (mode !== "split") workspace?.classList.add(`view-${mode}`);
+  editorViewButtons.forEach((item) => {
+    const active = item === button;
+    item.classList.toggle("active", active);
+    item.setAttribute("aria-pressed", String(active));
+  });
+}));
+editorFindButton?.addEventListener("click", openEditorFind);
+editorFindClose?.addEventListener("click", closeEditorFind);
+editorFindInput?.addEventListener("input", refreshEditorFindMatches);
+editorFindNext?.addEventListener("click", () => moveEditorFind(1));
+editorFindPrevious?.addEventListener("click", () => moveEditorFind(-1));
+editorReplaceOne?.addEventListener("click", replaceCurrentEditorMatch);
+editorReplaceAll?.addEventListener("click", replaceAllEditorMatches);
+editorOutline?.addEventListener("change", () => {
+  const position = Number(editorOutline.value);
+  if (!Number.isFinite(position)) return;
+  editorBody.focus();
+  editorBody.setSelectionRange(position, position);
+  const lineHeight = Number.parseFloat(getComputedStyle(editorBody).lineHeight) || 24;
+  const line = editorBody.value.slice(0, position).split("\n").length - 1;
+  editorBody.scrollTop = Math.max(0, line * lineHeight - editorBody.clientHeight / 3);
+});
 
 savePostButton.addEventListener("click", async () => {
 
@@ -729,7 +910,14 @@ editorSlug.addEventListener("input", () => {
 });
 
 editorBody.addEventListener("input", () => {
+  updateSourceHighlight();
   renderMarkdownPreview();
+});
+
+editorBody.addEventListener("scroll", () => {
+  if (!editorHighlight) return;
+  editorHighlight.scrollTop = editorBody.scrollTop;
+  editorHighlight.scrollLeft = editorBody.scrollLeft;
 });
 
 editorBody.addEventListener("keydown", (event) => {
@@ -803,9 +991,19 @@ postsSearchInput.addEventListener(
 uploadImageButton.addEventListener(
   "click",
   () => {
-    imageUploadInput.click();
+    suspendEditorForMedia();
+    openView("media");
+    loadMedia();
   }
 );
+
+editorFullscreenButton?.addEventListener("click", () => {
+  const fullscreen = editorPanel.classList.toggle("is-fullscreen");
+  editorFullscreenButton.innerHTML = fullscreen
+    ? '<i class="fa-solid fa-compress"></i>'
+    : '<i class="fa-solid fa-expand"></i>';
+  editorFullscreenButton.title = fullscreen ? "Wyjdź z pełnego ekranu" : "Pełny ekran";
+});
 
 imageUploadInput.addEventListener(
   "change",
@@ -1118,7 +1316,39 @@ function openView(viewName) {
     loadMedia();
   }
 
+  if (viewName === "dashboard") {
+    loadDashboardContentOverview();
+  }
+
   window.location.hash = viewName;
+}
+
+async function loadDashboardContentOverview() {
+  if (!dashboardRecentContent) return;
+  dashboardRecentContent.innerHTML = '<p class="dashboard-empty">Pobieranie ostatnich treści…</p>';
+  await Promise.all([loadPosts(), loadPages()]);
+  setText("dashboardPostsCount", posts.length);
+  setText("dashboardPagesCount", pages.length);
+
+  const entries = [
+    ...posts.map((item) => ({ type: "post", item, title: item.title || item.name, date: item.updatedAt || item.date })),
+    ...pages.map((item) => ({ type: "page", item, title: item.title || item.name, date: item.updatedAt || item.date }))
+  ].sort((left, right) => (Date.parse(right.date || "") || 0) - (Date.parse(left.date || "") || 0)).slice(0, 5);
+
+  dashboardRecentContent.innerHTML = "";
+  if (!entries.length) {
+    dashboardRecentContent.innerHTML = '<p class="dashboard-empty">Brak treści do wyświetlenia.</p>';
+    return;
+  }
+
+  entries.forEach(({ type, item, title, date }) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "dashboard-recent-item";
+    button.innerHTML = `<i class="fa-regular fa-${type === "page" ? "file-code" : "file-lines"}"></i><span><strong>${escapePreviewHtml(title || "Bez tytułu")}</strong><small>${type === "page" ? "Strona" : "Wpis"}${date ? ` · ${escapePreviewHtml(formatDate(date))}` : ""}</small></span><i class="fa-solid fa-chevron-right"></i>`;
+    button.addEventListener("click", () => type === "page" ? openPageEditor(item) : openPostEditor(item));
+    dashboardRecentContent.appendChild(button);
+  });
 }
 
 /* =========================================================
@@ -1428,6 +1658,11 @@ function configureEditorForContentType(type) {
   editorSlugField.hidden = isPage;
   editorDateField.hidden = isPage;
   editorLayoutField.hidden = isPage;
+  if (editorFormatBadge) editorFormatBadge.textContent = isPage ? "HTML / Liquid" : "Markdown";
+  if (editorSourceLabel) editorSourceLabel.textContent = isPage ? "Kod strony" : "Markdown";
+  document.querySelector(".markdown-toolbar")?.setAttribute("aria-label", isPage ? "Narzędzia HTML i Liquid" : "Narzędzia Markdown");
+  markdownToolbarButtons.forEach((button) => { button.hidden = isPage; });
+  sourceActionButtons.forEach((button) => { button.hidden = !isPage; });
 }
 
 async function openPageEditor(page) {
@@ -1453,6 +1688,7 @@ async function openPageEditor(page) {
     editorBody.value = result.page.source ?? result.page.body ?? "";
     setEditorBaseline();
     restoreEditorDraft();
+    resetEditorHistory();
     renderMarkdownPreview();
     editorOverlay.hidden = false;
     editorPanel.hidden = false;
@@ -1547,6 +1783,7 @@ async function openPostEditor(post) {
 
     setEditorBaseline();
     restoreEditorDraft();
+    resetEditorHistory();
     renderMarkdownPreview();
 
     editorOverlay.hidden = false;
@@ -1590,6 +1827,7 @@ function createNewPost() {
   editorBody.value = "";
   setEditorBaseline();
   restoreEditorDraft();
+  resetEditorHistory();
   renderMarkdownPreview();
 
   editorOverlay.hidden = false;
@@ -1633,6 +1871,11 @@ function closePostEditor(options = {}) {
 
   editorOverlay.hidden = true;
   editorPanel.hidden = true;
+  editorPanel.classList.remove("is-fullscreen");
+  if (editorFullscreenButton) {
+    editorFullscreenButton.innerHTML = '<i class="fa-solid fa-expand"></i>';
+    editorFullscreenButton.title = "Pełny ekran";
+  }
   editorSuspendedForMedia = false;
   window.clearTimeout(editorAutosaveTimeout);
 
@@ -1676,6 +1919,7 @@ function serializeEditorValues() {
 
 function setEditorBaseline() {
   editorBaseline = serializeEditorValues();
+  setEditorSaveStatus("saved", "Zapisano");
 }
 
 function hasUnsavedEditorChanges() {
@@ -1727,6 +1971,7 @@ function saveEditorDraft() {
       })
     );
     lastSavedDraftValues = serializedValues;
+    setEditorSaveStatus("draft", "Szkic zapisany lokalnie");
     showEditorDraftSavedToast();
     return true;
   } catch (error) {
@@ -1796,6 +2041,7 @@ function restoreEditorDraft() {
   editorBody.value = draft.body || "";
   slugEditedManually = editorContentType === "page" || Boolean(editorSlug.value);
   lastSavedDraftValues = serializeEditorValues();
+  setEditorSaveStatus("draft", "Przywrócony szkic lokalny");
 }
 
 function suspendEditorForMedia() {
@@ -2056,6 +2302,21 @@ function handleEditorShortcuts(event) {
   }
 
   switch (true) {
+    case event.key.toLowerCase() === "h":
+      event.preventDefault();
+      openEditorFind();
+      return;
+
+    case event.key.toLowerCase() === "z" && !event.shiftKey:
+      event.preventDefault();
+      moveEditorHistory("undo");
+      return;
+
+    case (event.key.toLowerCase() === "z" && event.shiftKey) || event.key.toLowerCase() === "y":
+      event.preventDefault();
+      moveEditorHistory("redo");
+      return;
+
     case event.key.toLowerCase() === "b":
       event.preventDefault();
       applyMarkdownAction("bold");
@@ -2474,14 +2735,69 @@ function prepareLiquidPreview(source, options = {}) {
     : marked.parse(previewSource, { breaks: true, gfm: true });
 }
 
+function updateSourceHighlight() {
+  if (!editorHighlight) return;
+
+  const source = String(editorBody.value || "");
+  const tokenPattern = /({%[\s\S]*?%}|{{[\s\S]*?}}|<!--[\s\S]*?-->|<\/?[a-zA-Z][^>]*>|^#{1,6}\s.*$)/gm;
+  let cursor = 0;
+  let highlighted = "";
+
+  source.replace(tokenPattern, (token, _capture, offset) => {
+    highlighted += escapePreviewHtml(source.slice(cursor, offset));
+    let className = "syntax-tag";
+    if (token.startsWith("{%") || token.startsWith("{{")) className = "syntax-liquid";
+    if (token.startsWith("<!--")) className = "syntax-comment";
+    if (token.startsWith("#")) className = "syntax-heading";
+    highlighted += `<span class="${className}">${escapePreviewHtml(token)}</span>`;
+    cursor = offset + token.length;
+    return token;
+  });
+
+  highlighted += escapePreviewHtml(source.slice(cursor));
+  editorHighlight.innerHTML = `${highlighted}\n`;
+}
+
+function renderSitePreview(html) {
+  if (!sitePreviewFrame) return;
+
+  const baseUrl = `${window.location.origin}/`;
+  const pageKey = String(selectedPage?.path || "home")
+    .split(/[\\/]/)
+    .pop()
+    .replace(/\.liquid$/i, "")
+    .toLowerCase();
+  const navItems = [
+    ["home", "Główna"],
+    ["about", "O mnie"],
+    ["contact", "Kontakt"],
+    ["newsletter", "Newsletter"]
+  ].map(([key, label]) =>
+    `<li><a class="${key === pageKey ? "active" : ""}">${label}</a></li>`
+  ).join("");
+  sitePreviewFrame.srcdoc = `<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<base href="${baseUrl}"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/newsletter.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>body{margin:0}.preview-note{padding:.55rem 1rem;background:#f5f1e8;color:#625d52;font:12px Montserrat,sans-serif;text-align:center}</style>
+</head><body><div class="preview-note">Podgląd lokalny — wygląd i CSS bloga</div><div class="container">
+<header><h1>Minimalistycznie Przez Życie</h1><p>Małe przygody w wielkim świecie</p></header>
+<nav><ul>${navItems}</ul></nav>
+<main class="page-section active-section">${html}</main></div></body></html>`;
+}
+
 function renderMarkdownPreview() {
   clearPreviewImageSelection();
+  updateSourceHighlight();
   const title = editorTitle.value.trim();
   const markdown = editorBody.value || "";
 
   updateEditorStatistics(markdown);
+  updateEditorOutline(markdown);
 
   if (!title && !markdown.trim()) {
+    if (sitePreviewFrame) sitePreviewFrame.hidden = true;
+    markdownPreview.hidden = false;
     markdownPreview.innerHTML = `
       <p class="markdown-preview-empty">
         Podgląd pojawi się podczas pisania.
@@ -2574,6 +2890,38 @@ previewContainer
 
 markdownPreview.innerHTML =
   previewContainer.innerHTML;
+
+if (editorContentType === "page") {
+  markdownPreview.hidden = true;
+  sitePreviewFrame.hidden = false;
+  renderSitePreview(previewContainer.innerHTML);
+} else {
+  markdownPreview.hidden = false;
+  sitePreviewFrame.hidden = true;
+}
+}
+
+function updateEditorOutline(source) {
+  if (!editorOutline) return;
+  const headings = [];
+  const markdownPattern = /^(#{1,6})\s+(.+)$/gm;
+  const htmlPattern = /<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let match;
+  while ((match = markdownPattern.exec(source)) !== null) {
+    headings.push({ level: match[1].length, text: match[2].replace(/[*_`[\]]/g, "").trim(), position: match.index });
+  }
+  while ((match = htmlPattern.exec(source)) !== null) {
+    headings.push({ level: Number(match[1]), text: match[2].replace(/<[^>]+>/g, "").trim(), position: match.index });
+  }
+  headings.sort((left, right) => left.position - right.position);
+  editorOutline.innerHTML = '<option value="">Nagłówki</option>';
+  headings.forEach((heading) => {
+    const option = document.createElement("option");
+    option.value = String(heading.position);
+    option.textContent = `${"— ".repeat(Math.max(0, heading.level - 1))}${heading.text || `H${heading.level}`}`;
+    editorOutline.appendChild(option);
+  });
+  editorOutline.disabled = headings.length === 0;
 }
 
 function updateEditorStatistics(markdown) {
@@ -2824,6 +3172,20 @@ function applyHeadingShortcut(level) {
     placeholder,
     block: true,
   });
+}
+
+function applySourceAction(action) {
+  const start = editorBody.selectionStart;
+  const end = editorBody.selectionEnd;
+  const selectedText = editorBody.value.slice(start, end);
+  const actions = {
+    paragraph: { before: "<p>", after: "</p>", placeholder: "Treść akapitu" },
+    section: { before: "<section>\n  ", after: "\n</section>", placeholder: "Treść sekcji", block: true },
+    "liquid-output": { before: "{{ ", after: " }}", placeholder: "variable" },
+    "liquid-if": { before: "{% if condition %}\n", after: "\n{% endif %}", placeholder: "Treść warunkowa", block: true },
+  };
+  const config = actions[action];
+  if (config) insertMarkdownSyntax({ start, end, selectedText, ...config });
 }
 
 function applyMarkdownAction(action) {
