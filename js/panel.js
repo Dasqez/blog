@@ -16,6 +16,15 @@ const ADMIN_CREATE_POST_API_URL =
 const ADMIN_DELETE_POST_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/post/delete";  
 
+const ADMIN_PAGES_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/pages";
+
+const ADMIN_PAGE_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/page";
+
+const ADMIN_UPDATE_PAGE_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/page/update";
+
 const ADMIN_UPLOAD_IMAGE_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/upload-image";  
 
@@ -79,6 +88,14 @@ const deletePostButton =
 const reloadPostsButton =
   document.getElementById("reloadPostsButton");
 const newPostButton = document.getElementById("newPostButton");
+const pagesList = document.getElementById("pagesList");
+const pagesSearchInput = document.getElementById("pagesSearchInput");
+const reloadPagesButton = document.getElementById("reloadPagesButton");
+const pagePreviewTitle = document.getElementById("pagePreviewTitle");
+const pagePreviewPath = document.getElementById("pagePreviewPath");
+const pagePreviewExcerpt = document.getElementById("pagePreviewExcerpt");
+const openPageButton = document.getElementById("openPageButton");
+const editPageButton = document.getElementById("editPageButton");
 const closeEditorButton =
     document.getElementById("closeEditorButton");  
 
@@ -88,6 +105,11 @@ const editorSlug = document.getElementById("editorSlug");
 const editorDate = document.getElementById("editorDate");
 const editorLayout = document.getElementById("editorLayout");
 const editorBody = document.getElementById("editorBody");
+const editorHeading = document.getElementById("editorHeading");
+const editorTitleField = document.getElementById("editorTitleField");
+const editorSlugField = document.getElementById("editorSlugField");
+const editorDateField = document.getElementById("editorDateField");
+const editorLayoutField = document.getElementById("editorLayoutField");
 const markdownPreview =
   document.getElementById("markdownPreview");
 
@@ -179,6 +201,11 @@ let posts = [];
 let selectedPost = null;
 let editedPost = null;
 let postsLoaded = false;
+let pages = [];
+let pagesLoaded = false;
+let selectedPage = null;
+let editedPage = null;
+let editorContentType = "post";
 let slugEditedManually = false;
 let isCreatingNewPost = false;
 let activeSearchResultIndex = -1;
@@ -354,6 +381,18 @@ reloadPostsButton.addEventListener("click", async () => {
   await loadPosts(true);
 });
 
+reloadPagesButton?.addEventListener("click", async () => {
+  await loadPages(true);
+});
+
+pagesSearchInput?.addEventListener("input", filterPages);
+
+editPageButton?.addEventListener("click", async () => {
+  if (selectedPage) {
+    await openPageEditor(selectedPage);
+  }
+});
+
 newPostButton.addEventListener("click", () => {
   createNewPost();
 });
@@ -416,19 +455,21 @@ deletePostButton.addEventListener("click", async () => {
 
     await loadPosts(true);
 
-    showMessage(
-      globalMessage,
-      "Wpis został usunięty. Cloudflare opublikuje nową wersję strony.",
-      "success"
-    );
+    showToast({
+      title: "Edytor",
+      message: "Wpis został usunięty. Cloudflare opublikuje nową wersję strony.",
+      type: "success",
+      duration: 3000,
+    });
   } catch (error) {
-    showMessage(
-      globalMessage,
-      error instanceof Error
+    showToast({
+      title: "Błąd usuwania wpisu",
+      message: error instanceof Error
         ? error.message
         : "Nie udało się usunąć wpisu.",
-      "error"
-    );
+      type: "error",
+      duration: 5000,
+    });
   } finally {
     deletePostButton.disabled = selectedPost === null;
     deletePostButton.textContent = "Usuń";
@@ -468,6 +509,11 @@ function scheduleEditorAutosave() {
 );
 
 savePostButton.addEventListener("click", async () => {
+
+  if (editorContentType === "page") {
+    await savePage();
+    return;
+  }
 
   if (isCreatingNewPost) {
 
@@ -510,21 +556,23 @@ savePostButton.addEventListener("click", async () => {
 
       closePostEditor({ force: true });
 
-      showMessage(
-        globalMessage,
-        "Nowy wpis został utworzony.",
-        "success"
-      );
+      showToast({
+        title: "Edytor",
+        message: "Nowy wpis został utworzony.",
+        type: "success",
+        duration: 3000,
+      });
 
     } catch (error) {
 
-      showMessage(
-        globalMessage,
-        error instanceof Error
+      showToast({
+        title: "Błąd tworzenia wpisu",
+        message: error instanceof Error
           ? error.message
           : "Nie udało się utworzyć wpisu.",
-        "error"
-      );
+        type: "error",
+        duration: 5000,
+      });
 
     } finally {
 
@@ -545,33 +593,36 @@ savePostButton.addEventListener("click", async () => {
   const layout = editorLayout.value.trim();
 
   if (!title) {
-    showMessage(
-      globalMessage,
-      "Wpisz tytuł wpisu.",
-      "error"
-    );
+    showToast({
+      title: "Edytor",
+      message: "Wpisz tytuł wpisu.",
+      type: "error",
+      duration: 5000,
+    });
 
     editorTitle.focus();
     return;
   }
 
   if (!date) {
-    showMessage(
-      globalMessage,
-      "Wpisz datę wpisu.",
-      "error"
-    );
+    showToast({
+      title: "Edytor",
+      message: "Wpisz datę wpisu.",
+      type: "error",
+      duration: 5000,
+    });
 
     editorDate.focus();
     return;
   }
 
   if (!layout) {
-    showMessage(
-      globalMessage,
-      "Wpisz nazwę layoutu.",
-      "error"
-    );
+    showToast({
+      title: "Edytor",
+      message: "Wpisz nazwę layoutu.",
+      type: "error",
+      duration: 5000,
+    });
 
     editorLayout.focus();
     return;
@@ -582,13 +633,14 @@ savePostButton.addEventListener("click", async () => {
   try {
     jekyllDate = editorDateToJekyll(date);
   } catch (error) {
-    showMessage(
-      globalMessage,
-      error instanceof Error
+    showToast({
+      title: "Nieprawidłowa data",
+      message: error instanceof Error
         ? error.message
         : "Data ma nieprawidłowy format.",
-      "error"
-    );
+      type: "error",
+      duration: 5000,
+    });
 
     editorDate.focus();
     return;
@@ -642,19 +694,21 @@ savePostButton.addEventListener("click", async () => {
 
     closePostEditor({ force: true });
 
-    showMessage(
-      globalMessage,
-      "Wpis został zapisany. Cloudflare rozpocznie publikację nowej wersji.",
-      "success"
-    );
+    showToast({
+      title: "Edytor",
+      message: "Wpis został zapisany. Cloudflare rozpocznie publikację nowej wersji.",
+      type: "success",
+      duration: 3000,
+    });
   } catch (error) {
-    showMessage(
-      globalMessage,
-      error instanceof Error
+    showToast({
+      title: "Błąd zapisu wpisu",
+      message: error instanceof Error
         ? error.message
         : "Nie udało się zapisać wpisu.",
-      "error"
-    );
+      type: "error",
+      duration: 5000,
+    });
   } finally {
     savePostButton.disabled = false;
     savePostButton.textContent = "Zapisz";
@@ -662,7 +716,7 @@ savePostButton.addEventListener("click", async () => {
 });
 
 editorTitle.addEventListener("input", () => {
-  if (!slugEditedManually) {
+  if (editorContentType === "post" && !slugEditedManually) {
     editorSlug.value = createSlug(editorTitle.value);
   }
 
@@ -777,19 +831,21 @@ imageUploadInput.addEventListener(
 
       mediaLoaded = false;
 
-      showMessage(
-        globalMessage,
-        "Obraz został dodany do GitHuba i wstawiony do treści.",
-        "success"
-      );
+      showToast({
+        title: "Biblioteka mediów",
+        message: "Obraz został dodany do GitHuba i wstawiony do treści.",
+        type: "success",
+        duration: 3000,
+      });
     } catch (error) {
-      showMessage(
-        globalMessage,
-        error instanceof Error
+      showToast({
+        title: "Błąd wysyłania obrazu",
+        message: error instanceof Error
           ? error.message
           : "Nie udało się wysłać obrazu.",
-        "error"
-      );
+        type: "error",
+        duration: 5000,
+      });
     } finally {
       uploadImageButton.disabled = false;
       imageUploadInput.value = "";
@@ -898,7 +954,12 @@ async function restoreSession() {
 
 async function loadDashboardData() {
   setConnectionState("loading");
-  showMessage(globalMessage, "Pobieram dane...");
+  showToast({
+    title: "Panel",
+    message: "Pobieram dane...",
+    type: "info",
+    duration: 3000,
+  });
 
   try {
     const response = await fetch(ADMIN_API_URL, {
@@ -920,7 +981,6 @@ async function loadDashboardData() {
     renderData(result);
 
     setConnectionState("connected");
-    showMessage(globalMessage, "");
     showMessage(loginMessage, "");
 
     lastUpdated.textContent =
@@ -937,7 +997,12 @@ async function loadDashboardData() {
 
     setConnectionState("error");
     showMessage(loginMessage, message, "error");
-    showMessage(globalMessage, message, "error");
+    showToast({
+      title: "Błąd połączenia",
+      message,
+      type: "error",
+      duration: 5000,
+    });
 
     return false;
   }
@@ -1005,7 +1070,8 @@ function openView(viewName) {
   }
 
   if (editorPanel.hidden && editorSuspendedForMedia && viewName !== "media") {
-    if (viewName === "posts") {
+    const editorView = editorContentType === "page" ? "pages" : "posts";
+    if (viewName === editorView) {
       editorOverlay.hidden = false;
       editorPanel.hidden = false;
       editorSuspendedForMedia = false;
@@ -1042,6 +1108,10 @@ function openView(viewName) {
 
   if (viewName === "posts" && !postsLoaded) {
     loadPosts();
+  }
+
+  if (viewName === "pages" && !pagesLoaded) {
+    loadPages();
   }
 
   if (viewName === "media" && !mediaLoaded) {
@@ -1234,10 +1304,203 @@ function resetPostPreview() {
 }
 
 /* =========================================================
+   STRONY
+   ========================================================= */
+
+async function loadPages(forceRefresh = false) {
+  if (pagesLoaded && !forceRefresh) return;
+
+  pagesList.innerHTML = "<p>Ładowanie stron...</p>";
+  reloadPagesButton.disabled = true;
+
+  try {
+    const response = await fetch(ADMIN_PAGES_API_URL, {
+      headers: { Authorization: `Bearer ${adminSecret}` },
+    });
+    const result = await response.json();
+
+    if (!response.ok || result.success !== true) {
+      throw new Error(result.message || "Nie udało się pobrać stron.");
+    }
+
+    pages = Array.isArray(result.pages) ? result.pages : [];
+    pagesLoaded = true;
+
+    if (selectedPage) {
+      selectedPage = pages.find((page) => page.path === selectedPage.path) || null;
+    }
+
+    renderPages();
+    if (!selectedPage) resetPagePreview();
+  } catch (error) {
+    pagesList.innerHTML = "";
+    const message = document.createElement("p");
+    message.className = "global-message error";
+    message.textContent = error instanceof Error ? error.message : "Wystąpił nieznany błąd.";
+    pagesList.appendChild(message);
+  } finally {
+    reloadPagesButton.disabled = false;
+  }
+}
+
+function renderPages() {
+  pagesList.innerHTML = "";
+
+  if (pages.length === 0) {
+    const empty = document.createElement("p");
+    empty.textContent = "Nie znaleziono żadnych stron.";
+    pagesList.appendChild(empty);
+    return;
+  }
+
+  pages.forEach((page) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "post-item page-item";
+    item.dataset.pagePath = page.path || "";
+
+    const title = document.createElement("span");
+    title.className = "post-title";
+    title.textContent = page.title || page.name || page.path;
+
+    const path = document.createElement("span");
+    path.className = "post-date";
+    path.textContent = page.path || "";
+
+    item.append(title, path);
+    item.addEventListener("click", () => selectPage(page, item));
+    pagesList.appendChild(item);
+
+    if (selectedPage?.path === page.path) selectPage(page, item);
+  });
+
+  filterPages();
+}
+
+function filterPages() {
+  const search = (pagesSearchInput?.value || "").trim().toLowerCase();
+  pagesList?.querySelectorAll(".page-item").forEach((item) => {
+    item.style.display = item.textContent.toLowerCase().includes(search) ? "" : "none";
+  });
+}
+
+function selectPage(page, item) {
+  selectedPage = page;
+  pagesList.querySelectorAll(".page-item").forEach((element) => element.classList.remove("active"));
+  item?.classList.add("active");
+
+  pagePreviewTitle.textContent = page.title || page.name || "Strona";
+  pagePreviewPath.textContent = page.path || "";
+  pagePreviewExcerpt.textContent = page.excerpt || "Edytuj surową treść pliku strony.";
+
+  const pageUrl = page.url || page.githubUrl;
+  if (pageUrl) {
+    openPageButton.href = pageUrl;
+    openPageButton.hidden = false;
+  } else {
+    openPageButton.hidden = true;
+    openPageButton.removeAttribute("href");
+  }
+  editPageButton.disabled = false;
+}
+
+function resetPagePreview() {
+  selectedPage = null;
+  pagePreviewTitle.textContent = "Wybierz stronę";
+  pagePreviewPath.textContent = "";
+  pagePreviewExcerpt.textContent = "Po kliknięciu strony zobaczysz tutaj jej podstawowe informacje.";
+  openPageButton.hidden = true;
+  openPageButton.removeAttribute("href");
+  editPageButton.disabled = true;
+}
+
+/* =========================================================
    EDYTOR ISTNIEJĄCEGO WPISU
    ========================================================= */
 
+function configureEditorForContentType(type) {
+  const isPage = type === "page";
+  editorContentType = isPage ? "page" : "post";
+  editorHeading.textContent = isPage ? "Edycja strony" : "Edycja wpisu";
+  editorTitle.readOnly = isPage;
+  editorTitle.setAttribute("aria-readonly", String(isPage));
+  editorTitleField.hidden = false;
+  editorSlugField.hidden = isPage;
+  editorDateField.hidden = isPage;
+  editorLayoutField.hidden = isPage;
+}
+
+async function openPageEditor(page) {
+  savePostButton.disabled = true;
+  savePostButton.textContent = "Pobieranie...";
+  try {
+    const response = await fetch(`${ADMIN_PAGE_API_URL}?path=${encodeURIComponent(page.path)}`, {
+      headers: { Authorization: `Bearer ${adminSecret}` },
+    });
+    const result = await response.json();
+    if (!response.ok || result.success !== true) {
+      throw new Error(result.message || "Nie udało się pobrać strony.");
+    }
+    editedPage = result.page;
+    editedPost = null;
+    isCreatingNewPost = false;
+    slugEditedManually = true;
+    configureEditorForContentType("page");
+    editorTitle.value = result.page.title || page.title || result.page.name || "Strona";
+    editorSlug.value = "";
+    editorDate.value = "";
+    editorLayout.value = "";
+    editorBody.value = result.page.source ?? result.page.body ?? "";
+    setEditorBaseline();
+    restoreEditorDraft();
+    renderMarkdownPreview();
+    editorOverlay.hidden = false;
+    editorPanel.hidden = false;
+    editorSuspendedForMedia = false;
+    savePostButton.disabled = false;
+    savePostButton.textContent = "Zapisz stronę";
+    editorBody.focus();
+  } catch (error) {
+    showToast({ title: "Błąd pobierania strony", message: error instanceof Error ? error.message : "Nie udało się pobrać strony.", type: "error", duration: 5000 });
+    savePostButton.disabled = false;
+    savePostButton.textContent = "Zapisz";
+  }
+}
+
+async function savePage() {
+  if (!editedPage) return;
+  savePostButton.disabled = true;
+  savePostButton.textContent = "Zapisywanie...";
+  try {
+    const response = await fetch(ADMIN_UPDATE_PAGE_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
+      body: JSON.stringify({ path: editedPage.path, sha: editedPage.sha, body: editorBody.value }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.success !== true) {
+      throw new Error(result.message || "Nie udało się zapisać strony.");
+    }
+    if (result.page?.sha) {
+      editedPage.sha = result.page.sha;
+      if (selectedPage) selectedPage.sha = result.page.sha;
+    }
+    pagesLoaded = false;
+    clearEditorDraft();
+    await loadPages(true);
+    closePostEditor({ force: true });
+    showToast({ title: "Edytor", message: "Strona została zapisana. Cloudflare rozpocznie publikację nowej wersji.", type: "success", duration: 3000 });
+  } catch (error) {
+    showToast({ title: "Błąd zapisu strony", message: error instanceof Error ? error.message : "Nie udało się zapisać strony.", type: "error", duration: 5000 });
+  } finally {
+    savePostButton.disabled = false;
+    savePostButton.textContent = editorContentType === "page" ? "Zapisz stronę" : "Zapisz";
+  }
+}
+
 async function openPostEditor(post) {
+  configureEditorForContentType("post");
+  editedPage = null;
   savePostButton.disabled = true;
   savePostButton.textContent = "Pobieranie...";
 
@@ -1292,15 +1555,15 @@ async function openPostEditor(post) {
     savePostButton.disabled = false;
     editorTitle.focus();
 
-    showMessage(globalMessage, "");
   } catch (error) {
-    showMessage(
-      globalMessage,
-      error instanceof Error
+    showToast({
+      title: "Błąd pobierania wpisu",
+      message: error instanceof Error
         ? error.message
         : "Nie udało się pobrać wpisu.",
-      "error"
-    );
+      type: "error",
+      duration: 5000,
+    });
   } finally {
     savePostButton.textContent = "Zapisz";
   }
@@ -1311,6 +1574,8 @@ async function openPostEditor(post) {
    ========================================================= */
 
 function createNewPost() {
+  configureEditorForContentType("post");
+  editedPage = null;
   selectedPost = null;
   editedPost = null;
 
@@ -1348,8 +1613,6 @@ function createNewPost() {
   editPostButton.disabled = true;
   deletePostButton.disabled = true;
 
-  showMessage(globalMessage, "");
-
   editorTitle.focus();
 }
 
@@ -1374,6 +1637,8 @@ function closePostEditor(options = {}) {
   window.clearTimeout(editorAutosaveTimeout);
 
   editedPost = null;
+  editedPage = null;
+  configureEditorForContentType("post");
   isCreatingNewPost = false;
   slugEditedManually = false;
 
@@ -1392,7 +1657,7 @@ function closePostEditor(options = {}) {
 }
 
 function hasActiveEditorSession() {
-  return isCreatingNewPost || Boolean(editedPost) || editorSuspendedForMedia;
+  return isCreatingNewPost || Boolean(editedPost) || Boolean(editedPage) || editorSuspendedForMedia;
 }
 
 function getEditorValues() {
@@ -1423,8 +1688,9 @@ function hasUnsavedEditorChanges() {
 
 function getCurrentEditorIdentity() {
   return {
+    type: editorContentType,
     mode: isCreatingNewPost ? "new" : "existing",
-    path: isCreatingNewPost ? null : editedPost?.path || null,
+    path: isCreatingNewPost ? null : (editorContentType === "page" ? editedPage?.path : editedPost?.path) || null,
   };
 }
 
@@ -1470,54 +1736,12 @@ function saveEditorDraft() {
 }
 
 function showEditorDraftSavedToast() {
-  let toast = document.getElementById("editorDraftSavedToast");
-
-  if (!toast) {
-    toast = document.createElement("div");
-    toast.id = "editorDraftSavedToast";
-    toast.setAttribute("role", "status");
-    toast.setAttribute("aria-live", "polite");
-    Object.assign(toast.style, {
-      position: "fixed",
-      right: "24px",
-      bottom: "24px",
-      zIndex: "2147483647",
-      maxWidth: "calc(100vw - 48px)",
-      padding: "12px 16px",
-      borderRadius: "8px",
-      background: "#1f2937",
-      color: "#ffffff",
-      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.24)",
-      fontSize: "14px",
-      lineHeight: "1.4",
-      opacity: "0",
-      transform: "translateY(8px)",
-      transition: "opacity 180ms ease, transform 180ms ease",
-      pointerEvents: "none",
-      visibility: "visible",
-    });
-    document.body.appendChild(toast);
-  }
-
-  toast.textContent = "Wersja robocza została zapisana";
-  toast.style.display = "block";
-  toast.style.visibility = "visible";
-
-  window.clearTimeout(editorDraftToastTimeout);
-  window.requestAnimationFrame(() => {
-    toast.style.opacity = "1";
-    toast.style.transform = "translateY(0)";
+  showToast({
+    title: "💾 Wersja robocza",
+    message: "Wersja robocza została zapisana.",
+    type: "info",
+    duration: EDITOR_AUTOSAVE_TOAST_DURATION_MS
   });
-
-  editorDraftToastTimeout = window.setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transform = "translateY(8px)";
-    window.setTimeout(() => {
-      if (toast.style.opacity === "0") {
-        toast.style.display = "none";
-      }
-    }, 180);
-  }, EDITOR_AUTOSAVE_TOAST_DURATION_MS);
 }
 
 function clearEditorDraft() {
@@ -1526,7 +1750,7 @@ function clearEditorDraft() {
     const identity = getCurrentEditorIdentity();
     const belongsToCurrentEditor =
       !draft ||
-      (draft.mode === identity.mode &&
+      (draft.type === identity.type && draft.mode === identity.mode &&
         (identity.mode === "new" || draft.path === identity.path));
 
     if (!belongsToCurrentEditor) {
@@ -1549,7 +1773,7 @@ function restoreEditorDraft() {
 
   const identity = getCurrentEditorIdentity();
   const matchesCurrentEditor =
-    draft.mode === identity.mode &&
+    draft.type === identity.type && draft.mode === identity.mode &&
     (identity.mode === "new" || draft.path === identity.path);
 
   if (!matchesCurrentEditor) {
@@ -1568,9 +1792,9 @@ function restoreEditorDraft() {
   editorTitle.value = draft.title || "";
   editorSlug.value = draft.slug || "";
   editorDate.value = draft.date || "";
-  editorLayout.value = draft.layout || "post-layout.html";
+  editorLayout.value = draft.layout || (editorContentType === "post" ? "post-layout.html" : "");
   editorBody.value = draft.body || "";
-  slugEditedManually = Boolean(editorSlug.value);
+  slugEditedManually = editorContentType === "page" || Boolean(editorSlug.value);
   lastSavedDraftValues = serializeEditorValues();
 }
 
@@ -1585,7 +1809,7 @@ function restoreEditorAfterMedia() {
     return;
   }
 
-  openView("posts");
+  openView(editorContentType === "page" ? "pages" : "posts");
   editorOverlay.hidden = false;
   editorPanel.hidden = false;
   editorSuspendedForMedia = false;
@@ -2018,6 +2242,238 @@ function escapePreviewHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+/* =========================================================
+   PODGLĄD LIQUID DLA STRON CMS
+
+   Funkcje z tej sekcji pracują wyłącznie na kopii tekstu
+   przekazanej do podglądu. Oryginalna wartość editorBody
+   nie jest modyfikowana i nadal trafia do GitHuba 1:1.
+   ========================================================= */
+
+const LIQUID_PREVIEW_POSTS = [
+  {
+    url: "/_posts/przykladowy-wpis/",
+    date: "2026-08-08T12:00:00.000Z",
+    data: {
+      title: "Przykładowy wpis",
+      image: "/uploads/przykladowe-zdjecie.jpg",
+      page: {
+        excerpt: "To jest przykładowy opis wpisu używany wyłącznie w podglądzie strony."
+      }
+    }
+  },
+  {
+    url: "/_posts/drugi-przykladowy-wpis/",
+    date: "2026-08-01T12:00:00.000Z",
+    data: {
+      title: "Drugi przykładowy wpis",
+      image: "",
+      page: {
+        excerpt: "Drugi przykładowy opis pokazuje działanie pętli Liquid."
+      }
+    }
+  }
+];
+
+function getLiquidPreviewValue(expression, context) {
+  const source = String(expression || "").trim();
+
+  if (!source) return "";
+  if ((source.startsWith('"') && source.endsWith('"')) ||
+      (source.startsWith("'") && source.endsWith("'"))) {
+    return source.slice(1, -1);
+  }
+  if (/^-?\d+(?:\.\d+)?$/.test(source)) return Number(source);
+  if (source === "true") return true;
+  if (source === "false") return false;
+  if (source === "nil" || source === "null") return null;
+
+  return source.split(".").reduce((value, key) => {
+    if (value == null) return undefined;
+    return value[key];
+  }, context);
+}
+
+function liquidPreviewTruthy(value) {
+  return value !== false && value != null && value !== "";
+}
+
+function evaluateLiquidPreviewCondition(expression, context) {
+  const source = String(expression || "").trim();
+  const orParts = source.split(/\s+or\s+/i);
+
+  return orParts.some((orPart) =>
+    orPart.split(/\s+and\s+/i).every((part) => {
+      const condition = part.trim();
+      if (/^not\s+/i.test(condition)) {
+        return !evaluateLiquidPreviewCondition(condition.replace(/^not\s+/i, ""), context);
+      }
+
+      const comparison = condition.match(/^(.+?)\s+(contains|==|!=|>=|<=|>|<)\s+(.+)$/i);
+      if (!comparison) return liquidPreviewTruthy(getLiquidPreviewValue(condition, context));
+
+      const left = getLiquidPreviewValue(comparison[1], context);
+      const right = getLiquidPreviewValue(comparison[3], context);
+      switch (comparison[2].toLowerCase()) {
+        case "contains": return String(left ?? "").includes(String(right ?? ""));
+        case "==": return left == right;
+        case "!=": return left != right;
+        case ">=": return left >= right;
+        case "<=": return left <= right;
+        case ">": return left > right;
+        case "<": return left < right;
+        default: return false;
+      }
+    })
+  );
+}
+
+function applyLiquidPreviewFilter(value, filterSource) {
+  const [rawName, ...rawArguments] = String(filterSource).split(":");
+  const name = rawName.trim().toLowerCase();
+  const argument = rawArguments.join(":").trim().replace(/^['"]|['"]$/g, "");
+
+  if (name === "escape") return escapePreviewHtml(value ?? "");
+  if (name === "upcase") return String(value ?? "").toUpperCase();
+  if (name === "downcase") return String(value ?? "").toLowerCase();
+  if (name === "strip") return String(value ?? "").trim();
+  if (name === "default") return liquidPreviewTruthy(value) ? value : argument;
+  if (name === "date") {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value ?? "";
+    const pad = (number) => String(number).padStart(2, "0");
+    return argument
+      .replace(/%d/g, pad(date.getDate()))
+      .replace(/%m/g, pad(date.getMonth() + 1))
+      .replace(/%Y/g, String(date.getFullYear()))
+      .replace(/%y/g, String(date.getFullYear()).slice(-2));
+  }
+  if (name === "markdownify" && typeof marked !== "undefined") {
+    return marked.parse(String(value ?? ""), { breaks: true, gfm: true });
+  }
+
+  return value ?? "";
+}
+
+function interpolateLiquidPreviewVariables(source, context) {
+  return String(source).replace(/{{\s*([\s\S]*?)\s*}}/g, (_match, expression) => {
+    const [path, ...filters] = expression.split("|");
+    return filters.reduce(
+      (value, filter) => applyLiquidPreviewFilter(value, filter),
+      getLiquidPreviewValue(path, context)
+    );
+  });
+}
+
+function findLiquidPreviewBlock(source, startIndex, blockName) {
+  const tagPattern = /{%\s*(for|endfor|if|endif|else)\b[\s\S]*?%}/g;
+  tagPattern.lastIndex = startIndex;
+  let depth = 1;
+  let elseTag = null;
+  let match;
+
+  while ((match = tagPattern.exec(source))) {
+    const tagName = match[1];
+    if (tagName === "for" || tagName === "if") depth += 1;
+    if (tagName === "endfor" || tagName === "endif") depth -= 1;
+    if (tagName === "else" && depth === 1 && !elseTag) {
+      elseTag = { index: match.index, end: tagPattern.lastIndex };
+    }
+    if (depth === 0 && tagName === `end${blockName}`) {
+      return { endIndex: match.index, afterEnd: tagPattern.lastIndex, elseTag };
+    }
+  }
+
+  return null;
+}
+
+function renderLiquidPreviewBlocks(source, context) {
+  const openingTag = /{%\s*(for|if)\b([\s\S]*?)%}/g;
+  const match = openingTag.exec(source);
+  if (!match) return interpolateLiquidPreviewVariables(source, context);
+
+  const blockName = match[1];
+  const block = findLiquidPreviewBlock(source, openingTag.lastIndex, blockName);
+  if (!block) {
+    return interpolateLiquidPreviewVariables(source, context)
+      .replace(/{%[\s\S]*?%}/g, "");
+  }
+
+  const before = source.slice(0, match.index);
+  const after = source.slice(block.afterEnd);
+  const bodyEnd = block.elseTag ? block.elseTag.index : block.endIndex;
+  const mainBody = source.slice(openingTag.lastIndex, bodyEnd);
+  const elseBody = block.elseTag
+    ? source.slice(block.elseTag.end, block.endIndex)
+    : "";
+  let replacement = "";
+
+  if (blockName === "if") {
+    const chosenBody = evaluateLiquidPreviewCondition(match[2], context)
+      ? mainBody
+      : elseBody;
+    replacement = renderLiquidPreviewBlocks(chosenBody, context);
+  } else {
+    const loop = match[2].trim().match(/^(\w+)\s+in\s+([\w.]+)(?:\s+limit:\s*(\d+))?/);
+    if (loop) {
+      const items = getLiquidPreviewValue(loop[2], context);
+      const list = Array.isArray(items) ? items : [];
+      const limitedList = loop[3] ? list.slice(0, Number(loop[3])) : list;
+      replacement = limitedList.length
+        ? limitedList.map((item, index) => renderLiquidPreviewBlocks(mainBody, {
+            ...context,
+            [loop[1]]: item,
+            forloop: {
+              index: index + 1,
+              index0: index,
+              first: index === 0,
+              last: index === limitedList.length - 1,
+              length: limitedList.length
+            }
+          })).join("")
+        : renderLiquidPreviewBlocks(elseBody, context);
+    }
+  }
+
+  return renderLiquidPreviewBlocks(before, context) +
+    replacement +
+    renderLiquidPreviewBlocks(after, context);
+}
+
+function prepareLiquidPreview(source, options = {}) {
+  const includes = options.includes || {};
+  const context = {
+    collections: { posts: LIQUID_PREVIEW_POSTS },
+    site: {
+      title: "Minimalistycznie Przez Życie",
+      url: "https://minimalistycznie.pages.dev"
+    },
+    page: {
+      title: editorTitle?.value?.trim() || "Podgląd strony",
+      url: selectedPage?.url || "/"
+    },
+    ...options.context
+  };
+
+  let previewSource = String(source || "")
+    .replace(/{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g, "")
+    .replace(/{%\s*include\s+['"]?([^\s'"]+)['"]?\s*%}/g, (_tag, path) => {
+      const include = includes[path] ?? includes[path.replace(/^pages\//, "")];
+      return include == null
+        ? `<div class="markdown-preview-empty">Podgląd include: ${escapePreviewHtml(path)}</div>`
+        : String(include);
+    });
+
+  previewSource = renderLiquidPreviewBlocks(previewSource, context)
+    .replace(/{%\s*(?:assign|capture|endcapture)[\s\S]*?%}/g, "")
+    .replace(/{%[\s\S]*?%}/g, "");
+
+  const containsHtml = /<\/?[a-z][\s\S]*?>/i.test(previewSource);
+  return containsHtml
+    ? previewSource
+    : marked.parse(previewSource, { breaks: true, gfm: true });
+}
+
 function renderMarkdownPreview() {
   clearPreviewImageSelection();
   const title = editorTitle.value.trim();
@@ -2050,13 +2506,15 @@ function renderMarkdownPreview() {
     ""
   );
 
-  const renderedBody = marked.parse(source, {
-    breaks: true,
-    gfm: true,
-  });
+  const renderedBody = editorContentType === "page"
+    ? prepareLiquidPreview(source)
+    : marked.parse(source, {
+        breaks: true,
+        gfm: true,
+      });
   
 
-  const renderedTitle = title
+  const renderedTitle = title && editorContentType !== "page"
     ? `<h1>${escapePreviewHtml(title)}</h1>`
     : "";
 
@@ -2158,6 +2616,104 @@ function showMessage(
   }
 }
 
+/* =========================================================
+   TOAST MANAGER
+   ========================================================= */
+
+function showToast({
+  title = "",
+  message = "",
+  type = "info",
+  duration = 3000,
+}) {
+
+  const container =
+    document.getElementById(
+      "toastContainer"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  const icons = {
+    success:
+      "fa-solid fa-circle-check",
+    error:
+      "fa-solid fa-circle-xmark",
+    info:
+      "fa-solid fa-circle-info",
+    warning:
+      "fa-solid fa-triangle-exclamation",
+  };
+
+  const toast =
+    document.createElement("div");
+
+  toast.className =
+    `toast toast-${type}`;
+
+  toast.innerHTML = `
+    <div class="toast-icon">
+      <i class="${icons[type] || icons.info}"></i>
+    </div>
+
+    <div class="toast-content">
+      <strong class="toast-title">
+        ${title}
+      </strong>
+
+      <div class="toast-message">
+        ${message}
+      </div>
+    </div>
+
+    <button
+      class="toast-close"
+      type="button"
+    >
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  `;
+
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add(
+      "toast-visible"
+    );
+  });
+
+  const removeToast = () => {
+
+    toast.classList.remove(
+      "toast-visible"
+    );
+
+    toast.classList.add(
+      "toast-hiding"
+    );
+
+    setTimeout(() => {
+      toast.remove();
+    }, 220);
+
+  };
+
+  toast
+    .querySelector(".toast-close")
+    ?.addEventListener(
+      "click",
+      removeToast
+    );
+
+  setTimeout(
+    removeToast,
+    duration
+  );
+
+}
+
 async function deleteSelectedMedia() {
   if (!selectedMedia) {
     return;
@@ -2227,19 +2783,21 @@ async function deleteSelectedMedia() {
 
     renderMedia();
 
-    showMessage(
-      globalMessage,
-      "Obraz został usunięty. Cloudflare opublikuje nową wersję strony.",
-      "success"
-    );
+    showToast({
+      title: "Biblioteka mediów",
+      message: "Obraz został usunięty. Cloudflare opublikuje nową wersję strony.",
+      type: "success",
+      duration: 3000,
+    });
   } catch (error) {
-    showMessage(
-      globalMessage,
-      error instanceof Error
+    showToast({
+      title: "Błąd usuwania obrazu",
+      message: error instanceof Error
         ? error.message
         : "Nie udało się usunąć obrazu.",
-      "error"
-    );
+      type: "error",
+      duration: 5000,
+    });
   } finally {
     deleteMediaButton.disabled = false;
     deleteMediaButton.innerHTML = `
@@ -2568,21 +3126,23 @@ async function uploadMediaFiles(fileList) {
       mediaLoaded = false;
       await loadMedia(true);
 
-      showMessage(
-        globalMessage,
-        uploadedCount === 1
+      showToast({
+        title: "Biblioteka mediów",
+        message: uploadedCount === 1
           ? "Obraz został dodany do biblioteki."
           : `Dodano ${uploadedCount} obrazów do biblioteki.`,
-        "success"
-      );
+        type: "success",
+        duration: 3000,
+      });
     }
 
     if (errors.length > 0) {
-      showMessage(
-        globalMessage,
-        errors.join(" "),
-        "error"
-      );
+      showToast({
+        title: "Błąd wysyłania obrazów",
+        message: errors.join(" "),
+        type: "error",
+        duration: 5000,
+      });
     }
   } finally {
     mediaUploadButton.disabled = false;
@@ -2749,11 +3309,12 @@ function renderMedia() {
     card.addEventListener("dragstart", (event) => {
       if (!hasActiveEditorSession()) {
         event.preventDefault();
-        showMessage(
-          globalMessage,
-          "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
-          "error"
-        );
+        showToast({
+          title: "Edytor",
+          message: "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
+          type: "error",
+          duration: 5000,
+        });
         return;
       }
 
@@ -2844,11 +3405,12 @@ function insertSelectedMediaToEditor() {
   }
 
   if (!hasActiveEditorSession()) {
-    showMessage(
-      globalMessage,
-      "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
-      "error"
-    );
+    showToast({
+      title: "Edytor",
+      message: "Najpierw otwórz lub utwórz wpis, do którego chcesz wstawić obraz.",
+      type: "error",
+      duration: 5000,
+    });
     return false;
   }
 
