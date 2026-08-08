@@ -1,0 +1,29 @@
+            <section class="newsletter-section" aria-labelledby="newsletter-title">
+                <h2 id="newsletter-title">Newsletter</h2>
+                <p>
+                    Chcesz wiedzieć, kiedy pojawi się nowy wpis? Zostaw adres e-mail.
+                    Nie wysyłam reklam ani spamu — tylko informację o nowym artykule.
+                </p>
+
+                <form id="newsletterForm" class="newsletter-form" novalidate>
+                    <label for="newsletterEmail" class="newsletter-honeypot">Adres e-mail</label>
+                    <input
+                        type="email"
+                        id="newsletterEmail"
+                        name="email"
+                        placeholder="Twój adres e-mail"
+                        autocomplete="email"
+                        required
+                    >
+
+                    <div class="newsletter-honeypot" aria-hidden="true">
+                        <label for="newsletterWebsite">Nie wypełniaj tego pola</label>
+                        <input type="text" id="newsletterWebsite" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <button type="submit" id="newsletterButton">Zapisz mnie</button>
+                </form>
+
+                <div id="newsletterMessage" class="newsletter-message" role="status" aria-live="polite"></div>
+            </section>
+

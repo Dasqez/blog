@@ -121,6 +121,15 @@
         <button
           type="button"
           class="nav-item"
+          data-view="pages"
+        >
+          <i class="fa-regular fa-file"></i>
+          <span>Strony</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-item"
           data-view="newsletter"
         >
           <i class="fa-regular fa-envelope"></i>
@@ -445,6 +454,123 @@
   </section>
 </section>
 
+<!-- STRONY -->
+<section
+  class="panel-view"
+  id="view-pages"
+  data-title="Strony"
+>
+  <div class="page-intro">
+
+    <div>
+      <p class="section-kicker">
+        Treść strony
+      </p>
+
+      <h2>Strony</h2>
+
+      <p>
+        Zarządzaj stałymi stronami serwisu.
+        Zmiany zostaną zapisane bezpośrednio
+        w repozytorium GitHub.
+      </p>
+    </div>
+
+    <div class="posts-actions">
+
+      <button
+        type="button"
+        class="secondary-button"
+        id="reloadPagesButton"
+      >
+        <i class="fa-solid fa-rotate"></i>
+        Odśwież strony
+      </button>
+
+    </div>
+
+  </div>
+
+  <section class="posts-panel">
+
+    <aside class="posts-sidebar">
+
+      <h2>Strony</h2>
+
+      <div class="posts-search">
+
+        <i class="fa-solid fa-magnifying-glass"></i>
+
+        <input
+          id="pagesSearchInput"
+          type="text"
+          placeholder="Szukaj strony..."
+          autocomplete="off"
+        >
+
+      </div>
+
+      <div
+        id="pagesList"
+        class="posts-list"
+      >
+        Ładowanie stron...
+      </div>
+
+    </aside>
+
+    <article class="post-preview">
+
+      <p class="section-kicker">
+        Podgląd strony
+      </p>
+
+      <h2 id="pagePreviewTitle">
+        Wybierz stronę
+      </h2>
+
+      <p
+        id="pagePreviewPath"
+        class="post-date"
+      ></p>
+
+      <p id="pagePreviewExcerpt">
+        Po kliknięciu strony zobaczysz
+        tutaj jej podstawowe informacje.
+      </p>
+
+      <div class="preview-buttons">
+
+        <a
+          id="openPageButton"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-button"
+          hidden
+        >
+          Otwórz stronę
+          <i
+            class="fa-solid fa-arrow-up-right-from-square"
+          ></i>
+        </a>
+
+        <button
+          id="editPageButton"
+          type="button"
+          disabled
+        >
+          Edytuj
+        </button>
+
+      </div>
+
+    </article>
+
+  </section>
+
+</section>
+
 <aside
   id="editorPanel"
   class="editor-drawer"
@@ -453,7 +579,7 @@
 
   <div class="editor-header">
 
-    <h2>Edycja wpisu</h2>
+    <h2 id="editorHeading">Edycja wpisu</h2>
 
     <button
       id="closeEditorButton"
@@ -468,7 +594,10 @@
 
   <div class="editor-meta">
 
-    <div class="editor-field">
+    <div
+      class="editor-field"
+      id="editorTitleField"
+    >
       <label for="editorTitle">Tytuł</label>
       <input
         type="text"
@@ -476,7 +605,10 @@
       >
     </div>
 
-    <div class="editor-field">
+    <div
+      class="editor-field"
+      id="editorSlugField"
+    >
       <label for="editorSlug">Slug</label>
       <input
         type="text"
@@ -486,7 +618,10 @@
       >
     </div>
 
-    <div class="editor-field">
+    <div
+      class="editor-field"
+      id="editorDateField"
+    >
       <label for="editorDate">Data</label>
       <input
         type="text"
@@ -494,7 +629,10 @@
       >
     </div>
 
-    <div class="editor-field">
+    <div
+      class="editor-field"
+      id="editorLayoutField"
+    >
       <label for="editorLayout">Layout</label>
       <input
         type="text"

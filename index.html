@@ -31,108 +31,19 @@
         </nav>
 
         <div id="page-home" class="page-section active-section">
-            <div class="search-container">
-                <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj wpisów...">
-            </div> 
-
-            <main class="posts-list" id="postsList">
-                
-                {% for post in collections.posts %}
-    <article class="post-card">
-        {% if post.data.image %}
-            <div class="post-image" data-lightbox-src="{{ post.data.image }}">
-                <img src="{{ post.data.image }}" alt="{{ post.data.title }}">
-            </div>
-        {% endif %}
-        
-        <div class="post-content">
-            <h2><a href="{{ post.url }}">{{ post.data.title }}</a></h2>
-            <span class="date">{{ post.date | date: "%d.%m.%Y" }}</span>
-            <div class="excerpt">
-                {{ post.data.page.excerpt }}
-                <p><a href="{{ post.url }}" class="read-more">Czytaj dalej...</a></p>
-            </div>
-        </div>
-    </article>
-{% else %}
-    <p class="empty-blog">Brak wpisów. Nowe artykuły pojawią się wkrótce!</p>
-{% endfor %}
-
-            </main>
-            <div id="noResultsMessage" class="no-results">Nie znaleziono wpisów spełniających kryteria.</div>
+{% include pages/home.liquid %}
         </div>
 
         <div id="page-about" class="page-section">
-            <div class="about-content">
-                <div class="about-image">
-                    <img src="moje-foto.jpeg" alt="Moje zdjęcie">
-                </div>
-                <div class="about-text">
-                    <h2>Cześć, miło Cię poznać!</h2>
-                    <p>Nazywam się D. Jestem autorem tego bloga, niesamowitą marudą i, po trosze, marzycielem. Mimo, że moje wypociny nie są najwyższych lotów i w przekazywaniu uczuć i myśli muszę korzystać z komputera, w moim umyśle jestem wolny.</p>
-                    <p>„Minimalistycznie Przez Życie” to (nie)codziennik w postaci blogowej, w którym zamieszczam swoje wypociny powstałe w efekcie, niespodzianka, przepływu myśli. A że tych mam w nadmiarze, to czasami/często/rzadko/codziennie/raz na miesiąc/spadaj na drzewo*, płodzę z nich jakiś wpis. Niekiedy powstaje on szybko i bezboleśnie, innym razem płodzenie to przypomina rodzenie pięcioraczków bez cesarskiego cięcia. Ogólnie jest to moje miejsce w sieci, gdzie mogę spożytkować swoją frustrację gdy mnie mózg boli. Bo wbrew pozorom przepływ myśli boli.
-
-A z tymi wpisami to różnie bywa. Są one jak komety. Niektóre robią na niebie spektakularny rozpizd, inne przemykają bez echa, wychwycone okiem wytrawnych/przypadkowych obserwatorów. Tak też jest z moimi wpisami. Co poniektóre wypuszczają obfity warkocz i wybuchają fajerwerkami jak krowia kupa wysrana wprost na rozregulowaną minę przeciwpiechotną. Inne spokojnie i w milczeniu przemykają obszar internetowego układu gwiezdnego – bez żadnych sensacji i innych atrakcji. Ale ważne, że są. Bo są ładne i (nie)codzienne.
-
-Zapraszam do lektury. Robicie to na własną odpowiedzialność.
-
-* – niepotrzebne skreślić</p>
-                </div>
-            </div>
-
+{% include pages/about.liquid %}
         </div>
 
         <div id="page-contact" class="page-section">
-            <div class="contact-container">
-                <h2>Kontakt</h2>
-                <div class="contact-info">
-                    <p>Masz pytania? Chcesz poczytać więcej moich wypocin w necie? Chcesz mnie zwyzywać albo polemizować? Napisz do mnie!</p>
-                    <p><strong>Email:</strong> dave.pytel@gmail.com</p>                  
-                </div>
-                
-                <h3>Znajdziesz mnie również tutaj:</h3>
-                <div class="social-icons">
-                    <a href="https://www.facebook.com/dasqez" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="https://www.instagram.com/dasqez/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="https://www.x.com/Dasqez" target="_blank" title="X (Twitter)">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="28" viewBox="0 0 512 512" fill="currentColor">
-                            <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/>
-                        </svg>
-                    </a>
-                </div>
-            </div>
+{% include pages/contact.liquid %}
         </div>
 
         <div id="page-newsletter" class="page-section">
-            <section class="newsletter-section" aria-labelledby="newsletter-title">
-                <h2 id="newsletter-title">Newsletter</h2>
-                <p>
-                    Chcesz wiedzieć, kiedy pojawi się nowy wpis? Zostaw adres e-mail.
-                    Nie wysyłam reklam ani spamu — tylko informację o nowym artykule.
-                </p>
-
-                <form id="newsletterForm" class="newsletter-form" novalidate>
-                    <label for="newsletterEmail" class="newsletter-honeypot">Adres e-mail</label>
-                    <input
-                        type="email"
-                        id="newsletterEmail"
-                        name="email"
-                        placeholder="Twój adres e-mail"
-                        autocomplete="email"
-                        required
-                    >
-
-                    <div class="newsletter-honeypot" aria-hidden="true">
-                        <label for="newsletterWebsite">Nie wypełniaj tego pola</label>
-                        <input type="text" id="newsletterWebsite" name="website" tabindex="-1" autocomplete="off">
-                    </div>
-
-                    <button type="submit" id="newsletterButton">Zapisz mnie</button>
-                </form>
-
-                <div id="newsletterMessage" class="newsletter-message" role="status" aria-live="polite"></div>
-            </section>
-
+{% include pages/newsletter.liquid %}
         </div>
 
     </div>
