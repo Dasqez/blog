@@ -2285,6 +2285,22 @@ button:disabled {
   outline-offset: 3px;
 }
 
+.media-card.keyboard-active {
+  outline: 3px solid #2b7fff;
+  outline-offset: 3px;
+}
+
+#editorBody.is-media-drop-target {
+  outline: 3px dashed #2b7fff;
+  outline-offset: 4px;
+  background-color: rgba(43, 127, 255, 0.06);
+}
+
+#editorBody.is-media-drag-over {
+  outline-style: solid;
+  background-color: rgba(43, 127, 255, 0.12);
+}
+
 .media-preview-box { text-align: center; }
 .media-fullscreen-button { margin-top: 14px; }
 

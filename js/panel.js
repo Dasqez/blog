@@ -65,6 +65,8 @@ const mediaDropzone =
 
 const mediaFileInput =
   document.getElementById("mediaFileInput");
+const mediaUploadStatus =
+  document.getElementById("mediaUploadStatus");
 const logoutButton = document.getElementById("logoutButton");
 const refreshButton = document.getElementById("refreshButton");
 const connectionStatus =
@@ -265,30 +267,7 @@ deleteMediaButton?.addEventListener(
 
 insertMediaButton?.addEventListener("click", insertSelectedMediaToEditor);
 
-   downloadMediaButton?.addEventListener(
-    "click",
-    () => {
-
-        if (!selectedMedia)
-            return;
-
-        const a =
-            document.createElement("a");
-
-        a.href =
-            getMediaUrl(selectedMedia, true);
-
-        a.download =
-            selectedMedia.name;
-
-        document.body.appendChild(a);
-
-        a.click();
-
-        a.remove();
-
-    }
-);
+downloadMediaButton?.addEventListener("click", downloadSelectedMedia);
 
    copyMediaName?.addEventListener("click", () => {
 
@@ -331,6 +310,15 @@ mediaDropzone?.addEventListener("click", (event) => {
   if (event.target !== mediaChooseButton) {
     mediaFileInput.click();
   }
+});
+
+mediaDropzone?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  event.preventDefault();
+  mediaFileInput.click();
 });
 
 ["dragenter", "dragover"].forEach((eventName) => {
@@ -1088,8 +1076,9 @@ function insertImageMarkdown(url, altText = "Obraz") {
     .replace(/[\[\]]/g, "")
     .trim();
 
-  const markdown =
-    `![${safeAltText}](${url})`;
+  const imageMarkup = editorContentType === "page"
+    ? markdownImageToHtml(url, safeAltText)
+    : `![${safeAltText}](${url})`;
 
   const currentValue = editorBody.value;
 
@@ -1106,7 +1095,7 @@ function insertImageMarkdown(url, altText = "Obraz") {
       : "\n";
 
   const insertedText =
-    `${before}${markdown}${after}`;
+    `${before}${imageMarkup}${after}`;
 
   editorBody.setRangeText(
     insertedText,
@@ -3486,6 +3475,7 @@ async function uploadMediaFiles(fileList) {
 
   mediaUploadButton.disabled = true;
   mediaChooseButton.disabled = true;
+  mediaDropzone?.classList.add("is-uploading");
 
   const originalUploadButtonHtml =
     mediaUploadButton.innerHTML;
@@ -3496,16 +3486,23 @@ async function uploadMediaFiles(fileList) {
   `;
 
   let uploadedCount = 0;
+  const uploadedFiles = [];
   const errors = [];
 
   for (const file of files) {
+    const currentFileNumber = uploadedCount + errors.length + 1;
     mediaUploadButton.innerHTML = `
       <i class="fa-solid fa-spinner fa-spin"></i>
-      Wysyłanie ${uploadedCount + errors.length + 1}/${files.length}...
+      Wysyłanie ${currentFileNumber}/${files.length}...
     `;
+    if (mediaUploadStatus) {
+      mediaUploadStatus.textContent =
+        `Wysyłanie ${currentFileNumber} z ${files.length}: ${file.name}`;
+    }
     try {
-      await uploadImageFile(file);
+      const uploadResult = await uploadImageFile(file);
       uploadedCount++;
+      uploadedFiles.push({ file, uploadResult });
     } catch (error) {
       errors.push(
         error instanceof Error
@@ -3519,6 +3516,7 @@ async function uploadMediaFiles(fileList) {
     if (uploadedCount > 0) {
       mediaLoaded = false;
       await loadMedia(true);
+      applyLocalMediaPreviews(uploadedFiles);
 
       showToast({
         title: "Biblioteka mediów",
@@ -3541,8 +3539,62 @@ async function uploadMediaFiles(fileList) {
   } finally {
     mediaUploadButton.disabled = false;
     mediaChooseButton.disabled = false;
+    mediaDropzone?.classList.remove("is-uploading");
     mediaUploadButton.innerHTML =
       originalUploadButtonHtml;
+    if (mediaUploadStatus) {
+      mediaUploadStatus.textContent = errors.length > 0
+        ? `Dodano ${uploadedCount} z ${files.length} obrazów.`
+        : uploadedCount === 1
+          ? "Dodano 1 obraz."
+          : `Dodano obrazów: ${uploadedCount}.`;
+    }
+  }
+}
+
+async function downloadSelectedMedia() {
+  if (!selectedMedia || !downloadMediaButton) {
+    return;
+  }
+
+  const mediaToDownload = selectedMedia;
+  const originalButtonHtml = downloadMediaButton.innerHTML;
+  downloadMediaButton.disabled = true;
+  downloadMediaButton.innerHTML = `
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    Pobieranie...
+  `;
+
+  try {
+    const response = await fetch(getMediaUrl(mediaToDownload, true), {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Nie udało się pobrać pliku (${response.status}).`);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = mediaToDownload.name || "obraz";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch (error) {
+    showToast({
+      title: "Błąd pobierania obrazu",
+      message: error instanceof Error
+        ? error.message
+        : "Nie udało się pobrać obrazu.",
+      type: "error",
+      duration: 5000,
+    });
+  } finally {
+    downloadMediaButton.disabled = false;
+    downloadMediaButton.innerHTML = originalButtonHtml;
   }
 }
 
@@ -3730,13 +3782,11 @@ function renderMedia() {
     const image =
       document.createElement("img");
 
-    image.src =
-      getMediaUrl(item, true);
-
     image.alt =
       item.name || "Obraz";
 
     image.loading = "lazy";
+    loadMediaThumbnail(image, item);
 
     const details =
       document.createElement("span");
@@ -4024,71 +4074,64 @@ function compareMediaItems(left, right) {
   }
 }
 
-function ensureMediaV3Controls() {
-  if (!mediaGrid || document.getElementById("mediaV3Controls")) return;
-
-  if (!document.getElementById("mediaV3Styles")) {
-    const style = document.createElement("style");
-    style.id = "mediaV3Styles";
-    style.textContent = `
-      .media-v3-controls{display:flex;flex-wrap:wrap;gap:.75rem;margin:0 0 1rem}
-      .media-v3-controls label{display:flex;align-items:center;gap:.4rem}
-      .media-card[draggable="true"]{cursor:grab}.media-card[draggable="true"]:active{cursor:grabbing}
-      .preview-image-wrapper{position:relative;max-width:100%}
-      .preview-image-wrapper img{display:block;max-width:100%}
-      .preview-image-resize-handle{display:none;position:absolute;right:-6px;bottom:-6px;width:14px;height:14px;border:2px solid #fff;border-radius:50%;background:#2563eb;cursor:nwse-resize;touch-action:none}
-      .preview-image-selected{outline:2px solid #2563eb;outline-offset:3px}
-      .preview-image-selected .preview-image-resize-handle{display:block}
-      .media-fullscreen-dialog{width:min(96vw,1400px);height:min(94vh,1000px);padding:2.5rem 1rem 1rem;border:0;border-radius:12px;background:#111;color:#fff}
-      .media-fullscreen-dialog::backdrop{background:rgba(0,0,0,.85)}
-      .media-fullscreen-dialog img{display:block;width:100%;height:calc(100% - 2rem);object-fit:contain}
-      .media-fullscreen-dialog p{text-align:center;margin:.5rem 0 0}
-      .media-fullscreen-close{position:absolute;right:.75rem;top:.5rem;border:0;background:transparent;color:#fff;font-size:2rem;cursor:pointer}
-      .media-fullscreen-button{margin:.5rem 0}
-    `;
-    document.head.appendChild(style);
-  }
-
-  const controls = document.createElement("div");
-  controls.id = "mediaV3Controls";
-  controls.className = "media-v3-controls";
-  controls.setAttribute("aria-label", "Filtrowanie i sortowanie mediów");
-  controls.innerHTML = `
-    <label>Typ
-      <select id="mediaTypeFilter">
-        <option value="all">Wszystkie</option>
-        <option value="jpg">JPG</option><option value="jpeg">JPEG</option>
-        <option value="png">PNG</option><option value="webp">WebP</option>
-        <option value="gif">GIF</option><option value="svg">SVG</option>
-        <option value="avif">AVIF</option>
-      </select>
-    </label>
-    <label>Sortuj
-      <select id="mediaSortOrder">
-        <option value="newest">Najnowsze</option><option value="oldest">Najstarsze</option>
-        <option value="name-asc">Nazwa A–Z</option><option value="name-desc">Nazwa Z–A</option>
-        <option value="size-desc">Największe</option><option value="size-asc">Najmniejsze</option>
-      </select>
-    </label>`;
-  mediaGrid.parentElement?.insertBefore(controls, mediaGrid);
-
-  if (mediaPreviewImage && !document.getElementById("mediaFullscreenButton")) {
-    const fullscreenButton = document.createElement("button");
-    fullscreenButton.id = "mediaFullscreenButton";
-    fullscreenButton.type = "button";
-    fullscreenButton.className = "media-fullscreen-button";
-    fullscreenButton.innerHTML = '<i class="fa-solid fa-expand"></i> Pełny ekran';
-    fullscreenButton.addEventListener("click", () => openMediaFullscreen());
-    mediaPreviewImage.insertAdjacentElement("afterend", fullscreenButton);
-  }
-
-  controls.querySelector("#mediaTypeFilter")?.addEventListener("change", (event) => {
+function initializeMediaControls() {
+  document.getElementById("mediaTypeFilter")?.addEventListener("change", (event) => {
     mediaTypeFilter = event.target.value;
     renderMedia();
   });
-  controls.querySelector("#mediaSortOrder")?.addEventListener("change", (event) => {
+  document.getElementById("mediaSortOrder")?.addEventListener("change", (event) => {
     mediaSortOrder = event.target.value;
     renderMedia();
+  });
+  document.getElementById("mediaFullscreenButton")?.addEventListener(
+    "click",
+    () => openMediaFullscreen()
+  );
+}
+
+function loadMediaThumbnail(image, item) {
+  image.src = getMediaUrl(item, true);
+}
+
+function applyLocalMediaPreviews(uploadedItems) {
+  const cards = Array.from(
+    mediaGrid?.querySelectorAll(".media-card") || []
+  );
+
+  uploadedItems.forEach(({ file, uploadResult }) => {
+    const returnedUrl =
+      uploadResult?.url ||
+      uploadResult?.relativeUrl ||
+      uploadResult?.publicUrl ||
+      uploadResult?.path ||
+      uploadResult?.image?.url ||
+      uploadResult?.image?.path ||
+      "";
+    const returnedName = returnedUrl
+      ? decodeURIComponent(String(returnedUrl).split("/").pop().split("?")[0])
+      : "";
+    const possibleNames = new Set([
+      file.name,
+      uploadResult?.name,
+      uploadResult?.fileName,
+      uploadResult?.image?.name,
+      returnedName,
+    ].filter(Boolean));
+    const card = cards.find(
+      (candidate) => possibleNames.has(candidate.dataset.mediaName)
+    );
+    const image = card?.querySelector("img");
+
+    if (!image) {
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      image.onload = null;
+    };
+    image.src = objectUrl;
   });
 }
 
@@ -4117,10 +4160,13 @@ function openMediaFullscreen(item = selectedMedia) {
   dialog.showModal();
 }
 
-function markdownImageToHtml(source, alt, width) {
+function markdownImageToHtml(source, alt, width = null) {
   const safeSource = String(source).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   const safeAlt = String(alt || "Obraz").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-  return `<img src="${safeSource}" alt="${safeAlt}" width="${width}">`;
+  const widthAttribute = Number.isFinite(Number(width))
+    ? ` width="${Number(width)}"`
+    : "";
+  return `<img src="${safeSource}" alt="${safeAlt}"${widthAttribute}>`;
 }
 
 function savePreviewImageWidth(image, width) {
@@ -4266,31 +4312,8 @@ function handleMediaKeyboard(event) {
   }
 }
 
-function ensureMediaInteractionStyles() {
-  if (document.getElementById("mediaInteractionStyles")) return;
-  const style = document.createElement("style");
-  style.id = "mediaInteractionStyles";
-  style.textContent = `
-    .media-card.keyboard-active {
-      outline: 3px solid #2563eb !important;
-      outline-offset: 3px;
-    }
-    #editorBody.is-media-drop-target {
-      outline: 3px dashed #2563eb !important;
-      outline-offset: 4px;
-      background-color: rgba(37, 99, 235, 0.06) !important;
-    }
-    #editorBody.is-media-drag-over {
-      outline-style: solid !important;
-      background-color: rgba(37, 99, 235, 0.12) !important;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
 function initializeMediaV3() {
-  ensureMediaInteractionStyles();
-  ensureMediaV3Controls();
+  initializeMediaControls();
   markdownPreview?.addEventListener("pointerdown", beginPreviewResize);
   document.addEventListener("pointermove", movePreviewResize);
   document.addEventListener("pointerup", finishPreviewResize);

@@ -19,7 +19,15 @@ Status: gotowy do testów na localhost.
 
 ## Etap 2 — Media Library
 
-Planowany osobny etap porządkujący i rozszerzający zarządzanie mediami. Funkcje, które już istnieją w projekcie, zostaną objęte audytem regresji zamiast implementowane ponownie.
+Status: gotowy do testów na localhost.
+
+- wyszukiwanie, filtrowanie według typu oraz sortowanie biblioteki,
+- wielokrotny upload przez wybór plików i przeciąganie,
+- szczegóły pliku, kopiowanie danych, pobieranie, usuwanie i pełnoekranowy podgląd,
+- wstawianie obrazów do wpisów Markdown oraz stron HTML/Liquid,
+- przeciąganie obrazów do edytora i zmiana ich szerokości w podglądzie,
+- obsługa klawiatury oraz czytelne stany postępu, zaznaczenia i fokusu,
+- audyt regresji funkcji biblioteki istniejących przed rozpoczęciem etapu.
 
 ## Etap 3 — wpisy, tagi i czas czytania
 

@@ -95,6 +95,12 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Biblioteka mediów
 
+- Naprawiono puste miniatury świeżo dodanych obrazów przez natychmiastowy lokalny podgląd wybranego pliku, bez zmieniania adresów istniejących mediów.
+- Poprawiono pobieranie obrazów z zewnętrznej domeny, aby przycisk „Pobierz” zapisywał plik zamiast otwierać go w karcie przeglądarki.
+- Naprawiono działanie statycznych kontrolek filtrowania, sortowania i pełnoekranowego podglądu obrazu.
+- Obrazy wstawiane do stron HTML/Liquid korzystają teraz ze znacznika `<img>` zamiast składni Markdown.
+- Dodano komunikaty postępu wielokrotnego uploadu oraz klawiaturowe otwieranie wyboru plików w strefie dodawania.
+- Usunięto awaryjne generowanie kontrolek i stylów biblioteki przez JavaScript, pozostawiając interfejs w docelowych plikach HTML i CSS.
 - Rozbudowano bibliotekę o filtrowanie według typu pliku.
 - Dodano sortowanie według daty, nazwy i rozmiaru.
 - Dodano wielokrotny upload plików graficznych.
