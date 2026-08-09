@@ -6,6 +6,10 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano ekran Backup z osobnym eksportem repozytorium, bazy D1, subskrybentów i publicznych ustawień CMS.
+- Dodano pobieranie całego pakietu kopii bezpieczeństwa jednym przyciskiem wraz z paskiem postępu i raportem błędów.
+- Dodano chroniony endpoint Workera eksportujący wszystkie tabele D1 do JSON oraz subskrybentów do CSV bez ujawniania sekretów.
+- Zmieniono pełny backup tak, aby jednym pobraniem tworzył archiwum ZIP zawierające repozytorium, bazę D1, subskrybentów i ustawienia.
 - Dodano globalną wyszukiwarkę administratora przeszukującą wpisy, strony, media, newslettery i subskrybentów.
 - Dodano grupowanie wyników, obsługę klawiatury, skrót `Ctrl/Cmd + K` oraz przechodzenie bezpośrednio do znalezionej treści.
 - Dodano chroniony endpoint Workera udostępniający panelowi listę subskrybentów do wyszukiwania.

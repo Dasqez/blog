@@ -145,6 +145,11 @@
           <span>Media</span>
         </button>
 
+        <button type="button" class="nav-item" data-view="backup">
+          <i class="fa-solid fa-box-archive"></i>
+          <span>Backup</span>
+        </button>
+
         <button
           type="button"
           class="nav-item"
@@ -1282,6 +1287,30 @@
 
         </section>
 
+        <!-- BACKUP -->
+        <section class="panel-view" id="view-backup" data-title="Backup">
+          <div class="page-intro">
+            <div>
+              <span class="section-kicker">Kopia bezpieczeństwa</span>
+              <h2>Eksport danych CMS</h2>
+              <p>Pobierz repozytorium, bazę D1, subskrybentów i ustawienia. Sekrety oraz klucz administratora nie są eksportowane.</p>
+            </div>
+            <button id="downloadAllBackupsButton" class="primary-button" type="button"><i class="fa-solid fa-download"></i> Pobierz cały pakiet</button>
+          </div>
+
+          <div class="backup-grid">
+            <article class="backup-card" data-backup-type="repository"><span><i class="fa-brands fa-github"></i></span><div><h3>Repozytorium</h3><p>Archiwum ZIP aktualnej gałęzi głównej.</p></div><button type="button" class="secondary-button" data-download-backup="repository">Pobierz ZIP</button></article>
+            <article class="backup-card" data-backup-type="database"><span><i class="fa-solid fa-database"></i></span><div><h3>Baza D1</h3><p>Pełny eksport wszystkich tabel do pliku JSON.</p></div><button type="button" class="secondary-button" data-download-backup="database">Pobierz JSON</button></article>
+            <article class="backup-card" data-backup-type="subscribers"><span><i class="fa-solid fa-users"></i></span><div><h3>Subskrybenci</h3><p>Lista adresów i statusów w formacie CSV.</p></div><button type="button" class="secondary-button" data-download-backup="subscribers">Pobierz CSV</button></article>
+            <article class="backup-card" data-backup-type="settings"><span><i class="fa-solid fa-sliders"></i></span><div><h3>Ustawienia</h3><p>Publiczna konfiguracja bloga i integracji, bez sekretów.</p></div><button type="button" class="secondary-button" data-download-backup="settings">Pobierz JSON</button></article>
+          </div>
+          <div class="backup-progress" id="backupProgress" hidden>
+            <div><strong id="backupProgressTitle">Przygotowanie kopii…</strong><span id="backupProgressValue">0/4</span></div>
+            <div class="backup-progress-track"><span id="backupProgressBar"></span></div>
+            <p id="backupStatus" role="status"></p>
+          </div>
+        </section>
+
         <!-- USTAWIENIA -->
         <section
           class="panel-view"
@@ -1474,6 +1503,11 @@
 
 <script
   src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"
+  defer
+></script>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
   defer
 ></script>
 

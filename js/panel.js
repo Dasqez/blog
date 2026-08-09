@@ -56,6 +56,8 @@ const ADMIN_TEST_NEWSLETTER_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/newsletter/test";
 const ADMIN_SUBSCRIBERS_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/subscribers";
+const ADMIN_BACKUP_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/backup";
 
 const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV092";
 const EDITOR_AUTOSAVE_INTERVAL_MS = 30000;
@@ -133,6 +135,13 @@ const newsletterPreviewButtons = document.querySelectorAll("[data-newsletter-pre
 const globalSearch = document.getElementById("globalSearch");
 const globalSearchInput = document.getElementById("globalSearchInput");
 const globalSearchResults = document.getElementById("globalSearchResults");
+const downloadAllBackupsButton = document.getElementById("downloadAllBackupsButton");
+const backupDownloadButtons = document.querySelectorAll("[data-download-backup]");
+const backupProgress = document.getElementById("backupProgress");
+const backupProgressTitle = document.getElementById("backupProgressTitle");
+const backupProgressValue = document.getElementById("backupProgressValue");
+const backupProgressBar = document.getElementById("backupProgressBar");
+const backupStatus = document.getElementById("backupStatus");
 const pagesList = document.getElementById("pagesList");
 const pagesSearchInput = document.getElementById("pagesSearchInput");
 const reloadPagesButton = document.getElementById("reloadPagesButton");
@@ -388,6 +397,8 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape" && !globalSearchResults?.hidden) closeGlobalSearch();
 });
+backupDownloadButtons.forEach((button) => button.addEventListener("click", () => downloadBackup(button.dataset.downloadBackup, button)));
+downloadAllBackupsButton?.addEventListener("click", downloadAllBackups);
 
 insertMediaButton?.addEventListener("click", insertSelectedMediaToEditor);
 
@@ -1820,6 +1831,121 @@ async function activateGlobalSearchResult(result) {
   } else if (result.type === "subscriber") {
     openView("newsletter");
     showToast({ title: "Subskrybent", message: `${result.data.email} · ${formatSubscriberStatus(result.data.status)}`, type: "info", duration: 5000 });
+  }
+}
+
+/* =========================================================
+   BACKUP
+   ========================================================= */
+
+function getBackupTimestamp() {
+  return new Date().toISOString().replace(/[:.]/g, "-");
+}
+
+function triggerBlobDownload(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+async function fetchBackupBlob(type) {
+  const response = await fetch(`${ADMIN_BACKUP_API_URL}?type=${encodeURIComponent(type)}`, {
+    headers: { Authorization: `Bearer ${adminSecret}` },
+  });
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    throw new Error(result.message || `Nie udało się przygotować eksportu ${type}.`);
+  }
+  return response.blob();
+}
+
+function downloadRepositoryBackup() {
+  const link = document.createElement("a");
+  link.href = "https://github.com/Dasqez/blog/archive/refs/heads/main.zip";
+  link.download = `blog-repository-${getBackupTimestamp()}.zip`;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function createSettingsBackup() {
+  return new Blob([JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    site: { name: "Minimalistycznie Przez Życie", slogan: "Małe przygody w wielkim świecie", url: "https://minimalistycznie.pages.dev", language: "pl" },
+    cms: { workerUrl: "https://newsletter.dave-pytel.workers.dev", repository: "Dasqez/blog", defaultPostLayout: "post-layout.html" },
+    integrations: { newsletter: true, giscus: true },
+    note: "Eksport celowo nie zawiera sekretów, tokenów ani klucza administratora.",
+  }, null, 2)], { type: "application/json;charset=utf-8" });
+}
+
+async function downloadBackup(type, button = null, silent = false) {
+  const originalText = button?.innerHTML;
+  if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Przygotowanie…'; }
+  try {
+    const stamp = getBackupTimestamp();
+    if (type === "repository") downloadRepositoryBackup();
+    else if (type === "settings") triggerBlobDownload(createSettingsBackup(), `blog-settings-${stamp}.json`);
+    else {
+      const blob = await fetchBackupBlob(type);
+      triggerBlobDownload(blob, type === "subscribers" ? `blog-subscribers-${stamp}.csv` : `blog-d1-${stamp}.json`);
+    }
+    if (!silent) showToast({ title: "Backup", message: "Plik kopii bezpieczeństwa został przygotowany.", type: "success" });
+    return true;
+  } catch (error) {
+    if (!silent) showToast({ title: "Błąd backupu", message: error.message, type: "error", duration: 6000 });
+    throw error;
+  } finally {
+    if (button) { button.disabled = false; button.innerHTML = originalText; }
+  }
+}
+
+async function downloadAllBackups() {
+  if (typeof JSZip === "undefined") {
+    showToast({ title: "Backup", message: "Nie udało się załadować modułu tworzenia archiwum ZIP.", type: "error", duration: 6000 });
+    return;
+  }
+  downloadAllBackupsButton.disabled = true;
+  backupProgress.hidden = false;
+  backupProgressBar.style.width = "0%";
+  backupProgressValue.textContent = "0%";
+  backupProgressTitle.textContent = "Pobieranie danych do archiwum";
+  backupStatus.textContent = "Repozytorium, baza D1, subskrybenci i ustawienia…";
+  try {
+    const [repositoryBlob, databaseBlob, subscribersBlob] = await Promise.all([
+      fetchBackupBlob("repository"),
+      fetchBackupBlob("database"),
+      fetchBackupBlob("subscribers"),
+    ]);
+    const zip = new JSZip();
+    zip.file("repository.zip", repositoryBlob);
+    zip.file("database-d1.json", databaseBlob);
+    zip.file("subscribers.csv", subscribersBlob);
+    zip.file("settings.json", createSettingsBackup());
+    zip.file("README.txt", "Pakiet kopii bezpieczeństwa bloga. Wygenerowano: " + new Date().toISOString() + "\nPlik database-d1.json może zawierać dane osobowe i tokeny subskrypcji — przechowuj archiwum bezpiecznie.");
+    backupProgressTitle.textContent = "Pakowanie archiwum ZIP";
+    const archive = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } }, (metadata) => {
+      const percent = Math.round(metadata.percent);
+      backupProgressValue.textContent = `${percent}%`;
+      backupProgressBar.style.width = `${percent}%`;
+    });
+    triggerBlobDownload(archive, `blog-backup-${getBackupTimestamp()}.zip`);
+    backupProgressTitle.textContent = "Backup zakończony";
+    backupProgressValue.textContent = "100%";
+    backupProgressBar.style.width = "100%";
+    backupStatus.textContent = "Pobrano jeden plik ZIP zawierający cztery kopie bezpieczeństwa.";
+    showToast({ title: "Backup", message: "Pobrano pełny pakiet jako jeden plik ZIP.", type: "success", duration: 5000 });
+  } catch (error) {
+    backupProgressTitle.textContent = "Nie udało się utworzyć archiwum";
+    backupStatus.textContent = error.message;
+    showToast({ title: "Błąd backupu", message: error.message, type: "error", duration: 7000 });
+  } finally {
+    downloadAllBackupsButton.disabled = false;
   }
 }
 

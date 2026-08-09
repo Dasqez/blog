@@ -91,3 +91,13 @@ Status: gotowy do testów na localhost.
 - grupowanie wyników według rodzaju danych,
 - nawigacja klawiaturą oraz skrót `Ctrl/Cmd + K`,
 - bezpośrednie przejście z wyniku do właściwej sekcji CMS.
+
+## Etap 9 — Backup
+
+Status: gotowy do testów na localhost.
+
+- eksport repozytorium jako archiwum ZIP,
+- pełny eksport tabel bazy D1 do JSON,
+- eksport subskrybentów do CSV,
+- eksport publicznych ustawień bez sekretów,
+- pobieranie całego pakietu z widocznym postępem.
