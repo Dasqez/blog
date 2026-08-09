@@ -107,6 +107,7 @@ const editorSlug = document.getElementById("editorSlug");
 const editorDate = document.getElementById("editorDate");
 const editorLayout = document.getElementById("editorLayout");
 const editorBody = document.getElementById("editorBody");
+const editorLineNumbers = document.getElementById("editorLineNumbers");
 const editorHighlight = document.getElementById("editorHighlight");
 const sitePreviewFrame = document.getElementById("sitePreviewFrame");
 const editorFullscreenButton = document.getElementById("editorFullscreenButton");
@@ -918,9 +919,33 @@ editorBody.addEventListener("scroll", () => {
   if (!editorHighlight) return;
   editorHighlight.scrollTop = editorBody.scrollTop;
   editorHighlight.scrollLeft = editorBody.scrollLeft;
+  if (editorLineNumbers) editorLineNumbers.scrollTop = editorBody.scrollTop;
 });
 
 editorBody.addEventListener("keydown", (event) => {
+
+  if (event.key === ">" && editorContentType === "page") {
+    const cursor = editorBody.selectionStart;
+    const sourceBeforeCursor = editorBody.value.slice(0, cursor);
+    const openingTag = sourceBeforeCursor.match(/<([a-z][\w:-]*)(?:\s[^<>]*)?$/i);
+    const voidTags = new Set([
+      "area", "base", "br", "col", "embed", "hr", "img", "input",
+      "link", "meta", "param", "source", "track", "wbr"
+    ]);
+
+    if (
+      openingTag &&
+      !sourceBeforeCursor.endsWith("/") &&
+      !voidTags.has(openingTag[1].toLowerCase())
+    ) {
+      event.preventDefault();
+      const closingTag = `</${openingTag[1]}>`;
+      editorBody.setRangeText(`>${closingTag}`, cursor, cursor, "end");
+      editorBody.setSelectionRange(cursor + 1, cursor + 1);
+      editorBody.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+  }
 
   if (event.key !== "Tab") {
     return;
@@ -2739,6 +2764,13 @@ function updateSourceHighlight() {
   if (!editorHighlight) return;
 
   const source = String(editorBody.value || "");
+  if (editorLineNumbers) {
+    const lineCount = Math.max(1, source.split("\n").length);
+    editorLineNumbers.textContent = Array.from(
+      { length: lineCount },
+      (_item, index) => String(index + 1)
+    ).join("\n");
+  }
   const tokenPattern = /({%[\s\S]*?%}|{{[\s\S]*?}}|<!--[\s\S]*?-->|<\/?[a-zA-Z][^>]*>|^#{1,6}\s.*$)/gm;
   let cursor = 0;
   let highlighted = "";

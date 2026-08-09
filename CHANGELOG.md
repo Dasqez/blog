@@ -16,6 +16,9 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Edytor treści
 
+- Dodano numerację linii zsynchronizowaną z przewijaniem edytora kodu.
+- Dodano automatyczne domykanie wpisywanych tagów HTML z pominięciem elementów pustych, takich jak `img`, `br` i `input`.
+- Wyłączono zawijanie długich linii w trybie kodu, aby numeracja, zaznaczenie i warstwa kolorowania pozostawały zsynchronizowane.
 - Dodano pełnoekranowy tryb edytora z możliwością szybkiego powrotu do widoku panelowego.
 - Dodano trzy tryby przestrzeni roboczej: tylko kod, kod z podglądem oraz tylko podgląd.
 - Dodano dynamiczną etykietę formatu: „Markdown” dla wpisów oraz „HTML / Liquid” i „Kod strony” dla stron.
