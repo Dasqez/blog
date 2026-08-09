@@ -34,7 +34,7 @@ const ADMIN_MEDIA_API_URL =
 const ADMIN_DELETE_MEDIA_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/media/delete";  
 
-const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV091";
+const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV092";
 const EDITOR_AUTOSAVE_INTERVAL_MS = 30000;
 const EDITOR_AUTOSAVE_TOAST_DURATION_MS = 3000;
 
@@ -108,6 +108,7 @@ const editorTitle = document.getElementById("editorTitle");
 const editorSlug = document.getElementById("editorSlug");
 const editorDate = document.getElementById("editorDate");
 const editorLayout = document.getElementById("editorLayout");
+const editorTags = document.getElementById("editorTags");
 const editorBody = document.getElementById("editorBody");
 const editorLineNumbers = document.getElementById("editorLineNumbers");
 const editorHighlight = document.getElementById("editorHighlight");
@@ -136,6 +137,10 @@ const editorTitleField = document.getElementById("editorTitleField");
 const editorSlugField = document.getElementById("editorSlugField");
 const editorDateField = document.getElementById("editorDateField");
 const editorLayoutField = document.getElementById("editorLayoutField");
+const editorTagsField = document.getElementById("editorTagsField");
+const previewPostMeta = document.getElementById("previewPostMeta");
+const previewReadingTime = document.getElementById("previewReadingTime");
+const previewTags = document.getElementById("previewTags");
 const markdownPreview =
   document.getElementById("markdownPreview");
 
@@ -250,6 +255,7 @@ let editorBaseline = "";
 let lastSavedDraftValues = "";
 let editorDraftToastTimeout = null;
 let editorAutosaveTimeout = null;
+let editorTagsDraftTimeout = null;
 let editorHistory = [];
 let editorHistoryIndex = -1;
 let applyingEditorHistory = false;
@@ -630,13 +636,18 @@ function replaceAllEditorMatches() {
   refreshEditorFindMatches();
 }
 
-[editorTitle, editorSlug, editorDate, editorLayout, editorBody].forEach(
+[editorTitle, editorSlug, editorDate, editorLayout, editorTags, editorBody].forEach(
   (field) => {
     field.addEventListener("input", scheduleEditorAutosave);
     field.addEventListener("change", scheduleEditorAutosave);
     field.addEventListener("input", () => setEditorSaveStatus("editing", "Niezapisane zmiany"));
   }
 );
+
+editorTags.addEventListener("input", () => {
+  window.clearTimeout(editorTagsDraftTimeout);
+  editorTagsDraftTimeout = window.setTimeout(saveEditorDraft, 500);
+});
 
 editorBody.addEventListener("input", () => rememberEditorHistory());
 editorHistoryButtons.forEach((button) => button.addEventListener("click", () => moveEditorHistory(button.dataset.editorHistory)));
@@ -705,7 +716,8 @@ savePostButton.addEventListener("click", async () => {
             slug: editorSlug.value.trim(),
             date: editorDateToJekyll(editorDate.value),
             layout: editorLayout.value.trim(),
-            body: editorBody.value,
+            tags: parsePostTags(editorTags.value),
+            body: getPostBodyForSave(),
           }),
         }
       );
@@ -834,7 +846,8 @@ savePostButton.addEventListener("click", async () => {
           title,
           date: jekyllDate,
           layout,
-          body: editorBody.value,
+          tags: parsePostTags(editorTags.value),
+          body: getPostBodyForSave(),
         }),
       }
     );
@@ -1401,6 +1414,8 @@ async function loadPosts(forceRefresh = false) {
       ? result.posts
       : [];
 
+    await enrichPostsWithMetadata(posts);
+
     postsLoaded = true;
 
     if (selectedPost) {
@@ -1433,6 +1448,29 @@ async function loadPosts(forceRefresh = false) {
   }
 }
 
+async function enrichPostsWithMetadata(postItems) {
+  await Promise.all(postItems.map(async (post) => {
+    if (!post?.path || post.body || getPostTags(post).length) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${ADMIN_POST_API_URL}?path=${encodeURIComponent(post.path)}`,
+        { headers: { Authorization: `Bearer ${adminSecret}` } }
+      );
+      const result = await response.json();
+
+      if (response.ok && result.success === true && result.post) {
+        post.body = result.post.body || "";
+        post.tags = getPostTags(result.post);
+      }
+    } catch {
+      // Lista pozostaje dostępna nawet, gdy szczegóły pojedynczego wpisu zawiodą.
+    }
+  }));
+}
+
 function renderPosts() {
   postsList.innerHTML = "";
 
@@ -1460,7 +1498,16 @@ function renderPosts() {
     date.className = "post-date";
     date.textContent = formatDate(post.date);
 
-    item.append(title, date);
+    const meta = document.createElement("span");
+    meta.className = "post-item-meta";
+    const readingTime = getReadingTime(post.body || post.excerpt || "");
+    const tags = getPostTags(post);
+    meta.textContent = [
+      `${readingTime} min czytania`,
+      tags.length ? tags.map((tag) => `#${tag}`).join(" ") : "",
+    ].filter(Boolean).join(" · ");
+
+    item.append(title, date, meta);
 
     item.addEventListener("click", () => {
       selectPost(post, item);
@@ -1518,6 +1565,12 @@ function selectPost(post, item) {
   previewDate.textContent =
     formatDate(post.date);
 
+  const tags = getPostTags(post);
+  previewReadingTime.textContent =
+    `${getReadingTime(post.body || post.excerpt || "")} min czytania`;
+  previewTags.textContent = tags.map((tag) => `#${tag}`).join(" ");
+  previewPostMeta.hidden = false;
+
   previewExcerpt.textContent =
     post.excerpt ||
     "Ten wpis nie ma krótkiego opisu.";
@@ -1537,6 +1590,9 @@ function selectPost(post, item) {
 function resetPostPreview() {
   previewTitle.textContent = "Wybierz wpis";
   previewDate.textContent = "";
+  previewPostMeta.hidden = true;
+  previewReadingTime.textContent = "";
+  previewTags.textContent = "";
   previewExcerpt.textContent =
     "Po kliknięciu wpisu zobaczysz tutaj jego opis.";
 
@@ -1672,6 +1728,7 @@ function configureEditorForContentType(type) {
   editorSlugField.hidden = isPage;
   editorDateField.hidden = isPage;
   editorLayoutField.hidden = isPage;
+  editorTagsField.hidden = isPage;
   if (editorFormatBadge) editorFormatBadge.textContent = isPage ? "HTML / Liquid" : "Markdown";
   if (editorSourceLabel) editorSourceLabel.textContent = isPage ? "Kod strony" : "Markdown";
   document.querySelector(".markdown-toolbar")?.setAttribute("aria-label", isPage ? "Narzędzia HTML i Liquid" : "Narzędzia Markdown");
@@ -1699,6 +1756,7 @@ async function openPageEditor(page) {
     editorSlug.value = "";
     editorDate.value = "";
     editorLayout.value = "";
+    editorTags.value = "";
     editorBody.value = result.page.source ?? result.page.body ?? "";
     setEditorBaseline();
     restoreEditorDraft();
@@ -1792,8 +1850,10 @@ async function openPostEditor(post) {
     editorLayout.value =
       result.post.layout || "post-layout.html";
 
+    editorTags.value = getPostTags(result.post).join(", ");
+
     editorBody.value =
-      result.post.body || "";
+      stripPostTagsMetadata(result.post.body || "");
 
     setEditorBaseline();
     restoreEditorDraft();
@@ -1838,6 +1898,7 @@ function createNewPost() {
   editorDate.value =
     formatEditorDate(new Date());
   editorLayout.value = "post-layout.html";
+  editorTags.value = "";
   editorBody.value = "";
   setEditorBaseline();
   restoreEditorDraft();
@@ -1858,6 +1919,7 @@ function createNewPost() {
 
   previewTitle.textContent = "Nowy wpis";
   previewDate.textContent = "";
+  previewPostMeta.hidden = true;
   previewExcerpt.textContent =
     "Wypełnij formularz, aby utworzyć nowy wpis.";
 
@@ -1892,6 +1954,7 @@ function closePostEditor(options = {}) {
   }
   editorSuspendedForMedia = false;
   window.clearTimeout(editorAutosaveTimeout);
+  window.clearTimeout(editorTagsDraftTimeout);
 
   editedPost = null;
   editedPage = null;
@@ -1903,6 +1966,7 @@ function closePostEditor(options = {}) {
   editorSlug.value = "";
   editorDate.value = "";
   editorLayout.value = "";
+  editorTags.value = "";
   editorBody.value = "";
   editorBaseline = "";
   renderMarkdownPreview();
@@ -1923,6 +1987,7 @@ function getEditorValues() {
     slug: editorSlug.value,
     date: editorDate.value,
     layout: editorLayout.value,
+    tags: editorTags.value,
     body: editorBody.value,
   };
 }
@@ -2052,6 +2117,7 @@ function restoreEditorDraft() {
   editorSlug.value = draft.slug || "";
   editorDate.value = draft.date || "";
   editorLayout.value = draft.layout || (editorContentType === "post" ? "post-layout.html" : "");
+  editorTags.value = draft.tags || "";
   editorBody.value = draft.body || "";
   slugEditedManually = editorContentType === "page" || Boolean(editorSlug.value);
   lastSavedDraftValues = serializeEditorValues();
@@ -4050,6 +4116,70 @@ function formatFileSize(bytes) {
     size /
     (1024 * 1024)
   ).toFixed(1)} MB`;
+}
+
+function normalizePostTags(tags) {
+  if (Array.isArray(tags)) {
+    return [...new Set(tags.map((tag) => String(tag).trim()).filter(Boolean))];
+  }
+
+  return [...new Set(String(tags || "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean))];
+}
+
+const POST_TAGS_METADATA_PATTERN =
+  /^\s*<!--\s*cms-tags:\s*(\[[\s\S]*?\])\s*-->\s*/i;
+
+function extractPostTagsMetadata(content) {
+  const match = String(content || "").match(POST_TAGS_METADATA_PATTERN);
+  if (!match) {
+    return [];
+  }
+
+  try {
+    return normalizePostTags(JSON.parse(match[1]));
+  } catch {
+    return [];
+  }
+}
+
+function stripPostTagsMetadata(content) {
+  return String(content || "").replace(POST_TAGS_METADATA_PATTERN, "");
+}
+
+function getPostTags(post) {
+  const explicitTags = normalizePostTags(post?.tags);
+  if (explicitTags.length) {
+    return explicitTags;
+  }
+
+  return extractPostTagsMetadata(post?.body || post?.excerpt || "");
+}
+
+function getPostBodyForSave() {
+  const body = stripPostTagsMetadata(editorBody.value);
+  const tags = parsePostTags(editorTags.value);
+
+  return tags.length
+    ? `<!-- cms-tags: ${JSON.stringify(tags)} -->\n\n${body}`
+    : body;
+}
+
+function parsePostTags(value) {
+  return normalizePostTags(value);
+}
+
+function getReadingTime(content) {
+  const plainText = String(content || "")
+    .replace(/^---[\s\S]*?---/, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[[^\]]+\]\([^)]*\)/g, " ")
+    .replace(/[`*_>#~-]/g, " ");
+  const words = plainText.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 200));
 }
 
 /* =========================================================

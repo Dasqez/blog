@@ -31,6 +31,8 @@ Status: gotowy do testów na localhost.
 
 ## Etap 3 — wpisy, tagi i czas czytania
 
+Status: gotowy do testów na localhost.
+
 - rozwinięte zarządzanie wpisami,
 - tagi widoczne w CMS, na stronie głównej i przy wpisie,
 - automatyczny czas czytania widoczny w CMS, na stronie głównej i przy wpisie.

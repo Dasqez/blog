@@ -51,6 +51,27 @@
       color: #888;
       margin-bottom: 30px;
     }
+    .post-meta-line {
+      display: flex;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      color: #888;
+      font-size: 0.85rem;
+    }
+    .post-tags {
+      display: flex;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .post-tags span {
+      padding: 4px 9px;
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      color: #555;
+      font-size: 0.78rem;
+    }
     .post-body {
       font-size: 1.1rem;
       line-height: 1.7;
@@ -151,7 +172,17 @@
     <main>
       <article>
         <h1>{{ title }}</h1>
-        <div class="post-date">Opublikowano: {{ date | date: "%d.%m.%Y" }}</div>
+        <div class="post-meta-line">
+          <span>Opublikowano: {{ date | date: "%d.%m.%Y" }}</span>
+          <span>{{ content | readingTime }} min czytania</span>
+        </div>
+        {% assign visibleTags = tags %}
+        {% unless visibleTags %}{% assign visibleTags = content | postTags %}{% endunless %}
+        {% if visibleTags.size > 0 %}
+          <div class="post-tags" aria-label="Tagi wpisu">
+            {% for tag in visibleTags %}<span>#{{ tag }}</span>{% endfor %}
+          </div>
+        {% endif %}
         
         <div class="post-body">
           {{ content }}

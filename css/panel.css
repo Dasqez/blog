@@ -731,6 +731,29 @@ button:disabled {
   opacity: 0.7;
 }
 
+.post-item-meta {
+  display: block;
+  margin-top: 6px;
+  overflow: hidden;
+  font-size: 0.78rem;
+  opacity: 0.72;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-meta-summary {
+  display: flex;
+  margin: 10px 0 18px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.78rem;
+}
+
+.post-meta-summary[hidden] { display: none; }
+.post-meta-summary .post-tags { color: var(--text); }
+
 .post-preview {
   min-width: 0;
   padding: 30px;
@@ -977,6 +1000,11 @@ button:disabled {
 .editor-field input:focus {
   border-color: var(--text);
   box-shadow: 0 0 0 3px rgba(21, 21, 21, 0.08);
+}
+
+.editor-field small {
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 #editorTitle {

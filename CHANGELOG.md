@@ -6,6 +6,10 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Rozszerzono zarządzanie wpisami o edycję tagów, ich zapis w API oraz obsługę w lokalnych szkicach.
+- Dostosowano zapis tagów do istniejącego API Workera przez niewidoczne metadane w treści wpisu oraz dodano ich natychmiastowy zapis w szkicu lokalnym.
+- Dodano tagi i automatyczny czas czytania na liście oraz w podglądzie wpisów w CMS.
+- Dodano tagi i automatyczny czas czytania na stronie głównej oraz przy pełnej treści wpisu.
 - Dodano obsługę tworzenia nowych wpisów oraz edycji istniejących wpisów z poziomu panelu.
 - Dodano osobny widok zarządzania stronami statycznymi.
 - Dodano pobieranie, wyszukiwanie, wybieranie i edycję stron HTML/Liquid.

@@ -14,7 +14,17 @@
         
         <div class="post-content">
             <h2><a href="{{ post.url }}">{{ post.data.title }}</a></h2>
-            <span class="date">{{ post.date | date: "%d.%m.%Y" }}</span>
+            <div class="post-meta-line">
+                <span class="date">{{ post.date | date: "%d.%m.%Y" }}</span>
+                <span>{{ post.templateContent | readingTime }} min czytania</span>
+            </div>
+            {% assign visibleTags = post.data.tags %}
+            {% unless visibleTags %}{% assign visibleTags = post.templateContent | postTags %}{% endunless %}
+            {% if visibleTags.size > 0 %}
+                <div class="post-tags" aria-label="Tagi wpisu">
+                    {% for tag in visibleTags %}<span>#{{ tag }}</span>{% endfor %}
+                </div>
+            {% endif %}
             <div class="excerpt">
                 {{ post.data.page.excerpt }}
                 <p><a href="{{ post.url }}" class="read-more">Czytaj dalej...</a></p>

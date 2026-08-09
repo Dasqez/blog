@@ -452,6 +452,11 @@
 
       <p id="previewDate" class="post-date"></p>
 
+      <div id="previewPostMeta" class="post-meta-summary" hidden>
+        <span id="previewReadingTime"></span>
+        <span id="previewTags" class="post-tags"></span>
+      </div>
+
       <p id="previewExcerpt">
         Po kliknięciu wpisu zobaczysz tutaj jego opis.
       </p>
@@ -685,6 +690,20 @@
         type="text"
         id="editorLayout"
       >
+    </div>
+
+    <div
+      class="editor-field"
+      id="editorTagsField"
+    >
+      <label for="editorTags">Tagi</label>
+      <input
+        type="text"
+        id="editorTags"
+        placeholder="np. technologia, życie, minimalizm"
+        autocomplete="off"
+      >
+      <small>Oddziel tagi przecinkami.</small>
     </div>
 
   </div>

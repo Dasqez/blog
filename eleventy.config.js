@@ -1,4 +1,30 @@
 export default function(eleventyConfig) {
+  eleventyConfig.addFilter("readingTime", function(content) {
+    const plainText = String(content || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+      .replace(/\[[^\]]+\]\([^)]*\)/g, " ")
+      .replace(/[`*_>#~-]/g, " ");
+    const words = plainText.trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(1, Math.ceil(words / 200));
+  });
+
+  eleventyConfig.addFilter("postTags", function(content) {
+    const match = String(content || "").match(
+      /<!--\s*cms-tags:\s*(\[[\s\S]*?\])\s*-->/i
+    );
+    if (!match) return [];
+
+    try {
+      const tags = JSON.parse(match[1]);
+      return Array.isArray(tags)
+        ? [...new Set(tags.map((tag) => String(tag).trim()).filter(Boolean))]
+        : [];
+    } catch {
+      return [];
+    }
+  });
+
   // Przekazywanie folderu panelu administratora
   eleventyConfig.addPassthroughCopy("admin");
 

@@ -152,6 +152,34 @@
             margin-bottom: 20px; 
             display: block; 
         }
+
+        .post-meta-line {
+            display: flex;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            color: #666;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+        }
+
+        .post-meta-line .date { margin-bottom: 0; }
+
+        .post-tags {
+            display: flex;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .post-tags span {
+            padding: 3px 8px;
+            border: 1px solid #ddd;
+            border-radius: 999px;
+            color: #555;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.72rem;
+        }
         
         .post-content .excerpt { 
             font-size: 1.05rem; 
