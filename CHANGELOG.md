@@ -6,6 +6,13 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Rozbudowano dashboard CMS o liczniki wpisów, stron, obrazów, subskrybentów i wysłanych newsletterów.
+- Dodano wielokrotne zaznaczanie obrazów w bibliotece mediów za pomocą `Ctrl`/`Cmd`, widoczne znaczniki wyboru oraz grupowe usuwanie z postępem i jednym potwierdzeniem.
+- Dodano widoczny postęp grupowego usuwania w głównej części biblioteki oraz 30-sekundowy limit oczekiwania na każdy plik, aby operacja nie wyglądała na zawieszoną.
+- Zastąpiono sekwencyjne usuwanie mediów jednym zbiorczym commitem GitHuba oraz dodano graficzne okno postępu z paskiem i możliwością anulowania żądania.
+- Wyśrodkowano całą kartę pustej biblioteki mediów w dostępnej przestrzeni, wraz z ikoną, nagłówkiem, opisem i bezpiecznymi odstępami.
+- Dodano zestawienie ostatnio edytowanych wpisów, ostatniej wysyłki oraz wizualne statystyki struktury treści, dostarczalności i aktywnych subskrypcji.
+- Naprawiono niewidoczną wartość licznika newsletterów i ujednolicono jego kartę z pozostałymi elementami dashboardu na białym tle.
 - Ujednolicono kolejność stron w CMS z publiczną nawigacją: Strona główna jest przypięta na pierwszej pozycji, a pozostałe strony zachowują kolejność zapisaną w panelu.
 - Naprawiono publikację nowych stron: operacje tworzenia, duplikowania, usuwania i zmiany kolejności synchronizują teraz nawigację oraz sekcje publicznej strony głównej.
 - Dodano ponawianie zapisu publicznego `index.html` po konflikcie wersji GitHuba oraz przerwano zgłaszanie sukcesu, gdy synchronizacja strony faktycznie się nie powiedzie.

@@ -240,32 +240,42 @@
           <div class="stats-grid">
             <article class="stat-card">
               <div class="stat-card-header">
-                <span>Wszyscy zapisani</span>
+                <span>Wpisy</span>
+                <i class="fa-regular fa-file-lines"></i>
+              </div>
+
+              <strong id="dashboardPostsStat">—</strong>
+              <p>Opublikowane wpisy blogowe</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Strony</span>
+                <i class="fa-regular fa-file-code"></i>
+              </div>
+
+              <strong id="dashboardPagesStat">—</strong>
+              <p>Stałe strony serwisu</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Obrazy</span>
+                <i class="fa-regular fa-images"></i>
+              </div>
+
+              <strong id="dashboardImagesStat">—</strong>
+              <p>Pliki w bibliotece mediów</p>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-card-header">
+                <span>Subskrybenci</span>
                 <i class="fa-solid fa-users"></i>
               </div>
 
               <strong id="totalSubscribers">—</strong>
-              <p>Wszystkie adresy w bazie</p>
-            </article>
-
-            <article class="stat-card">
-              <div class="stat-card-header">
-                <span>Aktywni</span>
-                <i class="fa-regular fa-circle-check"></i>
-              </div>
-
-              <strong id="activeSubscribers">—</strong>
-              <p>Potwierdzone subskrypcje</p>
-            </article>
-
-            <article class="stat-card">
-              <div class="stat-card-header">
-                <span>Oczekujący</span>
-                <i class="fa-regular fa-clock"></i>
-              </div>
-
-              <strong id="pendingSubscribers">—</strong>
-              <p>Niepotwierdzone adresy</p>
+              <p><span id="activeSubscribers">—</span> aktywnych · <span id="pendingSubscribers">—</span> oczekujących</p>
             </article>
 
             <article class="stat-card">
@@ -273,9 +283,8 @@
                 <span>Newslettery</span>
                 <i class="fa-regular fa-paper-plane"></i>
               </div>
-
               <strong id="totalNewsletters">—</strong>
-              <p>Liczba zakończonych wysyłek</p>
+              <p>Zakończone wysyłki</p>
             </article>
           </div>
 
@@ -372,7 +381,7 @@
 
             <article class="content-card">
               <div class="card-heading">
-                <div><p class="section-kicker">Treść</p><h3>Ostatnio aktualizowane</h3></div>
+                <div><p class="section-kicker">Treść</p><h3>Ostatnio edytowane wpisy</h3></div>
               </div>
               <div id="dashboardRecentContent" class="dashboard-recent-content" aria-live="polite">
                 <p class="dashboard-empty">Dane zostaną pobrane po otwarciu dashboardu.</p>
@@ -381,6 +390,17 @@
                 <span><strong id="dashboardPostsCount">—</strong> wpisów</span>
                 <span><strong id="dashboardPagesCount">—</strong> stron</span>
               </div>
+            </article>
+          </div>
+
+          <div class="dashboard-insights-grid">
+            <article class="content-card">
+              <div class="card-heading"><div><p class="section-kicker">Statystyki</p><h3>Struktura treści</h3></div></div>
+              <div class="dashboard-metrics" id="dashboardContentMetrics"><p class="dashboard-empty">Pobieranie danych…</p></div>
+            </article>
+            <article class="content-card">
+              <div class="card-heading"><div><p class="section-kicker">Skuteczność</p><h3>Newsletter</h3></div></div>
+              <div class="dashboard-metrics" id="dashboardNewsletterMetrics"><p class="dashboard-empty">Pobieranie danych…</p></div>
             </article>
           </div>
         </section>
@@ -1394,6 +1414,18 @@
     </div>
 
 </aside>
+
+<dialog id="mediaDeleteProgressDialog" class="media-delete-progress-dialog">
+  <div class="media-delete-progress-content">
+    <span class="media-delete-progress-icon"><i class="fa-regular fa-trash-can"></i></span>
+    <p class="section-kicker">Biblioteka mediów</p>
+    <h2 id="mediaDeleteProgressTitle">Usuwanie obrazów</h2>
+    <p id="mediaDeleteProgressText">Przygotowanie operacji…</p>
+    <div class="media-delete-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="mediaDeleteProgressBar"></span></div>
+    <strong id="mediaDeleteProgressValue">0%</strong>
+    <button id="cancelMediaDeleteButton" type="button" class="secondary-button">Anuluj</button>
+  </div>
+</dialog>
 
     <div
     id="editorOverlay"

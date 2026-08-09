@@ -46,6 +46,8 @@ const ADMIN_MEDIA_API_URL =
 
 const ADMIN_DELETE_MEDIA_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/media/delete";  
+const ADMIN_BULK_DELETE_MEDIA_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/media/delete-bulk";
 
 const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV092";
 const EDITOR_AUTOSAVE_INTERVAL_MS = 30000;
@@ -105,6 +107,8 @@ const reloadPostsButton =
 const newPostButton = document.getElementById("newPostButton");
 const dashboardNewPost = document.getElementById("dashboardNewPost");
 const dashboardRecentContent = document.getElementById("dashboardRecentContent");
+const dashboardContentMetrics = document.getElementById("dashboardContentMetrics");
+const dashboardNewsletterMetrics = document.getElementById("dashboardNewsletterMetrics");
 const pagesList = document.getElementById("pagesList");
 const pagesSearchInput = document.getElementById("pagesSearchInput");
 const reloadPagesButton = document.getElementById("reloadPagesButton");
@@ -243,9 +247,15 @@ const insertMediaButton =
     );
 
 const deleteMediaButton =
-    document.getElementById(
-        "deleteMediaButton"
-    );
+document.getElementById(
+    "deleteMediaButton"
+);
+const mediaDeleteProgressDialog = document.getElementById("mediaDeleteProgressDialog");
+const mediaDeleteProgressTitle = document.getElementById("mediaDeleteProgressTitle");
+const mediaDeleteProgressText = document.getElementById("mediaDeleteProgressText");
+const mediaDeleteProgressBar = document.getElementById("mediaDeleteProgressBar");
+const mediaDeleteProgressValue = document.getElementById("mediaDeleteProgressValue");
+const cancelMediaDeleteButton = document.getElementById("cancelMediaDeleteButton");
 
 const copyMediaName =
     document.getElementById("copyMediaName");
@@ -286,6 +296,7 @@ let mediaItems = [];
 let mediaLoaded = false;
 let selectedMedia = null;
 let selectedMediaCard = null;
+const selectedMediaPaths = new Set();
 let mediaTypeFilter = "all";
 let mediaSortOrder = "newest";
 let editorSuspendedForMedia = false;
@@ -299,6 +310,9 @@ let editorHistoryIndex = -1;
 let applyingEditorHistory = false;
 let editorFindMatches = [];
 let editorFindIndex = -1;
+let dashboardSummary = null;
+let mediaDeleteController = null;
+let mediaDeleteProgressTimer = null;
 
 /* =========================================================
    LISTENERY
@@ -308,6 +322,15 @@ deleteMediaButton?.addEventListener(
   "click",
   deleteSelectedMedia
 );
+cancelMediaDeleteButton?.addEventListener("click", () => {
+  if (mediaDeleteController) {
+    cancelMediaDeleteButton.disabled = true;
+    mediaDeleteProgressText.textContent = "Anulowanie i sprawdzanie stanu biblioteki…";
+    mediaDeleteController.abort();
+  } else {
+    mediaDeleteProgressDialog?.close();
+  }
+});
 
 insertMediaButton?.addEventListener("click", insertSelectedMediaToEditor);
 
@@ -488,6 +511,8 @@ deletePostButton.addEventListener("click", async () => {
   if (!confirmed) {
     return;
   }
+
+  const deletedPaths = new Set();
 
   deletePostButton.disabled = true;
   deletePostButton.textContent = "Usuwanie...";
@@ -1277,6 +1302,7 @@ async function loadDashboardData() {
 }
 
 function renderData(data) {
+  dashboardSummary = data;
   const subscribers = data.subscribers;
   const newsletters = data.newsletters;
   const deliveries = data.deliveries;
@@ -1319,6 +1345,7 @@ function renderData(data) {
     "newsletterFailedDeliveries",
     deliveries.failed
   );
+  renderDashboardInsights();
 }
 
 /* =========================================================
@@ -1396,14 +1423,15 @@ function openView(viewName) {
 async function loadDashboardContentOverview() {
   if (!dashboardRecentContent) return;
   dashboardRecentContent.innerHTML = '<p class="dashboard-empty">Pobieranie ostatnich treści…</p>';
-  await Promise.all([loadPosts(), loadPages()]);
+  await Promise.all([loadPosts(), loadPages(), loadMedia()]);
   setText("dashboardPostsCount", posts.length);
   setText("dashboardPagesCount", pages.length);
+  setText("dashboardPostsStat", posts.length);
+  setText("dashboardPagesStat", pages.length);
+  setText("dashboardImagesStat", mediaItems.length);
 
-  const entries = [
-    ...posts.map((item) => ({ type: "post", item, title: item.title || item.name, date: item.updatedAt || item.date })),
-    ...pages.map((item) => ({ type: "page", item, title: item.title || item.name, date: item.updatedAt || item.date }))
-  ].sort((left, right) => (Date.parse(right.date || "") || 0) - (Date.parse(left.date || "") || 0)).slice(0, 5);
+  const entries = posts.map((item) => ({ type: "post", item, title: item.title || item.name, date: item.updatedAt || item.date }))
+    .sort((left, right) => (Date.parse(right.date || "") || 0) - (Date.parse(left.date || "") || 0)).slice(0, 5);
 
   dashboardRecentContent.innerHTML = "";
   if (!entries.length) {
@@ -1419,6 +1447,36 @@ async function loadDashboardContentOverview() {
     button.addEventListener("click", () => type === "page" ? openPageEditor(item) : openPostEditor(item));
     dashboardRecentContent.appendChild(button);
   });
+  renderDashboardInsights();
+}
+
+function createDashboardMetric(label, value, maximum, detail) {
+  const percentage = maximum > 0 ? Math.min(100, Math.max(0, Math.round((value / maximum) * 100))) : 0;
+  return `<div class="dashboard-metric"><div><span>${escapePreviewHtml(label)}</span><strong>${escapePreviewHtml(detail ?? String(value))}</strong></div><div class="dashboard-metric-track" aria-hidden="true"><span style="width:${percentage}%"></span></div></div>`;
+}
+
+function renderDashboardInsights() {
+  if (dashboardContentMetrics) {
+    const maximum = Math.max(1, posts.length, pages.length, mediaItems.length);
+    dashboardContentMetrics.innerHTML = [
+      createDashboardMetric("Wpisy", posts.length, maximum),
+      createDashboardMetric("Strony", pages.length, maximum),
+      createDashboardMetric("Obrazy", mediaItems.length, maximum),
+    ].join("");
+  }
+
+  if (dashboardNewsletterMetrics && dashboardSummary) {
+    const { subscribers, deliveries } = dashboardSummary;
+    const deliveryTotal = Number(deliveries.sent || 0) + Number(deliveries.failed || 0);
+    const deliveryRate = deliveryTotal ? Math.round((Number(deliveries.sent || 0) / deliveryTotal) * 100) : 0;
+    const subscriberTotal = Number(subscribers.total || 0);
+    const activeRate = subscriberTotal ? Math.round((Number(subscribers.active || 0) / subscriberTotal) * 100) : 0;
+    dashboardNewsletterMetrics.innerHTML = [
+      createDashboardMetric("Dostarczalność", deliveryRate, 100, `${deliveryRate}%`),
+      createDashboardMetric("Aktywni subskrybenci", activeRate, 100, `${activeRate}%`),
+      createDashboardMetric("Oczekujące wysyłki", Number(deliveries.pending || 0), Math.max(1, deliveryTotal), String(deliveries.pending || 0)),
+    ].join("");
+  }
 }
 
 /* =========================================================
@@ -3455,16 +3513,90 @@ function showToast({
 
 }
 
+function setMediaDeleteProgress(value, text) {
+  const progress = Math.min(100, Math.max(0, Math.round(value)));
+  if (mediaDeleteProgressBar) mediaDeleteProgressBar.style.width = `${progress}%`;
+  if (mediaDeleteProgressValue) mediaDeleteProgressValue.textContent = `${progress}%`;
+  if (mediaDeleteProgressText && text) mediaDeleteProgressText.textContent = text;
+  mediaDeleteProgressDialog?.querySelector('[role="progressbar"]')?.setAttribute("aria-valuenow", String(progress));
+}
+
 async function deleteSelectedMedia() {
-  if (!selectedMedia) {
+  const items = selectedMediaPaths.size
+    ? mediaItems.filter((item) => selectedMediaPaths.has(item.path))
+    : selectedMedia ? [selectedMedia] : [];
+  if (!items.length) return;
+
+  const confirmed = window.confirm(items.length === 1
+    ? `Czy na pewno chcesz usunąć obraz?\n\n${items[0].name}\n\nTej operacji nie można cofnąć z poziomu panelu.`
+    : `Czy na pewno chcesz usunąć ${items.length} zaznaczonych obrazów w jednym commicie?\n\nTej operacji nie można cofnąć z poziomu panelu.`);
+  if (!confirmed) return;
+
+  mediaDeleteController = new AbortController();
+  cancelMediaDeleteButton.disabled = false;
+  cancelMediaDeleteButton.textContent = "Anuluj";
+  mediaDeleteProgressTitle.textContent = `Usuwanie ${items.length} ${items.length === 1 ? "obrazu" : "obrazów"}`;
+  setMediaDeleteProgress(8, "Przygotowanie jednego zbiorczego commita…");
+  mediaDeleteProgressDialog.showModal();
+  deleteMediaButton.disabled = true;
+
+  let simulatedProgress = 8;
+  mediaDeleteProgressTimer = window.setInterval(() => {
+    simulatedProgress = Math.min(90, simulatedProgress + Math.max(1, Math.round((92 - simulatedProgress) / 8)));
+    setMediaDeleteProgress(simulatedProgress, simulatedProgress < 55 ? "Weryfikowanie plików…" : "Zapisywanie zmian w GitHubie…");
+  }, 450);
+
+  try {
+    const response = await fetch(ADMIN_BULK_DELETE_MEDIA_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
+      body: JSON.stringify({ items: items.map(({ name, path, sha }) => ({ name, path, sha })) }),
+      signal: mediaDeleteController.signal,
+    });
+    const result = await response.json();
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Nie udało się usunąć obrazów.");
+
+    const deletedPaths = new Set(items.map((item) => item.path));
+    mediaItems = mediaItems.filter((item) => !deletedPaths.has(item.path));
+    selectedMediaPaths.clear();
+    closeMediaPanel();
+    selectedMediaCard = null;
+    renderMedia();
+    setMediaDeleteProgress(100, `Usunięto ${items.length} ${items.length === 1 ? "obraz" : "obrazów"} w jednym commicie.`);
+    cancelMediaDeleteButton.disabled = true;
+    showToast({ title: "Biblioteka mediów", message: `Usunięto ${items.length} ${items.length === 1 ? "obraz" : "obrazów"}.`, type: "success", duration: 3500 });
+    window.setTimeout(() => mediaDeleteProgressDialog.close(), 1000);
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      setMediaDeleteProgress(0, "Operacja została anulowana. Odświeżam bibliotekę…");
+      await loadMedia(true);
+      window.setTimeout(() => mediaDeleteProgressDialog.close(), 700);
+    } else {
+      setMediaDeleteProgress(0, error instanceof Error ? error.message : "Usuwanie nie powiodło się.");
+      cancelMediaDeleteButton.textContent = "Zamknij";
+      cancelMediaDeleteButton.disabled = false;
+    }
+  } finally {
+    window.clearInterval(mediaDeleteProgressTimer);
+    mediaDeleteProgressTimer = null;
+    mediaDeleteController = null;
+    updateMediaSelectionState();
+  }
+}
+
+async function deleteSelectedMediaSequential() {
+  const mediaToDelete = selectedMediaPaths.size
+    ? mediaItems.filter((item) => selectedMediaPaths.has(item.path))
+    : selectedMedia ? [selectedMedia] : [];
+
+  if (!mediaToDelete.length) {
     return;
   }
 
-  const mediaToDelete =
-    selectedMedia;
-
   const confirmed = window.confirm(
-    `Czy na pewno chcesz usunąć obraz?\n\n${mediaToDelete.name}\n\nTej operacji nie można cofnąć z poziomu panelu.`
+    mediaToDelete.length === 1
+      ? `Czy na pewno chcesz usunąć obraz?\n\n${mediaToDelete[0].name}\n\nTej operacji nie można cofnąć z poziomu panelu.`
+      : `Czy na pewno chcesz usunąć ${mediaToDelete.length} zaznaczonych obrazów?\n\nTej operacji nie można cofnąć z poziomu panelu.`
   );
 
   if (!confirmed) {
@@ -3476,61 +3608,72 @@ async function deleteSelectedMedia() {
     <i class="fa-solid fa-spinner fa-spin"></i>
     Usuwanie...
   `;
+  if (mediaUploadStatus) {
+    mediaUploadStatus.textContent = `Przygotowanie usuwania ${mediaToDelete.length} obrazów…`;
+    mediaUploadStatus.className = "media-upload-status is-working";
+  }
 
   try {
-    const response = await fetch(
-      ADMIN_DELETE_MEDIA_API_URL,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-          Authorization:
-            `Bearer ${adminSecret}`,
-        },
-        body: JSON.stringify({
-          name:
-            mediaToDelete.name,
-          path:
-            mediaToDelete.path,
-          sha:
-            mediaToDelete.sha,
-        }),
+    for (let index = 0; index < mediaToDelete.length; index += 1) {
+      const item = mediaToDelete[index];
+      deleteMediaButton.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Usuwanie ${index + 1}/${mediaToDelete.length}…`;
+      if (mediaUploadStatus) mediaUploadStatus.textContent = `Usuwanie ${index + 1} z ${mediaToDelete.length}: ${item.name}`;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 30000);
+      let response;
+      try {
+        response = await fetch(ADMIN_DELETE_MEDIA_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
+          body: JSON.stringify({ name: item.name, path: item.path, sha: item.sha }),
+          signal: controller.signal,
+        });
+      } catch (error) {
+        if (error?.name === "AbortError") throw new Error(`${item.name}: przekroczono 30 sekund oczekiwania na GitHub.`);
+        throw error;
+      } finally {
+        window.clearTimeout(timeout);
       }
-    );
-
-    const result =
-      await response.json();
-
-    if (
-      !response.ok ||
-      result.success !== true
-    ) {
-      throw new Error(
-        result.message ||
-          "Nie udało się usunąć obrazu."
-      );
+      const result = await response.json();
+      if (!response.ok || result.success !== true) {
+        throw new Error(`${item.name}: ${result.message || "Nie udało się usunąć obrazu."}`);
+      }
+      deletedPaths.add(item.path);
     }
 
     mediaItems = mediaItems.filter(
-      (item) =>
-        item.path !==
-        mediaToDelete.path
+      (item) => !deletedPaths.has(item.path)
     );
 
+    selectedMediaPaths.clear();
     closeMediaPanel();
 
     selectedMediaCard = null;
 
     renderMedia();
+    if (mediaUploadStatus) {
+      mediaUploadStatus.textContent = `Usunięto ${mediaToDelete.length} obrazów.`;
+      mediaUploadStatus.className = "media-upload-status is-success";
+    }
 
     showToast({
       title: "Biblioteka mediów",
-      message: "Obraz został usunięty. Cloudflare opublikuje nową wersję strony.",
+      message: mediaToDelete.length === 1
+        ? "Obraz został usunięty. Cloudflare opublikuje nową wersję strony."
+        : `Usunięto ${mediaToDelete.length} obrazów. Cloudflare opublikuje nowe wersje strony.`,
       type: "success",
       duration: 3000,
     });
   } catch (error) {
+    if (deletedPaths.size) {
+      mediaItems = mediaItems.filter((item) => !deletedPaths.has(item.path));
+      deletedPaths.forEach((path) => selectedMediaPaths.delete(path));
+      renderMedia();
+    }
+    if (mediaUploadStatus) {
+      mediaUploadStatus.textContent = error instanceof Error ? error.message : "Usuwanie obrazów nie powiodło się.";
+      mediaUploadStatus.className = "media-upload-status is-error";
+    }
     showToast({
       title: "Błąd usuwania obrazu",
       message: error instanceof Error
@@ -3540,11 +3683,7 @@ async function deleteSelectedMedia() {
       duration: 5000,
     });
   } finally {
-    deleteMediaButton.disabled = false;
-    deleteMediaButton.innerHTML = `
-      <i class="fa-regular fa-trash-can"></i>
-      Usuń
-    `;
+    updateMediaSelectionState();
   }
 }
 
@@ -4122,7 +4261,10 @@ function renderMedia() {
     card.draggable = true;
     card.title = "Kliknij, aby wybrać; przeciągnij do edytora";
     card.dataset.mediaName = item.name || "";
+    card.dataset.mediaPath = item.path || "";
     card._mediaItem = item;
+    card.classList.toggle("is-selected", selectedMediaPaths.has(item.path));
+    card.setAttribute("aria-pressed", String(selectedMediaPaths.has(item.path)));
 
     card.addEventListener("dragstart", (event) => {
       if (!hasActiveEditorSession()) {
@@ -4183,12 +4325,17 @@ function renderMedia() {
       size
     );
 
-    card.append(
-      image,
-      details
-    );
+    const selectionMark = document.createElement("span");
+    selectionMark.className = "media-selection-mark";
+    selectionMark.innerHTML = '<i class="fa-solid fa-check"></i>';
+    selectionMark.setAttribute("aria-hidden", "true");
 
-    card.addEventListener("click", () => selectMediaCard(card, item));
+    card.append(image, details, selectionMark);
+
+    card.addEventListener("click", (event) => {
+      const additive = event.ctrlKey || event.metaKey || Boolean(event.target.closest(".media-selection-mark"));
+      selectMediaCard(card, item, { additive, toggle: additive });
+    });
 
     card.addEventListener("dblclick", (event) => {
       event.preventDefault();
@@ -4201,10 +4348,35 @@ function renderMedia() {
 }
 
 function selectMediaCard(card, item, options = {}) {
+  if (!options.additive) {
+    selectedMediaPaths.clear();
+    mediaGrid?.querySelectorAll(".media-card.is-selected").forEach((element) => {
+      element.classList.remove("is-selected");
+      element.setAttribute("aria-pressed", "false");
+    });
+  }
+
+  if (options.toggle && selectedMediaPaths.has(item.path)) {
+    selectedMediaPaths.delete(item.path);
+    card.classList.remove("is-selected", "active", "keyboard-active");
+    card.setAttribute("aria-pressed", "false");
+    const fallbackPath = [...selectedMediaPaths].at(-1);
+    const fallbackCard = fallbackPath ? mediaGrid?.querySelector(`[data-media-path="${CSS.escape(fallbackPath)}"]`) : null;
+    if (fallbackCard?._mediaItem) {
+      selectMediaCard(fallbackCard, fallbackCard._mediaItem, { additive: true });
+    } else {
+      closeMediaPanel();
+      updateMediaSelectionState();
+    }
+    return;
+  }
+
   selectedMediaCard?.classList.remove("active", "keyboard-active");
   selectedMediaCard = card;
   selectedMedia = item;
-  card.classList.add("active");
+  selectedMediaPaths.add(item.path);
+  card.classList.add("active", "is-selected");
+  card.setAttribute("aria-pressed", "true");
 
   if (options.keyboard === true) {
     card.classList.add("keyboard-active");
@@ -4213,6 +4385,14 @@ function selectMediaCard(card, item, options = {}) {
   }
 
   openMediaSidebar(item);
+  updateMediaSelectionState();
+}
+
+function updateMediaSelectionState() {
+  if (!deleteMediaButton) return;
+  const count = selectedMediaPaths.size;
+  deleteMediaButton.disabled = count === 0;
+  deleteMediaButton.innerHTML = `<i class="fa-regular fa-trash-can"></i> ${count > 1 ? `Usuń (${count})` : "Usuń"}`;
 }
 
 function insertSelectedMediaToEditor() {

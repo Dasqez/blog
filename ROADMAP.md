@@ -55,3 +55,12 @@ Status: gotowy do testów na localhost.
 - trwała zmiana kolejności stron,
 - podgląd zmian w edytorze,
 - historia wersji z możliwością rollbacku.
+
+## Etap 5 — Dashboard CMS
+
+Status: gotowy do testów na localhost.
+
+- liczniki wpisów, stron, obrazów i subskrybentów,
+- ostatnio edytowane wpisy i ostatnia wysyłka newslettera,
+- statystyki struktury treści, dostarczalności i aktywności subskrybentów,
+- szybkie akcje prowadzące do najważniejszych sekcji CMS.

@@ -413,9 +413,10 @@ button:disabled {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
 }
+
 
 .stat-card,
 .content-card {
@@ -1807,6 +1808,12 @@ button:disabled {
 
     display:flex;
 
+    grid-column:1 / -1;
+
+    width:min(420px,100%);
+
+    justify-self:center;
+
     flex-direction:column;
 
     align-items:center;
@@ -1814,6 +1821,10 @@ button:disabled {
     justify-content:center;
 
     gap:16px;
+
+    padding:24px;
+
+    text-align:center;
 
     min-height:220px;
 
@@ -2202,6 +2213,25 @@ button:disabled {
 
 }
 
+.media-placeholder span,
+.media-placeholder strong {
+    max-width:100%;
+    text-align:center;
+}
+
+.media-card.is-selected { border-color:#111; box-shadow:0 0 0 2px #111,0 14px 30px rgba(0,0,0,.14); }
+.media-selection-mark { position:absolute; top:10px; right:10px; display:grid; width:28px; height:28px; place-items:center; border:1px solid #bbb; border-radius:50%; background:rgba(255,255,255,.92); color:transparent; font-size:12px; }
+.media-card.is-selected .media-selection-mark { border-color:#111; background:#111; color:#fff; }
+.media-delete-progress-dialog { width:min(460px,calc(100vw - 32px)); border:0; border-radius:18px; padding:0; box-shadow:0 28px 80px rgba(0,0,0,.28); }
+.media-delete-progress-dialog::backdrop { background:rgba(0,0,0,.48); }
+.media-delete-progress-content { padding:32px; text-align:center; }
+.media-delete-progress-icon { display:grid; width:54px; height:54px; margin:0 auto 18px; place-items:center; border-radius:50%; background:#f3f1ed; font-size:20px; }
+.media-delete-progress-content h2 { margin:5px 0 8px; }
+.media-delete-progress-content > p:not(.section-kicker) { min-height:42px; color:var(--muted); }
+.media-delete-progress-track { height:12px; margin-top:18px; overflow:hidden; border-radius:999px; background:#e5e2dc; }
+.media-delete-progress-track span { display:block; width:0; height:100%; border-radius:inherit; background:#171717; transition:width .35s ease; }
+#mediaDeleteProgressValue { display:block; margin:10px 0 20px; font:600 13px "Montserrat",sans-serif; }
+
 .media-meta {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2315,6 +2345,9 @@ button:disabled {
   color: var(--muted);
   font-size: 0.85rem;
 }
+.media-upload-status.is-working { color:#8a5700; }
+.media-upload-status.is-success { color:#16733a; }
+.media-upload-status.is-error { color:#b42318; }
 
 .media-card[draggable="true"] { cursor: grab; }
 .media-card[draggable="true"]:active { cursor: grabbing; }
@@ -2761,9 +2794,15 @@ button:disabled {
 .dashboard-empty { margin:8px 0; }
 .dashboard-content-totals { display:flex; gap:16px; margin-top:16px; padding-top:14px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
 .dashboard-content-totals strong { color:var(--text); font-size:16px; }
+.dashboard-insights-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-top:24px; }
+.dashboard-metrics { display:grid; gap:18px; margin-top:24px; }
+.dashboard-metric > div:first-child { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:8px; font-size:13px; }
+.dashboard-metric > div:first-child span { color:var(--muted); }
+.dashboard-metric-track { height:8px; overflow:hidden; border-radius:999px; background:#ece9e3; }
+.dashboard-metric-track span { display:block; height:100%; border-radius:inherit; background:#171717; transition:width .3s ease; }
 
 @media (max-width:900px) {
-  .dashboard-content-grid { grid-template-columns:1fr; }
+  .dashboard-content-grid,.dashboard-insights-grid { grid-template-columns:1fr; }
   .editor-view-switcher span { display:none; }
 }
 
