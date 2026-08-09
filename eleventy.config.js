@@ -42,8 +42,8 @@ export default function(eleventyConfig) {
       .replace(/\s+/g, " ").trim().slice(0, 160);
   });
 
-  eleventyConfig.addFilter("absoluteUrl", function(value) {
-    try { return new URL(String(value || ""), "https://minimalistycznie.pages.dev").href; }
+  eleventyConfig.addFilter("absoluteUrl", function(value, base = "https://minimalistycznie.pages.dev") {
+    try { return new URL(String(value || ""), String(base || "https://minimalistycznie.pages.dev")).href; }
     catch { return "https://minimalistycznie.pages.dev/"; }
   });
 

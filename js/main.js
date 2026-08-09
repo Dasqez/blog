@@ -1,5 +1,61 @@
 "use strict";
 
+const LOCAL_SETTINGS_PREVIEW_KEY = "cms-local-site-settings-preview";
+
+function applyLocalSettingsPreview(settings) {
+    if (!settings || !["localhost", "127.0.0.1"].includes(window.location.hostname)) return;
+
+    const visibility = settings.visibility || {};
+    const socialVisibility = visibility.social || {};
+    const siteName = document.getElementById("siteName");
+    const siteSlogan = document.getElementById("siteSlogan");
+    const siteLogo = document.getElementById("siteLogo");
+    const siteFavicon = document.getElementById("siteFavicon");
+    const siteSocial = document.getElementById("siteSocial");
+
+    document.documentElement.dataset.theme = settings.theme || "light";
+    if (siteName) { siteName.textContent = settings.name || ""; siteName.hidden = visibility.name === false; }
+    if (siteSlogan) { siteSlogan.textContent = settings.slogan || ""; siteSlogan.hidden = visibility.slogan === false; }
+
+    if (siteLogo) {
+        const hasLogo = Boolean(settings.logo);
+        const source = hasLogo ? settings.logo : settings.favicon;
+        const visible = hasLogo ? visibility.logo !== false : visibility.favicon !== false;
+        siteLogo.src = source || "";
+        siteLogo.alt = hasLogo ? (settings.name || "Logo bloga") : "";
+        siteLogo.hidden = !source || !visible;
+        siteLogo.classList.toggle("site-favicon-logo", !hasLogo);
+    }
+
+    if (siteFavicon) {
+        if (settings.favicon && visibility.favicon !== false) siteFavicon.href = settings.favicon;
+        else siteFavicon.removeAttribute("href");
+    }
+
+    document.querySelectorAll("[data-site-social]").forEach((link) => {
+        const network = link.dataset.siteSocial;
+        const href = settings.social?.[network] || "";
+        link.href = href || "#";
+        link.hidden = !href || socialVisibility[network] === false;
+    });
+    if (siteSocial) siteSocial.hidden = !siteSocial.querySelector("a:not([hidden])");
+}
+
+function loadLocalSettingsPreview() {
+    if (!["localhost", "127.0.0.1"].includes(window.location.hostname)) return;
+    try {
+        applyLocalSettingsPreview(JSON.parse(localStorage.getItem(LOCAL_SETTINGS_PREVIEW_KEY) || "null"));
+    } catch (error) {
+        console.warn("Nie udało się wczytać lokalnego podglądu ustawień.", error);
+    }
+}
+
+window.addEventListener("storage", (event) => {
+    if (event.key === LOCAL_SETTINGS_PREVIEW_KEY && event.newValue) {
+        try { applyLocalSettingsPreview(JSON.parse(event.newValue)); } catch { /* pomiń niepoprawny podgląd */ }
+    }
+});
+
 function switchPage(pageId) {
     const targetSection = document.getElementById(`page-${pageId}`);
     if (!targetSection) return;
@@ -78,6 +134,7 @@ function updateGiscusCounters() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    loadLocalSettingsPreview();
     document.querySelectorAll("nav [data-page]").forEach((link) => {
         link.addEventListener("click", (event) => {
             event.preventDefault();

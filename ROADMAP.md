@@ -101,3 +101,13 @@ Status: gotowy do testów na localhost.
 - eksport subskrybentów do CSV,
 - eksport publicznych ustawień bez sekretów,
 - pobieranie całego pakietu z widocznym postępem.
+
+## Etap 10 — Ustawienia CMS
+
+Status: gotowy do testów na localhost.
+
+- nazwa bloga, slogan, favicon i logo,
+- linki social media oraz Google Analytics,
+- konfiguracja Giscus i newslettera,
+- wybór jasnego, ciemnego lub automatycznego motywu,
+- zapis publicznej konfiguracji do repozytorium bez sekretów.

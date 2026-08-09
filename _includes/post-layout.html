@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-theme="{{ site.theme | default: 'light' }}">
 <head>
   {% assign seo = content | postSeo %}
   {% assign seoTitle = seo.title | default: title %}
   {% assign seoDescription = seo.description | default: content | seoDescription %}
-  {% assign canonicalUrl = seo.canonical | default: page.url | absoluteUrl %}
-  {% assign seoImage = seo.image | default: '/favicon.png' | absoluteUrl %}
+  {% assign canonicalUrl = seo.canonical | default: page.url | absoluteUrl: site.url %}
+  {% assign seoImage = seo.image | default: site.favicon | absoluteUrl: site.url %}
   {% assign robotsValue = seo.robots | default: 'index,follow' %}
   {% assign twitterCard = seo.twitterCard | default: 'summary_large_image' %}
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ seoTitle }} - Minimalistycznie Przez Życie</title>
+  <title>{{ seoTitle }} - {{ site.name }}</title>
   <meta name="description" content="{{ seoDescription | escape }}" />
   <meta name="robots" content="{{ robotsValue | escape }}" />
   <link rel="canonical" href="{{ canonicalUrl }}" />
   <meta property="og:type" content="article" />
-  <meta property="og:site_name" content="Minimalistycznie Przez Życie" />
+  <meta property="og:site_name" content="{{ site.name | escape }}" />
   <meta property="og:title" content="{{ seoTitle | escape }}" />
   <meta property="og:description" content="{{ seoDescription | escape }}" />
   <meta property="og:url" content="{{ canonicalUrl }}" />
@@ -24,7 +24,9 @@
   <meta name="twitter:title" content="{{ seoTitle | escape }}" />
   <meta name="twitter:description" content="{{ seoDescription | escape }}" />
   <meta name="twitter:image" content="{{ seoImage }}" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":{{ seoTitle | json }},"description":{{ seoDescription | json }},"url":{{ canonicalUrl | json }},"image":{{ seoImage | json }},"datePublished":{{ date | date: "%Y-%m-%dT%H:%M:%S.000Z" | json }},"author":{"@type":"Person","name":"Dawid Pytel"},"publisher":{"@type":"Organization","name":"Minimalistycznie Przez Życie"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":{{ seoTitle | json }},"description":{{ seoDescription | json }},"url":{{ canonicalUrl | json }},"image":{{ seoImage | json }},"datePublished":{{ date | date: "%Y-%m-%dT%H:%M:%S.000Z" | json }},"author":{"@type":"Person","name":"Dawid Pytel"},"publisher":{"@type":"Organization","name":{{ site.name | json }}}}</script>
+  {% if site.visibility.favicon != false %}<link rel="icon" href="{{ site.favicon }}" />{% endif %}
+  {% if site.googleAnalyticsId %}<script async src="https://www.googletagmanager.com/gtag/js?id={{ site.googleAnalyticsId }}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','{{ site.googleAnalyticsId }}');</script>{% endif %}
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -180,13 +182,25 @@
     transform: scale(1.01);
 }
   </style>
+  <style>
+    html[data-theme="dark"] body { background:#171717; color:#eee; }
+    html[data-theme="dark"] article h1,html[data-theme="dark"] header h1 a { color:#f3f0ea; }
+    html[data-theme="dark"] .post-body { color:#d8d4cd; }
+    html[data-theme="dark"] hr { border-color:#3b3b3b; }
+    @media (prefers-color-scheme:dark) {
+      html[data-theme="auto"] body { background:#171717; color:#eee; }
+      html[data-theme="auto"] article h1,html[data-theme="auto"] header h1 a { color:#f3f0ea; }
+      html[data-theme="auto"] .post-body { color:#d8d4cd; }
+    }
+  </style>
 </head>
 <body>
 
   <div class="wrapper">
     <header>
-      <h1><a href="/">Minimalistycznie Przez Życie</a></h1>
-      <p>Małe przygody w wielkim świecie</p>
+      {% if site.logo != blank and site.visibility.logo != false %}<a href="/"><img src="{{ site.logo }}" alt="{{ site.name }}" style="max-width:150px;max-height:64px;object-fit:contain"></a>{% elsif site.favicon != blank and site.visibility.favicon != false %}<a href="/"><img src="{{ site.favicon }}" alt="" style="width:52px;height:52px;object-fit:contain"></a>{% endif %}
+      {% if site.visibility.name != false %}<h1><a href="/">{{ site.name }}</a></h1>{% endif %}
+      {% if site.visibility.slogan != false %}<p>{{ site.slogan }}</p>{% endif %}
       <hr>
     </header>
 
@@ -208,11 +222,11 @@
         <div class="post-body">
           {{ content }}
         </div>
-        <script src="https://giscus.app/client.js"
-        data-repo="Dasqez/blog"
-        data-repo-id="R_kgDOS4j9FQ"
-        data-category="General"
-        data-category-id="DIC_kwDOS4j9Fc4C_GFg"
+        {% if site.giscus.enabled %}<script src="https://giscus.app/client.js"
+        data-repo="{{ site.giscus.repo }}"
+        data-repo-id="{{ site.giscus.repoId }}"
+        data-category="{{ site.giscus.category }}"
+        data-category-id="{{ site.giscus.categoryId }}"
         data-mapping="pathname"
         data-strict="0"
         data-reactions-enabled="1"
@@ -221,8 +235,8 @@
         data-theme="preferred_color_scheme"
         data-lang="pl"
         crossorigin="anonymous"
-        async>
-</script>
+async>
+</script>{% endif %}
       </article>
       
       <a href="/" class="back-link">&larr; Powrót do strony głównej</a>

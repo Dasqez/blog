@@ -6,6 +6,13 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano natychmiastowy podgląd ustawień na otwartej stronie głównej localhost: motyw, nazwa, slogan, logo, favicona i ikony social reagują na zmiany w panelu przed publikacją.
+- Naprawiono brakującą ikonę X przez aktualizację Font Awesome, zabezpieczono puste adresy social media oraz dodano faviconę jako znak graficzny nagłówka, gdy osobne logo nie zostało ustawione.
+- Poprawiono podgląd wyboru motywu w ustawieniach CMS: jasny, ciemny i systemowy wariant są widoczne natychmiast przed zatwierdzeniem zmian.
+- Dodano niezależne przełączniki widoczności nazwy, sloganu, favicony, logo oraz każdej ikony mediów społecznościowych bez usuwania zapisanych wartości.
+- Dodano panel ustawień CMS dla nazwy, sloganu, favicony, logo, social media, Google Analytics, Giscus, newslettera i motywu bloga.
+- Dodano zapis publicznej konfiguracji do `_data/site.json` oraz automatyczne wykorzystanie ustawień podczas builda Eleventy.
+- Dodano chronione endpointy Workera do pobierania i zapisywania ustawień w repozytorium bez eksportowania sekretów.
 - Dodano ekran Backup z osobnym eksportem repozytorium, bazy D1, subskrybentów i publicznych ustawień CMS.
 - Dodano pobieranie całego pakietu kopii bezpieczeństwa jednym przyciskiem wraz z paskiem postępu i raportem błędów.
 - Dodano chroniony endpoint Workera eksportujący wszystkie tabele D1 do JSON oraz subskrybentów do CSV bez ujawniania sekretów.

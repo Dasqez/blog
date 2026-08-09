@@ -9,6 +9,24 @@
             padding: 0 20px;
         }
 
+        .site-logo { display:block; max-width:min(320px,80%); max-height:120px; margin:0 auto 18px; object-fit:contain; }
+        .site-favicon-logo { width:64px; height:64px; }
+        .site-social { display:flex; margin-top:50px; justify-content:center; gap:18px; }
+        .site-social a { color:inherit; font-size:1.25rem; }
+        html[data-theme="dark"] body { color:#f1eee8; background:#171717; }
+        html[data-theme="dark"] header p,html[data-theme="dark"] .post-meta-line { color:#aaa59d; }
+        html[data-theme="dark"] nav { border-color:#eee; }
+        html[data-theme="dark"] nav ul li a,html[data-theme="dark"] .post-card a { color:#f1eee8; }
+        html[data-theme="dark"] .search-bar { border-color:#ddd; background:#242424; color:#fff; }
+        html[data-theme="dark"] .post-card { border-color:#3b3b3b; }
+        @media (prefers-color-scheme:dark) {
+          html[data-theme="auto"] body { color:#f1eee8; background:#171717; }
+          html[data-theme="auto"] header p { color:#aaa59d; }
+          html[data-theme="auto"] nav { border-color:#eee; }
+          html[data-theme="auto"] nav ul li a,html[data-theme="auto"] .post-card a { color:#f1eee8; }
+          html[data-theme="auto"] .search-bar { border-color:#ddd; background:#242424; color:#fff; }
+        }
+
         .container {
             max-width: 940px;
             margin: 0 auto;

@@ -58,6 +58,9 @@ const ADMIN_SUBSCRIBERS_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/subscribers";
 const ADMIN_BACKUP_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/backup";
+const ADMIN_SETTINGS_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/settings";
+const LOCAL_SETTINGS_PREVIEW_KEY = "cms-local-site-settings-preview";
 
 const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV092";
 const EDITOR_AUTOSAVE_INTERVAL_MS = 30000;
@@ -142,6 +145,24 @@ const backupProgressTitle = document.getElementById("backupProgressTitle");
 const backupProgressValue = document.getElementById("backupProgressValue");
 const backupProgressBar = document.getElementById("backupProgressBar");
 const backupStatus = document.getElementById("backupStatus");
+const settingsForm = document.getElementById("settingsForm");
+const saveSettingsButton = document.getElementById("saveSettingsButton");
+const settingsStatus = document.getElementById("settingsStatus");
+const settingsFields = {
+  name: document.getElementById("settingSiteName"), slogan: document.getElementById("settingSiteSlogan"), url: document.getElementById("settingSiteUrl"), favicon: document.getElementById("settingFavicon"), logo: document.getElementById("settingLogo"), theme: document.getElementById("settingTheme"),
+  nameVisible: document.getElementById("settingNameVisible"), sloganVisible: document.getElementById("settingSloganVisible"), faviconVisible: document.getElementById("settingFaviconVisible"), logoVisible: document.getElementById("settingLogoVisible"),
+  facebook: document.getElementById("settingFacebook"), instagram: document.getElementById("settingInstagram"), x: document.getElementById("settingX"), github: document.getElementById("settingGithub"), googleAnalyticsId: document.getElementById("settingGoogleAnalytics"), newsletterEnabled: document.getElementById("settingNewsletterEnabled"),
+  facebookVisible: document.getElementById("settingFacebookVisible"), instagramVisible: document.getElementById("settingInstagramVisible"), xVisible: document.getElementById("settingXVisible"), githubVisible: document.getElementById("settingGithubVisible"),
+  giscusEnabled: document.getElementById("settingGiscusEnabled"), giscusRepo: document.getElementById("settingGiscusRepo"), giscusRepoId: document.getElementById("settingGiscusRepoId"), giscusCategory: document.getElementById("settingGiscusCategory"), giscusCategoryId: document.getElementById("settingGiscusCategoryId"),
+};
+const settingsPreview = document.getElementById("settingsPreview");
+const settingsNamePreview = document.getElementById("settingsNamePreview");
+const settingsSloganPreview = document.getElementById("settingsSloganPreview");
+const settingsLogoPreview = document.getElementById("settingsLogoPreview");
+const settingsFaviconPreview = document.getElementById("settingsFaviconPreview");
+const settingsSocialPreviews = {
+  facebook: document.getElementById("settingsFacebookPreview"), instagram: document.getElementById("settingsInstagramPreview"), x: document.getElementById("settingsXPreview"), github: document.getElementById("settingsGithubPreview"),
+};
 const pagesList = document.getElementById("pagesList");
 const pagesSearchInput = document.getElementById("pagesSearchInput");
 const reloadPagesButton = document.getElementById("reloadPagesButton");
@@ -359,6 +380,8 @@ let globalSearchSubscribers = [];
 let globalSearchNewsletterHistory = [];
 let globalSearchLoaded = false;
 let globalSearchActiveIndex = -1;
+let settingsLoaded = false;
+let currentSiteSettings = null;
 
 /* =========================================================
    LISTENERY
@@ -399,6 +422,8 @@ document.addEventListener("keydown", (event) => {
 });
 backupDownloadButtons.forEach((button) => button.addEventListener("click", () => downloadBackup(button.dataset.downloadBackup, button)));
 downloadAllBackupsButton?.addEventListener("click", downloadAllBackups);
+settingsForm?.addEventListener("input", updateSettingsPreview);
+saveSettingsButton?.addEventListener("click", saveSettings);
 
 insertMediaButton?.addEventListener("click", insertSelectedMediaToEditor);
 
@@ -1499,6 +1524,10 @@ function openView(viewName) {
     loadNewsletterWorkspace();
   }
 
+  if (viewName === "settings") {
+    loadSettings();
+  }
+
   window.location.hash = viewName;
 }
 
@@ -1875,13 +1904,92 @@ function downloadRepositoryBackup() {
 }
 
 function createSettingsBackup() {
-  return new Blob([JSON.stringify({
-    exportedAt: new Date().toISOString(),
-    site: { name: "Minimalistycznie Przez Życie", slogan: "Małe przygody w wielkim świecie", url: "https://minimalistycznie.pages.dev", language: "pl" },
-    cms: { workerUrl: "https://newsletter.dave-pytel.workers.dev", repository: "Dasqez/blog", defaultPostLayout: "post-layout.html" },
-    integrations: { newsletter: true, giscus: true },
-    note: "Eksport celowo nie zawiera sekretów, tokenów ani klucza administratora.",
-  }, null, 2)], { type: "application/json;charset=utf-8" });
+  const publicSettings = currentSiteSettings || collectSettingsForm();
+  return new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), site: publicSettings, note: "Eksport celowo nie zawiera sekretów, tokenów ani klucza administratora." }, null, 2)], { type: "application/json;charset=utf-8" });
+}
+
+/* =========================================================
+   USTAWIENIA CMS
+   ========================================================= */
+
+function getDefaultSiteSettings() {
+  return { name: "Minimalistycznie Przez Życie", slogan: "Małe przygody w wielkim świecie", url: "https://minimalistycznie.pages.dev", favicon: "/favicon.png", logo: "", theme: "light", visibility: { name: true, slogan: true, favicon: true, logo: true, social: { facebook: true, instagram: true, x: true, github: true } }, social: { facebook: "", instagram: "", x: "", github: "" }, googleAnalyticsId: "", giscus: { enabled: true, repo: "Dasqez/blog", repoId: "R_kgDOS4j9FQ", category: "General", categoryId: "DIC_kwDOS4j9Fc4C_GFg" }, newsletter: { enabled: true } };
+}
+
+async function settingsApi(method = "GET", body = null) {
+  const response = await fetch(ADMIN_SETTINGS_API_URL, { method, headers: { Authorization: `Bearer ${adminSecret}`, ...(body ? { "Content-Type": "application/json" } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const result = await response.json();
+  if (!response.ok || result.success !== true) throw new Error(result.message || "Operacja ustawień nie powiodła się.");
+  return result;
+}
+
+async function loadSettings(forceRefresh = false) {
+  if (settingsLoaded && !forceRefresh) return;
+  saveSettingsButton.disabled = true;
+  settingsStatus.textContent = "Pobieranie ustawień…";
+  try {
+    const result = await settingsApi();
+    currentSiteSettings = { ...getDefaultSiteSettings(), ...(result.settings || {}) };
+    fillSettingsForm(currentSiteSettings);
+    settingsLoaded = true;
+    settingsStatus.textContent = "Ustawienia są aktualne.";
+  } catch (error) {
+    settingsStatus.textContent = error.message;
+    showToast({ title: "Błąd ustawień", message: error.message, type: "error", duration: 6000 });
+  } finally { saveSettingsButton.disabled = false; }
+}
+
+function fillSettingsForm(settings) {
+  const defaults = getDefaultSiteSettings();
+  const value = { ...defaults, ...settings, visibility: { ...defaults.visibility, ...settings.visibility, social: { ...defaults.visibility.social, ...settings.visibility?.social } }, social: { ...defaults.social, ...settings.social }, giscus: { ...defaults.giscus, ...settings.giscus }, newsletter: { ...defaults.newsletter, ...settings.newsletter } };
+  settingsFields.name.value = value.name || ""; settingsFields.slogan.value = value.slogan || ""; settingsFields.url.value = value.url || ""; settingsFields.favicon.value = value.favicon || ""; settingsFields.logo.value = value.logo || ""; settingsFields.theme.value = value.theme || "light";
+  settingsFields.nameVisible.checked = value.visibility.name !== false; settingsFields.sloganVisible.checked = value.visibility.slogan !== false; settingsFields.faviconVisible.checked = value.visibility.favicon !== false; settingsFields.logoVisible.checked = value.visibility.logo !== false;
+  settingsFields.facebook.value = value.social.facebook || ""; settingsFields.instagram.value = value.social.instagram || ""; settingsFields.x.value = value.social.x || ""; settingsFields.github.value = value.social.github || ""; settingsFields.googleAnalyticsId.value = value.googleAnalyticsId || ""; settingsFields.newsletterEnabled.checked = value.newsletter.enabled !== false;
+  settingsFields.facebookVisible.checked = value.visibility.social.facebook !== false; settingsFields.instagramVisible.checked = value.visibility.social.instagram !== false; settingsFields.xVisible.checked = value.visibility.social.x !== false; settingsFields.githubVisible.checked = value.visibility.social.github !== false;
+  settingsFields.giscusEnabled.checked = value.giscus.enabled !== false; settingsFields.giscusRepo.value = value.giscus.repo || ""; settingsFields.giscusRepoId.value = value.giscus.repoId || ""; settingsFields.giscusCategory.value = value.giscus.category || ""; settingsFields.giscusCategoryId.value = value.giscus.categoryId || "";
+  updateSettingsPreview();
+}
+
+function collectSettingsForm() {
+  return { name: settingsFields.name?.value.trim() || "", slogan: settingsFields.slogan?.value.trim() || "", url: settingsFields.url?.value.trim().replace(/\/$/, "") || "", favicon: settingsFields.favicon?.value.trim() || "/favicon.png", logo: settingsFields.logo?.value.trim() || "", theme: settingsFields.theme?.value || "light", visibility: { name: Boolean(settingsFields.nameVisible?.checked), slogan: Boolean(settingsFields.sloganVisible?.checked), favicon: Boolean(settingsFields.faviconVisible?.checked), logo: Boolean(settingsFields.logoVisible?.checked), social: { facebook: Boolean(settingsFields.facebookVisible?.checked), instagram: Boolean(settingsFields.instagramVisible?.checked), x: Boolean(settingsFields.xVisible?.checked), github: Boolean(settingsFields.githubVisible?.checked) } }, social: { facebook: settingsFields.facebook?.value.trim() || "", instagram: settingsFields.instagram?.value.trim() || "", x: settingsFields.x?.value.trim() || "", github: settingsFields.github?.value.trim() || "" }, googleAnalyticsId: settingsFields.googleAnalyticsId?.value.trim() || "", giscus: { enabled: Boolean(settingsFields.giscusEnabled?.checked), repo: settingsFields.giscusRepo?.value.trim() || "", repoId: settingsFields.giscusRepoId?.value.trim() || "", category: settingsFields.giscusCategory?.value.trim() || "", categoryId: settingsFields.giscusCategoryId?.value.trim() || "" }, newsletter: { enabled: Boolean(settingsFields.newsletterEnabled?.checked) } };
+}
+
+function updateSettingsPreview() {
+  if (!settingsForm) return;
+  const settings = collectSettingsForm();
+  settingsPreview.dataset.theme = settings.theme;
+  settingsNamePreview.textContent = settings.name || "Nazwa bloga";
+  settingsNamePreview.hidden = !settings.visibility.name;
+  settingsSloganPreview.textContent = settings.slogan || "Slogan";
+  settingsSloganPreview.hidden = !settings.visibility.slogan;
+  [ [settingsLogoPreview, settings.logo, settings.visibility.logo], [settingsFaviconPreview, settings.favicon, settings.visibility.favicon] ].forEach(([image, source, visible]) => {
+    if (!image) return;
+    image.hidden = !source || !visible;
+    if (source) { try { image.src = new URL(source, settings.url || window.location.origin).href; } catch { image.removeAttribute("src"); } }
+  });
+  Object.entries(settingsSocialPreviews).forEach(([network, icon]) => {
+    if (icon) icon.hidden = !settings.social[network] || !settings.visibility.social[network];
+  });
+  if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    localStorage.setItem(LOCAL_SETTINGS_PREVIEW_KEY, JSON.stringify(settings));
+  }
+}
+
+async function saveSettings() {
+  if (!settingsForm.reportValidity()) return;
+  const settings = collectSettingsForm();
+  saveSettingsButton.disabled = true;
+  settingsStatus.textContent = "Zapisywanie ustawień w repozytorium…";
+  try {
+    const result = await settingsApi("POST", { settings });
+    currentSiteSettings = settings;
+    settingsLoaded = true;
+    settingsStatus.textContent = "Ustawienia zapisano. Cloudflare Pages rozpocznie publikację.";
+    showToast({ title: "Ustawienia", message: result.message || "Ustawienia zostały zapisane.", type: "success", duration: 5000 });
+  } catch (error) {
+    settingsStatus.textContent = error.message;
+    showToast({ title: "Błąd zapisu ustawień", message: error.message, type: "error", duration: 6000 });
+  } finally { saveSettingsButton.disabled = false; }
 }
 
 async function downloadBackup(type, button = null, silent = false) {

@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-theme="{{ site.theme | default: 'light' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimalistycznie Przez Życie</title>
-    <meta name="description" content="Minimalistycznie przez życie — małe przygody w wielkim świecie.">
+    <title>{{ site.name }}</title>
+    <meta name="description" content="{{ site.name }} — {{ site.slogan }}">
     <meta name="robots" content="index,follow">
-    <link rel="canonical" href="https://minimalistycznie.pages.dev/">
+    <link rel="canonical" href="{{ site.url }}/">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Minimalistycznie Przez Życie">
-    <meta property="og:description" content="Małe przygody w wielkim świecie.">
-    <meta property="og:url" content="https://minimalistycznie.pages.dev/">
-    <meta property="og:image" content="https://minimalistycznie.pages.dev/favicon.png">
+    <meta property="og:title" content="{{ site.name }}">
+    <meta property="og:description" content="{{ site.slogan }}">
+    <meta property="og:url" content="{{ site.url }}/">
+    <meta property="og:image" content="{{ site.favicon | absoluteUrl: site.url }}">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <script src="https://giscus.app/client.js" async></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link id="siteFavicon" rel="icon" href="{{ site.favicon }}"{% if site.visibility.favicon == false %} disabled{% endif %}>
+    {% if site.googleAnalyticsId %}<script async src="https://www.googletagmanager.com/gtag/js?id={{ site.googleAnalyticsId }}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','{{ site.googleAnalyticsId }}');</script>{% endif %}
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/newsletter.css">
 </head>
@@ -26,8 +26,9 @@
 
     <div class="container">
         <header>
-            <h1>Minimalistycznie Przez Życie</h1>
-            <p>Małe przygody w wielkim świecie</p>
+            <img id="siteLogo" class="site-logo{% if site.logo == blank %} site-favicon-logo{% endif %}" src="{% if site.logo != blank %}{{ site.logo }}{% else %}{{ site.favicon }}{% endif %}" alt="{% if site.logo != blank %}{{ site.name }}{% endif %}"{% if site.visibility.logo == false or site.logo == blank and site.visibility.favicon == false %} hidden{% endif %}>
+            <h1 id="siteName"{% if site.visibility.name == false %} hidden{% endif %}>{{ site.name }}</h1>
+            <p id="siteSlogan"{% if site.visibility.slogan == false %} hidden{% endif %}>{{ site.slogan }}</p>
         </header>
 
         <nav>
@@ -36,7 +37,7 @@
                 <li><a href="#home" data-page="home" id="nav-home" class="active">Strona główna</a></li>
                 <li><a href="#about" data-page="about" id="nav-about">O mnie</a></li>
                 <li><a href="#contact" data-page="contact" id="nav-contact">Kontakt</a></li>
-                <li><a href="#newsletter" data-page="newsletter" id="nav-newsletter">Newsletter</a></li>
+                {% if site.newsletter.enabled %}<li><a href="#newsletter" data-page="newsletter" id="nav-newsletter">Newsletter</a></li>{% endif %}
             </ul>
             <!-- CMS_NAV_END -->
         </nav>
@@ -54,10 +55,24 @@
     {% include "pages/contact.liquid" %}
 </div>
 
-<div id="page-newsletter" class="page-section">
+{% if site.newsletter.enabled %}<div id="page-newsletter" class="page-section">
     {% include "pages/newsletter.liquid" %}
-</div>
+</div>{% endif %}
 <!-- CMS_PAGES_END -->
+
+    {% assign showSocial = false %}
+    {% if site.social.facebook != blank and site.visibility.social.facebook != false %}{% assign showSocial = true %}{% endif %}
+    {% if site.social.instagram != blank and site.visibility.social.instagram != false %}{% assign showSocial = true %}{% endif %}
+    {% if site.social.x != blank and site.visibility.social.x != false %}{% assign showSocial = true %}{% endif %}
+    {% if site.social.github != blank and site.visibility.social.github != false %}{% assign showSocial = true %}{% endif %}
+    {% if showSocial %}
+    <footer id="siteSocial" class="site-social" aria-label="Media społecznościowe">
+      <a data-site-social="facebook" href="{{ site.social.facebook }}" rel="me noopener" aria-label="Facebook"{% if site.social.facebook == blank or site.visibility.social.facebook == false %} hidden{% endif %}><i class="fa-brands fa-facebook"></i></a>
+      <a data-site-social="instagram" href="{{ site.social.instagram }}" rel="me noopener" aria-label="Instagram"{% if site.social.instagram == blank or site.visibility.social.instagram == false %} hidden{% endif %}><i class="fa-brands fa-instagram"></i></a>
+      <a data-site-social="x" href="{{ site.social.x }}" rel="me noopener" aria-label="X"{% if site.social.x == blank or site.visibility.social.x == false %} hidden{% endif %}><i class="fa-brands fa-x-twitter"></i></a>
+      <a data-site-social="github" href="{{ site.social.github }}" rel="me noopener" aria-label="GitHub"{% if site.social.github == blank or site.visibility.social.github == false %} hidden{% endif %}><i class="fa-brands fa-github"></i></a>
+    </footer>
+    {% endif %}
 
     </div>
     <div id="lightbox" class="lightbox-overlay" aria-hidden="true">
@@ -65,6 +80,6 @@
     <img id="lightboxImg" src="" alt="Powiększenie zdjęcia">
 </div>
     <script src="/js/main.js" defer></script>
-    <script src="/js/newsletter.js" defer></script>
+    {% if site.newsletter.enabled %}<script src="/js/newsletter.js" defer></script>{% endif %}
 </body>
 </html>

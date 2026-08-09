@@ -8,13 +8,13 @@
   "visibility": {
     "name": true,
     "slogan": true,
-    "favicon": false,
-    "logo": false,
+    "favicon": true,
+    "logo": true,
     "social": {
-      "facebook": false,
-      "instagram": false,
-      "x": false,
-      "github": false
+      "facebook": true,
+      "instagram": true,
+      "x": true,
+      "github": true
     }
   },
   "social": {
