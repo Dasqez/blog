@@ -3,7 +3,7 @@
     "_includes/pages/contact.liquid",
     "_includes/pages/newsletter.liquid",
     "_includes/pages/home.liquid",
-    "_includes/pages/about.liquid",
-    "_includes/pages/test.liquid"
+    "_includes/pages/test.liquid",
+    "_includes/pages/about.liquid"
   ]
 }
