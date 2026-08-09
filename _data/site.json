@@ -4,10 +4,10 @@
   "url": "https://minimalistycznie.pages.dev",
   "favicon": "/favicon.png",
   "logo": "",
-  "theme": "dark",
+  "theme": "light",
   "visibility": {
     "name": true,
-    "slogan": false,
+    "slogan": true,
     "favicon": false,
     "logo": false,
     "social": {
