@@ -60,7 +60,17 @@ const ADMIN_BACKUP_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/backup";
 const ADMIN_SETTINGS_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/settings";
+const ADMIN_SESSION_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/session";
+const ADMIN_SESSION_REFRESH_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/session/refresh";
+const ADMIN_SESSION_LOGOUT_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/session/logout";
 const LOCAL_SETTINGS_PREVIEW_KEY = "cms-local-site-settings-preview";
+const ADMIN_SESSION_STORAGE_KEY = "mpzPanelSessionV1";
+const ADMIN_SESSION_IDLE_MS = 30 * 60 * 1000;
+const ADMIN_SESSION_MAX_MS = 8 * 60 * 60 * 1000;
+const ADMIN_SESSION_REFRESH_MARGIN_MS = 2 * 60 * 1000;
 
 const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV092";
 const EDITOR_AUTOSAVE_INTERVAL_MS = 30000;
@@ -347,8 +357,13 @@ document.getElementById(
    STAN APLIKACJI
    ========================================================= */
 
-let adminSecret =
-  sessionStorage.getItem("mpzPanelAdminSecret") || "";
+let adminSecret = "";
+let adminRefreshToken = "";
+let adminSessionExpiresAt = 0;
+let adminSessionStartedAt = 0;
+let adminSessionLastActivityAt = 0;
+let adminSessionLegacy = false;
+let adminSessionTimer = null;
 
 let posts = [];
 let selectedPost = null;
@@ -557,8 +572,13 @@ markdownPreview?.addEventListener(
     return;
   }
 
-  adminSecret = secret;
   setLoginLoading(true);
+
+  const sessionReady = await createAdminSession(secret);
+  if (!sessionReady) {
+    setLoginLoading(false);
+    return;
+  }
 
   const success = await loadDashboardData();
 
@@ -568,10 +588,8 @@ markdownPreview?.addEventListener(
     return;
   }
 
-  sessionStorage.setItem(
-    "mpzPanelAdminSecret",
-    adminSecret
-  );
+  persistAdminSession();
+  startAdminSessionMonitoring();
 
   loginScreen.hidden = true;
   adminApp.hidden = false;
@@ -1355,9 +1373,8 @@ editorOverlay.addEventListener(
    START APLIKACJI
    ========================================================= */
 
-if (adminSecret) {
-  restoreSession();
-}
+restoreStoredAdminSession();
+if (adminSecret) restoreSession();
 
 /* =========================================================
    LOGOWANIE I DASHBOARD
@@ -1366,11 +1383,17 @@ if (adminSecret) {
 async function restoreSession() {
   setConnectionState("loading");
 
+  if (isAdminSessionExpired()) {
+    expireAdminSession("Sesja wygasła. Zaloguj się ponownie.");
+    return;
+  }
+
+  if (!(await refreshAdminSessionIfNeeded())) return;
+
   const success = await loadDashboardData();
 
   if (!success) {
-    sessionStorage.removeItem("mpzPanelAdminSecret");
-    adminSecret = "";
+    clearAdminSession();
     return;
   }
 
@@ -1378,7 +1401,172 @@ async function restoreSession() {
   adminApp.hidden = false;
 
   openView("dashboard");
+  startAdminSessionMonitoring();
 }
+
+function restoreStoredAdminSession() {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_STORAGE_KEY) || "null");
+    if (stored?.accessToken) {
+      adminSecret = stored.accessToken;
+      adminRefreshToken = stored.refreshToken || "";
+      adminSessionExpiresAt = Number(stored.expiresAt) || 0;
+      adminSessionStartedAt = Number(stored.startedAt) || Date.now();
+      adminSessionLastActivityAt = Number(stored.lastActivityAt) || Date.now();
+      adminSessionLegacy = stored.legacy === true;
+      return;
+    }
+  } catch {
+    sessionStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+  }
+
+  const legacySecret = sessionStorage.getItem("mpzPanelAdminSecret") || "";
+  if (legacySecret) {
+    adminSecret = legacySecret;
+    adminSessionLegacy = true;
+    adminSessionStartedAt = Date.now();
+    adminSessionLastActivityAt = Date.now();
+    adminSessionExpiresAt = Date.now() + ADMIN_SESSION_IDLE_MS;
+    sessionStorage.removeItem("mpzPanelAdminSecret");
+    persistAdminSession();
+  }
+}
+
+async function createAdminSession(secret) {
+  try {
+    const response = await fetch(ADMIN_SESSION_API_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secret}` },
+    });
+
+    if (response.status === 404 || response.status === 405 || response.status === 501) {
+      setLegacyAdminSession(secret);
+      return true;
+    }
+
+    const result = await response.json().catch(() => null);
+    if (response.ok && (!result?.accessToken || !result?.refreshToken)) {
+      setLegacyAdminSession(secret);
+      return true;
+    }
+    if (!response.ok || !result?.accessToken || !result?.refreshToken) {
+      throw new Error(result?.message || "Nie udało się utworzyć bezpiecznej sesji.");
+    }
+
+    const now = Date.now();
+    adminSecret = result.accessToken;
+    adminRefreshToken = result.refreshToken;
+    adminSessionExpiresAt = now + Math.max(60, Number(result.expiresIn) || 900) * 1000;
+    adminSessionStartedAt = now;
+    adminSessionLastActivityAt = now;
+    adminSessionLegacy = false;
+    persistAdminSession();
+    return true;
+  } catch (error) {
+    if (error instanceof TypeError) {
+      setLegacyAdminSession(secret);
+      return true;
+    }
+    showMessage(loginMessage, error instanceof Error ? error.message : "Logowanie nie powiodło się.", "error");
+    return false;
+  }
+}
+
+function setLegacyAdminSession(secret) {
+  const now = Date.now();
+  adminSecret = secret;
+  adminRefreshToken = "";
+  adminSessionExpiresAt = now + ADMIN_SESSION_IDLE_MS;
+  adminSessionStartedAt = now;
+  adminSessionLastActivityAt = now;
+  adminSessionLegacy = true;
+  persistAdminSession();
+}
+
+async function refreshAdminSessionIfNeeded(force = false) {
+  if (adminSessionLegacy || !adminRefreshToken) return true;
+  if (!force && adminSessionExpiresAt - Date.now() > ADMIN_SESSION_REFRESH_MARGIN_MS) return true;
+
+  try {
+    const response = await fetch(ADMIN_SESSION_REFRESH_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: adminRefreshToken }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.accessToken) throw new Error(result.message || "Sesja wygasła.");
+    adminSecret = result.accessToken;
+    if (result.refreshToken) adminRefreshToken = result.refreshToken;
+    adminSessionExpiresAt = Date.now() + Math.max(60, Number(result.expiresIn) || 900) * 1000;
+    persistAdminSession();
+    return true;
+  } catch {
+    expireAdminSession("Nie udało się odświeżyć sesji. Zaloguj się ponownie.");
+    return false;
+  }
+}
+
+function persistAdminSession() {
+  if (!adminSecret) return;
+  sessionStorage.setItem(ADMIN_SESSION_STORAGE_KEY, JSON.stringify({
+    accessToken: adminSecret,
+    refreshToken: adminRefreshToken,
+    expiresAt: adminSessionExpiresAt,
+    startedAt: adminSessionStartedAt,
+    lastActivityAt: adminSessionLastActivityAt,
+    legacy: adminSessionLegacy,
+  }));
+}
+
+function clearAdminSession() {
+  adminSecret = "";
+  adminRefreshToken = "";
+  adminSessionExpiresAt = 0;
+  adminSessionStartedAt = 0;
+  adminSessionLastActivityAt = 0;
+  adminSessionLegacy = false;
+  if (adminSessionTimer) window.clearInterval(adminSessionTimer);
+  adminSessionTimer = null;
+  sessionStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+  sessionStorage.removeItem("mpzPanelAdminSecret");
+}
+
+function isAdminSessionExpired() {
+  const now = Date.now();
+  return !adminSecret || now - adminSessionLastActivityAt >= ADMIN_SESSION_IDLE_MS || now - adminSessionStartedAt >= ADMIN_SESSION_MAX_MS;
+}
+
+function recordAdminActivity() {
+  if (!adminSecret || Date.now() - adminSessionLastActivityAt < 15000) return;
+  adminSessionLastActivityAt = Date.now();
+  if (adminSessionLegacy) adminSessionExpiresAt = adminSessionLastActivityAt + ADMIN_SESSION_IDLE_MS;
+  persistAdminSession();
+  void refreshAdminSessionIfNeeded();
+}
+
+function startAdminSessionMonitoring() {
+  if (adminSessionTimer) window.clearInterval(adminSessionTimer);
+  adminSessionTimer = window.setInterval(async () => {
+    if (isAdminSessionExpired()) {
+      expireAdminSession("Sesja wygasła z powodu braku aktywności. Zaloguj się ponownie.");
+      return;
+    }
+    await refreshAdminSessionIfNeeded();
+  }, 30000);
+}
+
+function expireAdminSession(message) {
+  clearAdminSession();
+  adminApp.hidden = true;
+  loginScreen.hidden = false;
+  secretInput.value = "";
+  secretInput.focus();
+  showMessage(loginMessage, message, "error");
+}
+
+["pointerdown", "keydown", "scroll"].forEach((eventName) => {
+  document.addEventListener(eventName, recordAdminActivity, { passive: true });
+});
 
 async function loadDashboardData() {
   setConnectionState("loading");
@@ -3282,11 +3470,15 @@ function logout() {
     saveEditorDraft();
   }
 
-  adminSecret = "";
-
-  sessionStorage.removeItem(
-    "mpzPanelAdminSecret"
-  );
+  const accessToken = adminSecret;
+  if (!adminSessionLegacy && accessToken) {
+    fetch(ADMIN_SESSION_LOGOUT_API_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      keepalive: true,
+    }).catch(() => {});
+  }
+  clearAdminSession();
 
   adminApp.hidden = true;
   loginScreen.hidden = false;

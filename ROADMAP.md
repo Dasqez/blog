@@ -122,3 +122,13 @@ Status: gotowy do testów na localhost.
 - skróty klawiaturowe oraz ich podręczna lista,
 - menu kontekstowe wpisów i stron,
 - poprawiona responsywność panelu i obsługa ograniczonych animacji.
+
+## Etap 12 — Bezpieczeństwo
+
+Status: gotowy do testów na localhost i wdrożenia Workera.
+
+- krótkotrwałe tokeny dostępu z automatycznym odświeżaniem i rotacją tokenu odświeżającego,
+- wygaszanie panelu po 30 minutach bezczynności oraz maksymalnie po 8 godzinach,
+- unieważnianie sesji podczas wylogowania,
+- rate limiting logowania, odczytów i operacji modyfikujących,
+- limity rozmiaru żądań, walidacja JSON oraz bezpieczne komunikaty błędów z identyfikatorem żądania.

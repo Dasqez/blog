@@ -6,6 +6,8 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano Etap 12 Bezpieczeństwo: krótkotrwałe sesje administratora z odświeżaniem i rotacją tokenów, wygasanie po bezczynności, unieważnianie przy wylogowaniu, rate limiting, rozszerzoną walidację żądań i identyfikatory błędów Workera.
+- Naprawiono wykrywanie starszej wersji Workera podczas logowania, aby tryb zgodności nie blokował pobierania wpisów przed wdrożeniem endpointów bezpiecznej sesji.
 - Dodano graficzny pasek postępu wysyłania obrazów do biblioteki mediów z licznikiem plików, nazwą aktualnie przesyłanego obrazu oraz możliwością anulowania pozostałej kolejki.
 - Dodano Etap 11 UX: ciemny motyw panelu, skróty klawiaturowe, menu kontekstowe wpisów i stron, skeleton loading, animacje oraz spójniejsze dialogi i responsywność.
 - Dodano natychmiastowy podgląd ustawień na otwartej stronie głównej localhost: motyw, nazwa, slogan, logo, favicona i ikony social reagują na zmiany w panelu przed publikacją.
