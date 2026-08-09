@@ -4,7 +4,19 @@
   "url": "https://minimalistycznie.pages.dev",
   "favicon": "/favicon.png",
   "logo": "",
-  "theme": "light",
+  "theme": "dark",
+  "visibility": {
+    "name": true,
+    "slogan": false,
+    "favicon": false,
+    "logo": false,
+    "social": {
+      "facebook": false,
+      "instagram": false,
+      "x": false,
+      "github": false
+    }
+  },
   "social": {
     "facebook": "https://www.facebook.com/dasqez",
     "instagram": "https://www.instagram.com/dasqez/",
