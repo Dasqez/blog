@@ -916,6 +916,39 @@
 
   </div>
 
+  <section id="qualityToolkit" class="quality-toolkit">
+    <div class="quality-toolkit-header">
+      <div>
+        <span class="section-kicker">Quality Writing Toolkit</span>
+        <h3>Ocena i wskazówki</h3>
+      </div>
+      <div id="qualityScore" class="quality-score" aria-live="polite">
+        <strong>0</strong><span>/100</span>
+      </div>
+      <button id="qualityToggle" class="quality-toggle" type="button" aria-expanded="true" aria-controls="qualityToolkitBody">
+        <span>Ukryj szczegóły</span>
+        <i class="fa-solid fa-chevron-up"></i>
+      </button>
+    </div>
+
+    <div id="qualityToolkitBody" class="quality-toolkit-grid">
+      <div>
+        <h4>Analiza i zalecenia</h4>
+        <ul id="qualityChecks" class="quality-checks"></ul>
+      </div>
+
+      <div>
+        <h4>Podgląd Open Graph</h4>
+        <article class="og-preview" aria-label="Podgląd udostępnienia wpisu">
+          <span class="og-preview-site">minimalistycznie.pages.dev</span>
+          <strong id="ogPreviewTitle">Tytuł wpisu</strong>
+          <p id="ogPreviewDescription">Opis wpisu pojawi się tutaj.</p>
+          <span id="ogPreviewUrl">minimalistycznie.pages.dev</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <div class="editor-actions">
 
     <button

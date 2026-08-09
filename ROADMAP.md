@@ -39,6 +39,8 @@ Status: gotowy do testów na localhost.
 
 ## Etap 3.5 — Quality Writing Toolkit
 
+Status: gotowy do testów na localhost.
+
 - analiza SEO i czytelności,
 - analiza nagłówków i brakujących tekstów alternatywnych,
 - sprawdzanie linków i ostrzeżenia o dużych obrazach,

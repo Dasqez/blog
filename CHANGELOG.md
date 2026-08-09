@@ -20,6 +20,12 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Edytor treści
 
+- Dodano Quality Writing Toolkit z punktową oceną jakości, analizą SEO i czytelności oraz zaleceniami aktualizowanymi podczas pisania.
+- Dodano kontrolę długości tytułu i opisu, liczby słów, struktury nagłówków, długości zdań, tekstów alternatywnych, linków i obrazów powyżej 1 MB.
+- Dodano podgląd Open Graph wykorzystujący aktualny tytuł, opis i slug wpisu.
+- Przeprojektowano Toolkit jako zwijany, kompaktowy panel i naprawiono nakładanie go na kolumny kodu oraz podglądu.
+- Zastąpiono zawodny natywny mechanizm zwijania własnym, zawsze widocznym nagłówkiem i przyciskiem pokazywania szczegółów.
+- Zablokowano kurczenie panelu jakości do zerowej wysokości wewnątrz elastycznego układu edytora.
 - Dodano numerację linii zsynchronizowaną z przewijaniem edytora kodu.
 - Dodano automatyczne domykanie wpisywanych tagów HTML z pominięciem elementów pustych, takich jak `img`, `br` i `input`.
 - Wyłączono zawijanie długich linii w trybie kodu, aby numeracja, zaznaczenie i warstwa kolorowania pozostawały zsynchronizowane.

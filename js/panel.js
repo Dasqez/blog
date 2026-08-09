@@ -146,8 +146,24 @@ const markdownPreview =
 
 const editorStatistics =
   document.getElementById("editorStatistics");
+const qualityToolkit = document.getElementById("qualityToolkit");
+const qualityScore = document.getElementById("qualityScore");
+const qualityChecks = document.getElementById("qualityChecks");
+const qualityToggle = document.getElementById("qualityToggle");
+const ogPreviewTitle = document.getElementById("ogPreviewTitle");
+const ogPreviewDescription = document.getElementById("ogPreviewDescription");
+const ogPreviewUrl = document.getElementById("ogPreviewUrl");
 const markdownToolbarButtons =
   document.querySelectorAll("[data-markdown-action]");  
+
+qualityToggle?.addEventListener("click", () => {
+  const collapsed = qualityToolkit.classList.toggle("is-collapsed");
+  qualityToggle.setAttribute("aria-expanded", String(!collapsed));
+  qualityToggle.querySelector("span").textContent =
+    collapsed ? "Pokaż szczegóły" : "Ukryj szczegóły";
+  qualityToggle.querySelector("i").className =
+    `fa-solid ${collapsed ? "fa-chevron-down" : "fa-chevron-up"}`;
+});
 const savePostButton =
   document.getElementById("savePostButton");
 const uploadImageButton =
@@ -2881,6 +2897,7 @@ function renderMarkdownPreview() {
 
   updateEditorStatistics(markdown);
   updateEditorOutline(markdown);
+  updateQualityToolkit(markdown);
 
   if (!title && !markdown.trim()) {
     if (sitePreviewFrame) sitePreviewFrame.hidden = true;
@@ -3028,6 +3045,116 @@ function updateEditorStatistics(markdown) {
   editorStatistics.textContent =
     `${words} słów · ${characters} znaków · ` +
     `${readingMinutes} min czytania`;
+}
+
+function getPlainEditorText(source) {
+  return String(source || "")
+    .replace(POST_TAGS_METADATA_PATTERN, "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/[`*_>#~-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getEditorDescription(source) {
+  const withoutMetadata = stripPostTagsMetadata(source);
+  const beforeExcerpt = withoutMetadata.split("<!-- more -->")[0];
+  return getPlainEditorText(beforeExcerpt).slice(0, 180);
+}
+
+function analyzeEditorImages(source) {
+  const images = [];
+  const markdownPattern = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g;
+  const htmlPattern = /<img\b[^>]*>/gi;
+  let match;
+
+  while ((match = markdownPattern.exec(source))) {
+    images.push({ alt: match[1].trim(), src: match[2] });
+  }
+  while ((match = htmlPattern.exec(source))) {
+    const tag = match[0];
+    const alt = tag.match(/\balt\s*=\s*["']([^"']*)["']/i)?.[1]?.trim() || "";
+    const src = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1] || "";
+    images.push({ alt, src });
+  }
+
+  return images;
+}
+
+function analyzeEditorLinks(source) {
+  const links = [];
+  const markdownPattern = /(?<!!)\[[^\]]+\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g;
+  const htmlPattern = /<a\b[^>]*href\s*=\s*["']([^"']*)["'][^>]*>/gi;
+  let match;
+  while ((match = markdownPattern.exec(source))) links.push(match[1]);
+  while ((match = htmlPattern.exec(source))) links.push(match[1]);
+  return links;
+}
+
+function hasHeadingOrderIssue(source) {
+  const levels = [];
+  const markdownPattern = /^(#{1,6})\s+.+$/gm;
+  const htmlPattern = /<h([1-6])\b[^>]*>/gi;
+  let match;
+  while ((match = markdownPattern.exec(source))) levels.push({ level: match[1].length, position: match.index });
+  while ((match = htmlPattern.exec(source))) levels.push({ level: Number(match[1]), position: match.index });
+  levels.sort((left, right) => left.position - right.position);
+  return levels.some((heading, index) => index > 0 && heading.level > levels[index - 1].level + 1);
+}
+
+function updateQualityToolkit(source) {
+  if (!qualityToolkit || !qualityChecks || !qualityScore) return;
+
+  const title = editorTitle.value.trim();
+  const slug = editorSlug.value.trim();
+  const text = getPlainEditorText(source);
+  const description = getEditorDescription(source);
+  const words = text ? text.split(/\s+/).length : 0;
+  const sentences = text.split(/[.!?]+(?:\s|$)/).map((item) => item.trim()).filter(Boolean);
+  const averageSentenceLength = sentences.length ? words / sentences.length : 0;
+  const headings = (String(source).match(/^(#{1,6})\s+.+$/gm) || []).length +
+    (String(source).match(/<h[1-6]\b[^>]*>/gi) || []).length;
+  const images = analyzeEditorImages(source);
+  const missingAlt = images.filter((image) => !image.alt).length;
+  const links = analyzeEditorLinks(source);
+  const suspiciousLinks = links.filter((href) =>
+    !href || /^javascript:/i.test(href) || href === "#"
+  ).length;
+  const largeImages = images.filter((image) => {
+    const media = mediaItems.find((item) => [getMediaUrl(item), getMediaUrl(item, true)].includes(image.src));
+    return Number(media?.size || 0) > 1024 * 1024;
+  }).length;
+
+  const checks = [
+    { pass: title.length >= 30 && title.length <= 60, label: "Tytuł SEO", detail: `${title.length}/30–60 znaków` },
+    { pass: description.length >= 120 && description.length <= 160, label: "Opis", detail: `${description.length}/120–160 znaków` },
+    { pass: words >= 300, label: "Długość treści", detail: `${words}/min. 300 słów` },
+    { pass: headings > 0 && !hasHeadingOrderIssue(source), label: "Struktura nagłówków", detail: headings ? `${headings} nagłówków` : "Brak nagłówków" },
+    { pass: averageSentenceLength <= 22 || sentences.length === 0, label: "Czytelność zdań", detail: `${averageSentenceLength.toFixed(1)} słowa na zdanie` },
+    { pass: missingAlt === 0, label: "Opisy obrazów", detail: missingAlt ? `${missingAlt} bez tekstu alt` : `${images.length} sprawdzonych` },
+    { pass: suspiciousLinks === 0, label: "Linki", detail: suspiciousLinks ? `${suspiciousLinks} podejrzanych` : `${links.length} sprawdzonych` },
+    { pass: largeImages === 0, label: "Rozmiar obrazów", detail: largeImages ? `${largeImages} powyżej 1 MB` : "Brak dużych obrazów" },
+  ];
+  const score = Math.round(checks.filter((check) => check.pass).length / checks.length * 100);
+
+  qualityScore.className = `quality-score ${score >= 75 ? "is-good" : score >= 50 ? "is-warning" : "is-poor"}`;
+  qualityScore.innerHTML = `<strong>${score}</strong><span>/100</span>`;
+  qualityChecks.innerHTML = "";
+  checks.forEach((check) => {
+    const item = document.createElement("li");
+    item.className = check.pass ? "is-pass" : "is-warning";
+    item.innerHTML = `<i class="fa-solid ${check.pass ? "fa-circle-check" : "fa-triangle-exclamation"}"></i><span><strong></strong><small></small></span>`;
+    item.querySelector("strong").textContent = check.label;
+    item.querySelector("small").textContent = check.detail;
+    qualityChecks.appendChild(item);
+  });
+
+  ogPreviewTitle.textContent = title || "Tytuł wpisu";
+  ogPreviewDescription.textContent = description || "Opis wpisu pojawi się tutaj.";
+  ogPreviewUrl.textContent = `minimalistycznie.pages.dev/_posts/${slug || "adres-wpisu"}/`;
 }
 
 function showMessage(
