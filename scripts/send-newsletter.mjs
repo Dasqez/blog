@@ -1,5 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 const SITE_URL =
   process.env.SITE_URL || "https://minimalistycznie.pages.dev";
@@ -7,6 +11,7 @@ const SITE_URL =
 const WORKER_URL = process.env.NEWSLETTER_WORKER_URL || "";
 const TRIGGER_SECRET = process.env.NEWSLETTER_TRIGGER_SECRET || "";
 const DRY_RUN = process.env.DRY_RUN === "true";
+const BEFORE_SHA = process.env.BEFORE_SHA || "";
 
 const postFiles = String(process.env.POST_FILES || "")
   .split(/\r?\n/)
@@ -34,6 +39,17 @@ async function processPost(postFile) {
   const source = await fs.readFile(postFile, "utf8");
   const parsed = parsePost(source);
 
+  if (getPostPublicationStatus(source) === "draft") {
+    console.log("Wpis jest wersją roboczą. Newsletter nie zostanie wysłany.");
+    return;
+  }
+
+  const previousStatus = await getPreviousPostPublicationStatus(postFile);
+  if (previousStatus === "published") {
+    console.log("Wpis był już wcześniej opublikowany. Zwykła edycja nie wysyła kolejnego newslettera.");
+    return;
+  }
+
   if (!parsed.data.title) {
     throw new Error(`Wpis ${postFile} nie ma pola title.`);
   }
@@ -43,7 +59,7 @@ async function processPost(postFile) {
   const postImage = findPostImage(parsed.data.image, parsed.body);
 
   const payload = {
-    postId: slug,
+    postId: `${slug}:published`,
     postTitle: parsed.data.title,
     postUrl,
     postExcerpt: createExcerpt(parsed.body),
@@ -239,4 +255,23 @@ function sleep(milliseconds) {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds);
   });
+}
+
+function getPostPublicationStatus(source) {
+  return /<!--\s*cms-status:\s*draft\s*-->/i.test(String(source || ""))
+    ? "draft"
+    : "published";
+}
+
+async function getPreviousPostPublicationStatus(postFile) {
+  if (!BEFORE_SHA || /^0+$/.test(BEFORE_SHA)) return null;
+  try {
+    const { stdout } = await execFileAsync("git", ["show", `${BEFORE_SHA}:${postFile}`], {
+      encoding: "utf8",
+      maxBuffer: 5 * 1024 * 1024,
+    });
+    return getPostPublicationStatus(stdout);
+  } catch {
+    return null;
+  }
 }
