@@ -4,12 +4,12 @@
   "url": "https://minimalistycznie.pages.dev",
   "favicon": "/favicon.png",
   "logo": "",
-  "theme": "dark",
+  "theme": "light",
   "social": {
-    "facebook": "",
-    "instagram": "",
-    "x": "",
-    "github": ""
+    "facebook": "https://www.facebook.com/dasqez",
+    "instagram": "https://www.instagram.com/dasqez/",
+    "x": "https://www.x.com/Dasqez",
+    "github": "https://github.com/Dasqez"
   },
   "googleAnalyticsId": "",
   "giscus": {
