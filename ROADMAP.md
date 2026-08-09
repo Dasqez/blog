@@ -64,3 +64,12 @@ Status: gotowy do testów na localhost.
 - ostatnio edytowane wpisy i ostatnia wysyłka newslettera,
 - statystyki struktury treści, dostarczalności i aktywności subskrybentów,
 - szybkie akcje prowadzące do najważniejszych sekcji CMS.
+
+## Etap 6 — Newsletter
+
+Status: gotowy do testów na localhost.
+
+- wizualny podgląd wiadomości i podgląd HTML,
+- testowa wysyłka na wskazany adres,
+- kolejka i historia newsletterów,
+- ponowna wysyłka oraz statystyki dostarczeń.

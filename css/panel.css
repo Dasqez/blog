@@ -542,6 +542,22 @@ button:disabled {
 .activity-item strong {
   font-size: 0.9rem;
 }
+.newsletter-workspace,.newsletter-lists-grid { display:grid; grid-template-columns:minmax(320px,.8fr) minmax(420px,1.2fr); gap:20px; margin-top:20px; }
+.newsletter-lists-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.newsletter-composer label { display:grid; gap:7px; margin-top:16px; color:var(--muted); font:600 11px "Montserrat",sans-serif; letter-spacing:.06em; text-transform:uppercase; }
+.newsletter-composer input,.newsletter-composer textarea,.newsletter-composer select { width:100%; border:1px solid var(--border); border-radius:8px; padding:12px; background:var(--surface); color:var(--text); font:400 14px "Montserrat",sans-serif; text-transform:none; }
+.newsletter-test-row { display:grid; grid-template-columns:1fr auto; gap:10px; margin:18px 0 12px; }
+.newsletter-preview-switch { display:flex; gap:4px; padding:3px; border:1px solid var(--border); border-radius:8px; }
+.newsletter-preview-switch button { min-height:30px; padding:0 10px; border:0; border-radius:5px; background:transparent; font-size:11px; }
+.newsletter-preview-switch button.active { background:#171717; color:#fff; }
+#newsletterPreviewFrame,#newsletterHtmlPreview { width:100%; height:540px; margin-top:20px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+#newsletterHtmlPreview { overflow:auto; padding:18px; white-space:pre-wrap; font:12px/1.55 Consolas,monospace; }
+.newsletter-record-list { display:grid; gap:10px; margin-top:20px; }
+.newsletter-record { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px; border:1px solid var(--border); border-radius:9px; }
+.newsletter-record div { display:grid; gap:5px; min-width:0; }
+.newsletter-record strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.newsletter-record small { color:var(--muted); }
+@media (max-width:1000px) { .newsletter-workspace,.newsletter-lists-grid { grid-template-columns:1fr; } }
 
 .activity-item p {
   margin: 5px 0 0;

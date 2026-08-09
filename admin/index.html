@@ -1082,21 +1082,34 @@
             </article>
           </div>
 
-          <article class="content-card information-card">
-            <span class="information-symbol">
-              <i class="fa-solid fa-shield-halved"></i>
-            </span>
+          <div class="newsletter-workspace">
+            <article class="content-card newsletter-composer">
+              <div class="card-heading"><div><p class="section-kicker">Nowa kampania</p><h3>Przygotuj newsletter</h3></div></div>
+              <label>Wpis <span aria-hidden="true">*</span><select id="newsletterPostSelect" required><option value="">Wybierz wpis…</option></select></label>
+              <label>Tytuł wiadomości <span aria-hidden="true">*</span><input id="newsletterSubject" type="text" placeholder="Tytuł newslettera" required></label>
+              <label>Opis <span aria-hidden="true">*</span><textarea id="newsletterExcerpt" rows="5" placeholder="Napisz własny opis newslettera" required></textarea></label>
+              <label>Adres obrazu<input id="newsletterImage" type="url" placeholder="https://…"></label>
+              <div class="newsletter-test-row">
+                <input id="newsletterTestEmail" type="email" placeholder="Adres do wysyłki testowej *" required>
+                <button id="newsletterTestButton" type="button" class="secondary-button" disabled>Wyślij test</button>
+              </div>
+              <button id="newsletterSendButton" type="button" class="primary-button" disabled>Wyślij do subskrybentów</button>
+              <p id="newsletterActionStatus" class="media-upload-status" role="status"></p>
+            </article>
 
-            <div>
-              <h3>Dane pobierane bezpośrednio z D1</h3>
+            <article class="content-card newsletter-preview-card">
+              <div class="card-heading"><div><p class="section-kicker">Podgląd</p><h3>Wiadomość e-mail</h3></div>
+                <div class="newsletter-preview-switch"><button type="button" class="active" data-newsletter-preview="visual">Wizualny</button><button type="button" data-newsletter-preview="html">HTML</button></div>
+              </div>
+              <iframe id="newsletterPreviewFrame" title="Podgląd newslettera"></iframe>
+              <pre id="newsletterHtmlPreview" hidden><code></code></pre>
+            </article>
+          </div>
 
-              <p>
-                Panel komunikuje się z zabezpieczonym endpointem
-                Cloudflare Workera. Klucz administratora nie jest
-                zapisywany w repozytorium ani w trwałej pamięci przeglądarki.
-              </p>
-            </div>
-          </article>
+          <div class="newsletter-lists-grid">
+            <article class="content-card"><div class="card-heading"><div><p class="section-kicker">Kolejka</p><h3>Stan wysyłek</h3></div></div><div id="newsletterQueueList" class="newsletter-record-list"><p class="dashboard-empty">Pobieranie…</p></div></article>
+            <article class="content-card"><div class="card-heading"><div><p class="section-kicker">Historia</p><h3>Wysłane newslettery</h3></div></div><div id="newsletterHistoryList" class="newsletter-record-list"><p class="dashboard-empty">Pobieranie…</p></div></article>
+          </div>
         </section>
 
         <!-- MEDIA -->

@@ -48,6 +48,12 @@ const ADMIN_DELETE_MEDIA_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/media/delete";  
 const ADMIN_BULK_DELETE_MEDIA_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/media/delete-bulk";
+const ADMIN_NEWSLETTERS_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/newsletters";
+const ADMIN_SEND_NEWSLETTER_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/newsletter/send";
+const ADMIN_TEST_NEWSLETTER_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/newsletter/test";
 
 const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV092";
 const EDITOR_AUTOSAVE_INTERVAL_MS = 30000;
@@ -109,6 +115,19 @@ const dashboardNewPost = document.getElementById("dashboardNewPost");
 const dashboardRecentContent = document.getElementById("dashboardRecentContent");
 const dashboardContentMetrics = document.getElementById("dashboardContentMetrics");
 const dashboardNewsletterMetrics = document.getElementById("dashboardNewsletterMetrics");
+const newsletterPostSelect = document.getElementById("newsletterPostSelect");
+const newsletterSubject = document.getElementById("newsletterSubject");
+const newsletterExcerpt = document.getElementById("newsletterExcerpt");
+const newsletterImage = document.getElementById("newsletterImage");
+const newsletterTestEmail = document.getElementById("newsletterTestEmail");
+const newsletterTestButton = document.getElementById("newsletterTestButton");
+const newsletterSendButton = document.getElementById("newsletterSendButton");
+const newsletterActionStatus = document.getElementById("newsletterActionStatus");
+const newsletterPreviewFrame = document.getElementById("newsletterPreviewFrame");
+const newsletterHtmlPreview = document.getElementById("newsletterHtmlPreview");
+const newsletterQueueList = document.getElementById("newsletterQueueList");
+const newsletterHistoryList = document.getElementById("newsletterHistoryList");
+const newsletterPreviewButtons = document.querySelectorAll("[data-newsletter-preview]");
 const pagesList = document.getElementById("pagesList");
 const pagesSearchInput = document.getElementById("pagesSearchInput");
 const reloadPagesButton = document.getElementById("reloadPagesButton");
@@ -313,6 +332,7 @@ let editorFindIndex = -1;
 let dashboardSummary = null;
 let mediaDeleteController = null;
 let mediaDeleteProgressTimer = null;
+let newslettersLoaded = false;
 
 /* =========================================================
    LISTENERY
@@ -331,6 +351,12 @@ cancelMediaDeleteButton?.addEventListener("click", () => {
     mediaDeleteProgressDialog?.close();
   }
 });
+newsletterPostSelect?.addEventListener("change", selectNewsletterPost);
+[newsletterSubject, newsletterExcerpt, newsletterImage].forEach((field) => field?.addEventListener("input", () => { renderNewsletterPreview(); updateNewsletterActions(); }));
+newsletterTestEmail?.addEventListener("input", updateNewsletterActions);
+newsletterTestButton?.addEventListener("click", sendNewsletterTest);
+newsletterSendButton?.addEventListener("click", () => sendNewsletterCampaign(false));
+newsletterPreviewButtons.forEach((button) => button.addEventListener("click", () => setNewsletterPreviewMode(button.dataset.newsletterPreview)));
 
 insertMediaButton?.addEventListener("click", insertSelectedMediaToEditor);
 
@@ -1416,6 +1442,9 @@ function openView(viewName) {
   if (viewName === "dashboard") {
     loadDashboardContentOverview();
   }
+  if (viewName === "newsletter") {
+    loadNewsletterWorkspace();
+  }
 
   window.location.hash = viewName;
 }
@@ -1477,6 +1506,154 @@ function renderDashboardInsights() {
       createDashboardMetric("Oczekujące wysyłki", Number(deliveries.pending || 0), Math.max(1, deliveryTotal), String(deliveries.pending || 0)),
     ].join("");
   }
+}
+
+async function loadNewsletterWorkspace(forceRefresh = false) {
+  if (newslettersLoaded && !forceRefresh) return;
+  await loadPosts();
+  newsletterPostSelect.innerHTML = '<option value="">Wybierz wpis…</option>';
+  posts.forEach((post, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = post.title || post.name || "Bez tytułu";
+    newsletterPostSelect.appendChild(option);
+  });
+  updateNewsletterActions();
+  renderNewsletterPreview();
+  await loadNewsletterRecords();
+  newslettersLoaded = true;
+}
+
+function getSelectedNewsletterPost() {
+  const selectedValue = newsletterPostSelect?.value;
+  if (selectedValue === undefined || selectedValue === "") return null;
+  const index = Number(selectedValue);
+  return Number.isInteger(index) && index >= 0 ? posts[index] : null;
+}
+
+function selectNewsletterPost() {
+  const post = getSelectedNewsletterPost();
+  if (!post) {
+    updateNewsletterActions();
+    renderNewsletterPreview();
+    return;
+  }
+  newsletterSubject.value = post.title || post.name || "";
+  newsletterExcerpt.value = "";
+  newsletterImage.value = post.image || post.featuredImage || "";
+  newsletterActionStatus.textContent = "";
+  updateNewsletterActions();
+  renderNewsletterPreview();
+}
+
+function updateNewsletterActions() {
+  const hasPost = Boolean(getSelectedNewsletterPost());
+  const hasContent = Boolean(newsletterSubject?.value.trim() && newsletterExcerpt?.value.trim());
+  const hasTestEmail = Boolean(newsletterTestEmail?.value.trim() && newsletterTestEmail.checkValidity());
+  if (newsletterSendButton) newsletterSendButton.disabled = !(hasPost && hasContent);
+  if (newsletterTestButton) newsletterTestButton.disabled = !(hasPost && hasContent && hasTestEmail);
+}
+
+function getNewsletterPayload() {
+  const post = getSelectedNewsletterPost();
+  if (!post) return null;
+  const slug = post.slug || String(post.name || "").replace(/\.md$/i, "").replace(/^\d{4}-\d{2}-\d{2}-/, "");
+  const relativeUrl = post.url || `/_posts/${slug}/`;
+  return {
+    postId: post.path || post.name || slug,
+    postTitle: newsletterSubject.value.trim(),
+    postUrl: new URL(relativeUrl, "https://minimalistycznie.pages.dev").href,
+    postExcerpt: newsletterExcerpt.value.trim(),
+    postImage: newsletterImage.value.trim(),
+  };
+}
+
+function buildNewsletterPreviewHtml() {
+  const payload = getNewsletterPayload() || { postTitle: newsletterSubject?.value || "Tytuł newslettera", postExcerpt: newsletterExcerpt?.value || "Opis wiadomości pojawi się tutaj.", postUrl: "#", postImage: newsletterImage?.value || "" };
+  const image = payload.postImage ? `<img src="${escapePreviewHtml(payload.postImage)}" alt="" style="width:100%;max-height:320px;object-fit:cover;border-radius:10px">` : "";
+  return `<!doctype html><html lang="pl"><body style="margin:0;background:#f4f1eb;font-family:Arial,sans-serif;color:#191919"><main style="max-width:620px;margin:32px auto;background:#fff;padding:38px;border-radius:12px"><p style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#6b6862">Minimalistycznie Przez Życie</p>${image}<h1 style="font-family:Georgia,serif;font-size:32px">${escapePreviewHtml(payload.postTitle)}</h1><p style="font-size:17px;line-height:1.65;color:#4c4944">${escapePreviewHtml(payload.postExcerpt)}</p><a href="${escapePreviewHtml(payload.postUrl)}" style="display:inline-block;margin-top:14px;padding:13px 20px;background:#171717;color:#fff;text-decoration:none">Czytaj wpis</a><hr style="margin:34px 0;border:0;border-top:1px solid #ddd"><small style="color:#777">To jest podgląd wiadomości. Link wypisania zostanie dodany automatycznie.</small></main></body></html>`;
+}
+
+function renderNewsletterPreview() {
+  const html = buildNewsletterPreviewHtml();
+  if (newsletterPreviewFrame) newsletterPreviewFrame.srcdoc = html;
+  const code = newsletterHtmlPreview?.querySelector("code");
+  if (code) code.textContent = html;
+}
+
+function setNewsletterPreviewMode(mode) {
+  const showHtml = mode === "html";
+  newsletterPreviewFrame.hidden = showHtml;
+  newsletterHtmlPreview.hidden = !showHtml;
+  newsletterPreviewButtons.forEach((button) => button.classList.toggle("active", button.dataset.newsletterPreview === mode));
+}
+
+async function newsletterApi(url, body) {
+  const response = await fetch(url, { method: body ? "POST" : "GET", headers: { ...(body ? { "Content-Type": "application/json" } : {}), Authorization: `Bearer ${adminSecret}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const result = await response.json();
+  if (!response.ok || result.success !== true) throw new Error(result.message || "Operacja newslettera nie powiodła się.");
+  return result;
+}
+
+async function sendNewsletterTest() {
+  const payload = getNewsletterPayload();
+  const email = newsletterTestEmail.value.trim();
+  if (!payload || !payload.postTitle || !payload.postExcerpt || !email || !newsletterTestEmail.checkValidity()) return showToast({ title: "Newsletter", message: "Uzupełnij wpis, tytuł, opis i prawidłowy adres e-mail.", type: "error" });
+  newsletterTestButton.disabled = true;
+  newsletterActionStatus.textContent = "Wysyłanie wiadomości testowej…";
+  try {
+    await newsletterApi(ADMIN_TEST_NEWSLETTER_API_URL, { ...payload, email });
+    newsletterActionStatus.textContent = "Wiadomość testowa została wysłana.";
+    showToast({ title: "Newsletter", message: "Wysłano wiadomość testową.", type: "success" });
+    await loadNewsletterRecords();
+  } catch (error) { newsletterActionStatus.textContent = error.message; showToast({ title: "Błąd wysyłki testowej", message: error.message, type: "error", duration: 5000 }); }
+  finally { newsletterTestButton.disabled = false; }
+}
+
+async function sendNewsletterCampaign(resend = false, payloadOverride = null) {
+  const payload = payloadOverride || getNewsletterPayload();
+  if (!payload || !payload.postTitle || !payload.postExcerpt) return showToast({ title: "Newsletter", message: "Uzupełnij wpis, tytuł i opis.", type: "error" });
+  if (!window.confirm(resend ? "Ponownie wysłać ten newsletter do aktywnych subskrybentów?" : "Wysłać newsletter do wszystkich aktywnych subskrybentów?")) return;
+  newsletterSendButton.disabled = true;
+  newsletterActionStatus.textContent = resend ? "Przygotowanie ponownej wysyłki…" : "Dodawanie wiadomości do kolejki…";
+  try {
+    const result = await newsletterApi(ADMIN_SEND_NEWSLETTER_API_URL, { ...payload, resend });
+    newsletterActionStatus.textContent = "Newsletter wysłano pomyślnie.";
+    showToast({ title: "Newsletter", message: "Newsletter wysłano pomyślnie.", type: "success", duration: 5000 });
+    await loadNewsletterRecords();
+    await loadDashboardData();
+  } catch (error) { newsletterActionStatus.textContent = error.message; showToast({ title: "Błąd newslettera", message: error.message, type: "error", duration: 6000 }); }
+  finally { updateNewsletterActions(); }
+}
+
+async function loadNewsletterRecords() {
+  newsletterQueueList.innerHTML = '<p class="dashboard-empty">Pobieranie kolejki…</p>';
+  newsletterHistoryList.innerHTML = '<p class="dashboard-empty">Pobieranie historii…</p>';
+  try {
+    const result = await newsletterApi(ADMIN_NEWSLETTERS_API_URL);
+    renderNewsletterRecords(newsletterQueueList, result.queue || [], false);
+    renderNewsletterRecords(newsletterHistoryList, result.history || [], true);
+  } catch (error) {
+    newsletterQueueList.innerHTML = `<p class="global-message error">${escapePreviewHtml(error.message)}</p>`;
+    newsletterHistoryList.innerHTML = `<p class="global-message error">${escapePreviewHtml(error.message)}</p>`;
+  }
+}
+
+function renderNewsletterRecords(container, records, history) {
+  container.innerHTML = "";
+  if (!records.length) { container.innerHTML = `<p class="dashboard-empty">${history ? "Brak wysłanych newsletterów." : "Kolejka jest pusta."}</p>`; return; }
+  records.forEach((record) => {
+    const row = document.createElement("div");
+    row.className = "newsletter-record";
+    const historyDetails = record.isTest ? `Test · ${escapePreviewHtml(record.testEmail || "adres testowy")} · ${escapePreviewHtml(formatDate(record.sentAt))}` : `${escapePreviewHtml(formatDate(record.sentAt))} · ${Number(record.recipientsCount || 0)} odbiorców`;
+    row.innerHTML = `<div><strong>${escapePreviewHtml(record.postTitle || record.postId || "Newsletter")}</strong><small>${history ? historyDetails : `${Number(record.pending || 0)} oczekujących · ${Number(record.failed || 0)} błędów`}</small></div>`;
+    if (history && !record.isTest) {
+      const button = document.createElement("button"); button.type = "button"; button.className = "secondary-button"; button.textContent = "Wyślij ponownie";
+      button.addEventListener("click", () => sendNewsletterCampaign(true, { postId: record.postId, postTitle: record.postTitle, postUrl: record.postUrl, postExcerpt: "", postImage: "" }));
+      row.appendChild(button);
+    }
+    container.appendChild(row);
+  });
 }
 
 /* =========================================================

@@ -6,6 +6,12 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Poprawiono walidację newslettera: wymagane są wpis, tytuł i własny opis, a przy wysyłce testowej także prawidłowy adres e-mail.
+- Usunięto automatyczne kopiowanie treści wpisu do opisu newslettera, poprawiono bezwzględny adres wpisu oraz dodano wyraźny komunikat udanej wysyłki.
+- Dodano testowe wysyłki do historii newsletterów i automatyczne odświeżanie historii bez przeładowania panelu.
+- Naprawiono dane techniczne wysyłki testowej: Worker przekazuje pełny adres wypisania, identyfikator wpisu oraz bezpieczny obraz zastępczy, gdy kampania nie ma własnej grafiki.
+- Rozbudowano sekcję newslettera o wybór wpisu, edycję danych kampanii, podgląd wizualny i kod HTML wiadomości.
+- Dodano wysyłkę testową, właściwą wysyłkę do subskrybentów, kolejkę, historię oraz możliwość ponownego wysłania newslettera.
 - Rozbudowano dashboard CMS o liczniki wpisów, stron, obrazów, subskrybentów i wysłanych newsletterów.
 - Dodano wielokrotne zaznaczanie obrazów w bibliotece mediów za pomocą `Ctrl`/`Cmd`, widoczne znaczniki wyboru oraz grupowe usuwanie z postępem i jednym potwierdzeniem.
 - Dodano widoczny postęp grupowego usuwania w głównej części biblioteki oraz 30-sekundowy limit oczekiwania na każdy plik, aby operacja nie wyglądała na zawieszoną.
