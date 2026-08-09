@@ -6,6 +6,7 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano trwałe wersje robocze wpisów: pełna treść Markdown, obrazy, tagi i SEO zapisują się w repozytorium, wpis jest oznaczony w CMS i pozostaje całkowicie wykluczony z publicznego builda do chwili publikacji.
 - Dodano Etap 13 Stabilizacja: scentralizowano chronione wywołania API, usunięto nieużywane moduły starego panelu, dodano kontrolę przed wydaniem oraz dokumentację architektury i testów regresji.
 - Dodano Etap 12 Bezpieczeństwo: krótkotrwałe sesje administratora z odświeżaniem i rotacją tokenów, wygasanie po bezczynności, unieważnianie przy wylogowaniu, rate limiting, rozszerzoną walidację żądań i identyfikatory błędów Workera.
 - Naprawiono wykrywanie starszej wersji Workera podczas logowania, aby tryb zgodności nie blokował pobierania wpisów przed wdrożeniem endpointów bezpiecznej sesji.

@@ -21,6 +21,8 @@
 - logowanie, odświeżenie karty i wylogowanie działają,
 - Dashboard pokazuje aktualne liczniki,
 - można utworzyć, edytować, zapisać i usunąć wpis testowy,
+- nowy wpis można zapisać jako wersję roboczą; jest oznaczony w CMS, zachowuje Markdown i obrazy, ale nie powstaje dla niego publiczny adres ani pozycja na stronie głównej i w sitemap,
+- zmiana statusu wersji roboczej na „Opublikowany” umieszcza wpis na blogu bez utraty treści,
 - tagi, wersja robocza, podgląd, SEO i historia zachowują dane,
 - można utworzyć, duplikować, przesunąć, przywrócić i usunąć stronę testową,
 - biblioteka obsługuje wysyłanie wielu zdjęć, anulowanie, zaznaczanie i zbiorcze usuwanie,

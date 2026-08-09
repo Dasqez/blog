@@ -205,6 +205,7 @@ const editorSlug = document.getElementById("editorSlug");
 const editorDate = document.getElementById("editorDate");
 const editorLayout = document.getElementById("editorLayout");
 const editorTags = document.getElementById("editorTags");
+const editorPostStatus = document.getElementById("editorPostStatus");
 const editorBody = document.getElementById("editorBody");
 const editorLineNumbers = document.getElementById("editorLineNumbers");
 const editorHighlight = document.getElementById("editorHighlight");
@@ -234,6 +235,7 @@ const editorSlugField = document.getElementById("editorSlugField");
 const editorDateField = document.getElementById("editorDateField");
 const editorLayoutField = document.getElementById("editorLayoutField");
 const editorTagsField = document.getElementById("editorTagsField");
+const editorPostStatusField = document.getElementById("editorPostStatusField");
 const previewPostMeta = document.getElementById("previewPostMeta");
 const previewReadingTime = document.getElementById("previewReadingTime");
 const previewTags = document.getElementById("previewTags");
@@ -848,7 +850,7 @@ function replaceAllEditorMatches() {
   refreshEditorFindMatches();
 }
 
-[editorTitle, editorSlug, editorDate, editorLayout, editorTags, editorBody, ...editorSeoFields].forEach(
+[editorTitle, editorSlug, editorDate, editorLayout, editorTags, editorPostStatus, editorBody, ...editorSeoFields].forEach(
   (field) => {
     field.addEventListener("input", scheduleEditorAutosave);
     field.addEventListener("change", scheduleEditorAutosave);
@@ -866,6 +868,10 @@ editorSeoFields.forEach((field) => field?.addEventListener("change", refreshSeoT
 editorTags.addEventListener("input", () => {
   window.clearTimeout(editorTagsDraftTimeout);
   editorTagsDraftTimeout = window.setTimeout(saveEditorDraft, 500);
+});
+editorPostStatus?.addEventListener("change", () => {
+  updatePostSaveButtonLabel();
+  renderMarkdownPreview();
 });
 
 editorBody.addEventListener("input", () => rememberEditorHistory());
@@ -915,7 +921,7 @@ savePostButton.addEventListener("click", async () => {
     return;
   }
 
-  if (!confirmSeoBeforeSave()) return;
+  if (editorPostStatus.value === "published" && !confirmSeoBeforeSave()) return;
 
   if (isCreatingNewPost) {
 
@@ -961,7 +967,9 @@ savePostButton.addEventListener("click", async () => {
 
       showToast({
         title: "Edytor",
-        message: "Nowy wpis został utworzony.",
+        message: editorPostStatus.value === "draft"
+          ? "Wersja robocza została zapisana i nie jest widoczna na blogu."
+          : "Nowy wpis został opublikowany.",
         type: "success",
         duration: 3000,
       });
@@ -980,7 +988,7 @@ savePostButton.addEventListener("click", async () => {
     } finally {
 
       savePostButton.disabled = false;
-      savePostButton.textContent = "Zapisz";
+      updatePostSaveButtonLabel();
 
     }
 
@@ -1100,7 +1108,9 @@ savePostButton.addEventListener("click", async () => {
 
     showToast({
       title: "Edytor",
-      message: "Wpis został zapisany. Cloudflare rozpocznie publikację nowej wersji.",
+      message: editorPostStatus.value === "draft"
+        ? "Wersja robocza została zapisana i nie jest widoczna na blogu."
+        : "Wpis został opublikowany. Cloudflare rozpocznie publikację nowej wersji.",
       type: "success",
       duration: 3000,
     });
@@ -1115,7 +1125,7 @@ savePostButton.addEventListener("click", async () => {
     });
   } finally {
     savePostButton.disabled = false;
-    savePostButton.textContent = "Zapisz";
+    updatePostSaveButtonLabel();
   }
 });
 
@@ -1592,7 +1602,6 @@ function expireAdminSession(message) {
 ["pointerdown", "keydown", "scroll"].forEach((eventName) => {
   document.addEventListener(eventName, recordAdminActivity, { passive: true });
 });
-
 async function loadDashboardData() {
   setConnectionState("loading");
   showToast({
@@ -1840,6 +1849,7 @@ async function loadNewsletterWorkspace(forceRefresh = false) {
   await loadPosts();
   newsletterPostSelect.innerHTML = '<option value="">Wybierz wpis…</option>';
   posts.forEach((post, index) => {
+    if (getPostStatus(post) === "draft") return;
     const option = document.createElement("option");
     option.value = String(index);
     option.textContent = post.title || post.name || "Bez tytułu";
@@ -2007,7 +2017,7 @@ function getGlobalSearchResults(query) {
   const matches = (...values) => normalizeGlobalSearchText(values.filter(Boolean).join(" ")).includes(normalizedQuery);
   const results = [];
   posts.filter((post) => matches(post.title, post.name, post.path, post.excerpt, getPostTags(post).join(" "))).slice(0, 8)
-    .forEach((post) => results.push({ type: "post", group: "Wpisy", icon: "fa-file-lines", title: post.title || post.name, detail: `${formatDate(post.date)} · ${post.path}`, data: post }));
+    .forEach((post) => results.push({ type: "post", group: "Wpisy", icon: "fa-file-lines", title: post.title || post.name, detail: `${getPostStatus(post) === "draft" ? "Wersja robocza · " : ""}${formatDate(post.date)} · ${post.path}`, data: post }));
   pages.filter((page) => matches(page.title, page.name, page.path, page.excerpt)).slice(0, 8)
     .forEach((page) => results.push({ type: "page", group: "Strony", icon: "fa-file", title: page.title || page.name, detail: page.path, data: page }));
   mediaItems.filter((item) => matches(item.name, item.path, item.type)).slice(0, 8)
@@ -2480,7 +2490,7 @@ async function loadPosts(forceRefresh = false) {
 
 async function enrichPostsWithMetadata(postItems) {
   await Promise.all(postItems.map(async (post) => {
-    if (!post?.path || post.body || getPostTags(post).length) {
+    if (!post?.path || post.body) {
       return;
     }
 
@@ -2494,6 +2504,7 @@ async function enrichPostsWithMetadata(postItems) {
       if (response.ok && result.success === true && result.post) {
         post.body = result.post.body || "";
         post.tags = getPostTags(result.post);
+        post.status = getPostStatus(result.post);
       }
     } catch {
       // Lista pozostaje dostępna nawet, gdy szczegóły pojedynczego wpisu zawiodą.
@@ -2539,6 +2550,13 @@ function renderPosts() {
     ].filter(Boolean).join(" · ");
 
     item.append(title, date, meta);
+
+    if (getPostStatus(post) === "draft") {
+      const statusBadge = document.createElement("span");
+      statusBadge.className = "post-status-badge";
+      statusBadge.textContent = "Wersja robocza";
+      item.appendChild(statusBadge);
+    }
 
     item.addEventListener("click", () => {
       selectPost(post, item);
@@ -2606,7 +2624,7 @@ function selectPost(post, item) {
     post.excerpt ||
     "Ten wpis nie ma krótkiego opisu.";
 
-  if (post.url) {
+  if (post.url && getPostStatus(post) !== "draft") {
     openPostButton.href = post.url;
     openPostButton.hidden = false;
   } else {
@@ -2900,6 +2918,7 @@ function configureEditorForContentType(type) {
   editorDateField.hidden = isPage;
   editorLayoutField.hidden = isPage;
   editorTagsField.hidden = isPage;
+  editorPostStatusField.hidden = isPage;
   if (qualityToolkit) qualityToolkit.hidden = isPage;
   editorBody.wrap = isPage ? "off" : "soft";
   editorBody.spellcheck = !isPage;
@@ -2909,6 +2928,15 @@ function configureEditorForContentType(type) {
   document.querySelector(".markdown-toolbar")?.setAttribute("aria-label", isPage ? "Narzędzia HTML i Liquid" : "Narzędzia Markdown");
   markdownToolbarButtons.forEach((button) => { button.hidden = isPage; });
   sourceActionButtons.forEach((button) => { button.hidden = !isPage; });
+}
+
+function updatePostSaveButtonLabel() {
+  if (editorContentType === "page") return;
+  if (editorPostStatus.value === "draft") {
+    savePostButton.textContent = "Zapisz wersję roboczą";
+  } else {
+    savePostButton.textContent = isCreatingNewPost ? "Opublikuj wpis" : "Zapisz i opublikuj";
+  }
 }
 
 async function openPageEditor(page) {
@@ -3033,6 +3061,7 @@ async function openPostEditor(post) {
       result.post.layout || "post-layout.html";
 
     editorTags.value = getPostTags(result.post).join(", ");
+    editorPostStatus.value = getPostStatus(result.post);
 
     setSeoEditorValues(extractPostSeoMetadata(result.post.body || ""));
 
@@ -3048,6 +3077,7 @@ async function openPostEditor(post) {
     editorPanel.hidden = false;
     editorSuspendedForMedia = false;
     savePostButton.disabled = false;
+    updatePostSaveButtonLabel();
     editorTitle.focus();
 
   } catch (error) {
@@ -3060,7 +3090,7 @@ async function openPostEditor(post) {
       duration: 5000,
     });
   } finally {
-    savePostButton.textContent = "Zapisz";
+    updatePostSaveButtonLabel();
   }
 }
 
@@ -3083,6 +3113,7 @@ function createNewPost() {
     formatEditorDate(new Date());
   editorLayout.value = "post-layout.html";
   editorTags.value = "";
+  editorPostStatus.value = "draft";
   setSeoEditorValues({});
   editorBody.value = "";
   setEditorBaseline();
@@ -3094,7 +3125,7 @@ function createNewPost() {
   editorPanel.hidden = false;
   editorSuspendedForMedia = false;
   savePostButton.disabled = false;
-  savePostButton.textContent = "Utwórz wpis";
+  updatePostSaveButtonLabel();
 
   document
     .querySelectorAll(".post-item")
@@ -3153,6 +3184,7 @@ function closePostEditor(options = {}) {
   editorDate.value = "";
   editorLayout.value = "";
   editorTags.value = "";
+  editorPostStatus.value = "draft";
   setSeoEditorValues({});
   editorBody.value = "";
   editorBaseline = "";
@@ -3175,6 +3207,7 @@ function getEditorValues() {
     date: editorDate.value,
     layout: editorLayout.value,
     tags: editorTags.value,
+    status: editorContentType === "post" ? editorPostStatus.value : "",
     seo: getSeoEditorValues(),
     body: editorBody.value,
   };
@@ -3306,11 +3339,13 @@ function restoreEditorDraft() {
   editorDate.value = draft.date || "";
   editorLayout.value = draft.layout || (editorContentType === "post" ? "post-layout.html" : "");
   editorTags.value = draft.tags || "";
+  if (editorContentType === "post") editorPostStatus.value = draft.status || "draft";
   setSeoEditorValues(draft.seo || {});
   editorBody.value = draft.body || "";
   slugEditedManually = editorContentType === "page" || Boolean(editorSlug.value);
   lastSavedDraftValues = serializeEditorValues();
   setEditorSaveStatus("draft", "Przywrócony szkic lokalny");
+  updatePostSaveButtonLabel();
 }
 
 function suspendEditorForMedia() {
@@ -5636,9 +5671,20 @@ const POST_TAGS_METADATA_PATTERN =
   /^\s*<!--\s*cms-tags:\s*(\[[\s\S]*?\])\s*-->\s*/i;
 const POST_SEO_METADATA_PATTERN =
   /^\s*<!--\s*cms-seo:\s*(\{[\s\S]*?\})\s*-->\s*/i;
+const POST_STATUS_METADATA_PATTERN =
+  /^\s*<!--\s*cms-status:\s*(draft|published)\s*-->\s*/i;
+
+function stripPostStatusMetadata(content) {
+  return String(content || "").replace(POST_STATUS_METADATA_PATTERN, "");
+}
+
+function extractPostStatusMetadata(content) {
+  const match = String(content || "").match(POST_STATUS_METADATA_PATTERN);
+  return match?.[1]?.toLowerCase() === "draft" ? "draft" : "published";
+}
 
 function extractPostTagsMetadata(content) {
-  const match = String(content || "").match(POST_TAGS_METADATA_PATTERN);
+  const match = stripPostStatusMetadata(content).match(POST_TAGS_METADATA_PATTERN);
   if (!match) {
     return [];
   }
@@ -5651,7 +5697,7 @@ function extractPostTagsMetadata(content) {
 }
 
 function stripPostTagsMetadata(content) {
-  return String(content || "").replace(POST_TAGS_METADATA_PATTERN, "");
+  return stripPostStatusMetadata(content).replace(POST_TAGS_METADATA_PATTERN, "");
 }
 
 function extractPostSeoMetadata(content) {
@@ -5694,11 +5740,16 @@ function getPostTags(post) {
   return extractPostTagsMetadata(post?.body || post?.excerpt || "");
 }
 
+function getPostStatus(post) {
+  if (String(post?.status || "").toLowerCase() === "draft") return "draft";
+  return extractPostStatusMetadata(post?.body || post?.excerpt || "");
+}
+
 function getPostBodyForSave() {
   const body = stripPostMetadata(editorBody.value);
   const tags = parsePostTags(editorTags.value);
   const seo = getSeoEditorValues();
-  const metadata = [];
+  const metadata = [`<!-- cms-status: ${editorPostStatus.value === "draft" ? "draft" : "published"} -->`];
   if (tags.length) metadata.push(`<!-- cms-tags: ${JSON.stringify(tags)} -->`);
   metadata.push(`<!-- cms-seo: ${JSON.stringify(seo)} -->`);
   return `${metadata.join("\n")}\n\n${body}`;

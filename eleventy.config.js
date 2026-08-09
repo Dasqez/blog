@@ -1,4 +1,10 @@
 export default function(eleventyConfig) {
+  eleventyConfig.addPreprocessor("cms-draft-posts", ["md"], function(data, content) {
+    const normalizedPath = String(this.inputPath || "").replace(/\\/g, "/");
+    if (!normalizedPath.startsWith("./_posts/") && !normalizedPath.startsWith("_posts/")) return;
+    if (/<!--\s*cms-status:\s*draft\s*-->/i.test(String(content || ""))) return false;
+  });
+
   eleventyConfig.addFilter("readingTime", function(content) {
     const plainText = String(content || "")
       .replace(/<[^>]+>/g, " ")
