@@ -11,10 +11,10 @@
     "favicon": true,
     "logo": true,
     "social": {
-      "facebook": true,
-      "instagram": true,
-      "x": true,
-      "github": true
+      "facebook": false,
+      "instagram": false,
+      "x": false,
+      "github": false
     }
   },
   "social": {
