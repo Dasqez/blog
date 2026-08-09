@@ -132,3 +132,14 @@ Status: gotowy do testów na localhost i wdrożenia Workera.
 - unieważnianie sesji podczas wylogowania,
 - rate limiting logowania, odczytów i operacji modyfikujących,
 - limity rozmiaru żądań, walidacja JSON oraz bezpieczne komunikaty błędów z identyfikatorem żądania.
+
+## Etap 13 — Stabilizacja
+
+Status: gotowy do pełnych testów localhost.
+
+- audyt kodu i zależności panelu CMS,
+- centralna obsługa chronionych wywołań API i błędów sesji,
+- usunięcie nieużywanej, przestarzałej próby modularizacji panelu,
+- dokumentacja architektury, bezpieczeństwa i procedury wydania,
+- jedna komenda kontroli składni JavaScript oraz pełnego builda Eleventy,
+- kompletna lista testów regresji localhost i produkcji.

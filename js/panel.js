@@ -662,7 +662,7 @@ deletePostButton.addEventListener("click", async () => {
   deletePostButton.textContent = "Usuwanie...";
 
   try {
-    const response = await fetch(
+    const response = await adminApiFetch(
       ADMIN_DELETE_POST_API_URL,
       {
         method: "POST",
@@ -924,7 +924,7 @@ savePostButton.addEventListener("click", async () => {
 
     try {
 
-      const response = await fetch(
+      const response = await adminApiFetch(
         ADMIN_CREATE_POST_API_URL,
         {
           method: "POST",
@@ -1053,7 +1053,7 @@ savePostButton.addEventListener("click", async () => {
   savePostButton.textContent = "Zapisywanie...";
 
   try {
-    const response = await fetch(
+    const response = await adminApiFetch(
       ADMIN_UPDATE_POST_API_URL,
       {
         method: "POST",
@@ -1506,6 +1506,31 @@ async function refreshAdminSessionIfNeeded(force = false) {
   }
 }
 
+async function adminApiFetch(input, options = {}) {
+  if (isAdminSessionExpired()) {
+    expireAdminSession("Sesja wygasła. Zaloguj się ponownie.");
+    throw new Error("Sesja administratora wygasła.");
+  }
+  if (!(await refreshAdminSessionIfNeeded())) {
+    throw new Error("Nie udało się odświeżyć sesji administratora.");
+  }
+
+  const createOptions = () => {
+    const headers = new Headers(options.headers || {});
+    headers.set("Authorization", `Bearer ${adminSecret}`);
+    return { ...options, headers };
+  };
+
+  let response = await fetch(input, createOptions());
+  if (response.status === 401 && !adminSessionLegacy && await refreshAdminSessionIfNeeded(true)) {
+    response = await fetch(input, createOptions());
+  }
+  if (response.status === 401) {
+    expireAdminSession("Sesja utraciła ważność. Zaloguj się ponownie.");
+  }
+  return response;
+}
+
 function persistAdminSession() {
   if (!adminSecret) return;
   sessionStorage.setItem(ADMIN_SESSION_STORAGE_KEY, JSON.stringify({
@@ -1578,7 +1603,7 @@ async function loadDashboardData() {
   });
 
   try {
-    const response = await fetch(ADMIN_API_URL, {
+    const response = await adminApiFetch(ADMIN_API_URL, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${adminSecret}`,
@@ -1891,7 +1916,7 @@ function setNewsletterPreviewMode(mode) {
 }
 
 async function newsletterApi(url, body) {
-  const response = await fetch(url, { method: body ? "POST" : "GET", headers: { ...(body ? { "Content-Type": "application/json" } : {}), Authorization: `Bearer ${adminSecret}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const response = await adminApiFetch(url, { method: body ? "POST" : "GET", headers: body ? { "Content-Type": "application/json" } : {}, ...(body ? { body: JSON.stringify(body) } : {}) });
   const result = await response.json();
   if (!response.ok || result.success !== true) throw new Error(result.message || "Operacja newslettera nie powiodła się.");
   return result;
@@ -2103,7 +2128,7 @@ function triggerBlobDownload(blob, fileName) {
 }
 
 async function fetchBackupBlob(type) {
-  const response = await fetch(`${ADMIN_BACKUP_API_URL}?type=${encodeURIComponent(type)}`, {
+  const response = await adminApiFetch(`${ADMIN_BACKUP_API_URL}?type=${encodeURIComponent(type)}`, {
     headers: { Authorization: `Bearer ${adminSecret}` },
   });
   if (!response.ok) {
@@ -2137,7 +2162,7 @@ function getDefaultSiteSettings() {
 }
 
 async function settingsApi(method = "GET", body = null) {
-  const response = await fetch(ADMIN_SETTINGS_API_URL, { method, headers: { Authorization: `Bearer ${adminSecret}`, ...(body ? { "Content-Type": "application/json" } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const response = await adminApiFetch(ADMIN_SETTINGS_API_URL, { method, headers: body ? { "Content-Type": "application/json" } : {}, ...(body ? { body: JSON.stringify(body) } : {}) });
   const result = await response.json();
   if (!response.ok || result.success !== true) throw new Error(result.message || "Operacja ustawień nie powiodła się.");
   return result;
@@ -2396,7 +2421,7 @@ async function loadPosts(forceRefresh = false) {
   reloadPostsButton.disabled = true;
 
   try {
-    const response = await fetch(
+    const response = await adminApiFetch(
       ADMIN_POSTS_API_URL,
       {
         method: "GET",
@@ -2460,7 +2485,7 @@ async function enrichPostsWithMetadata(postItems) {
     }
 
     try {
-      const response = await fetch(
+      const response = await adminApiFetch(
         `${ADMIN_POST_API_URL}?path=${encodeURIComponent(post.path)}`,
         { headers: { Authorization: `Bearer ${adminSecret}` } }
       );
@@ -2620,7 +2645,7 @@ async function loadPages(forceRefresh = false) {
   reloadPagesButton.disabled = true;
 
   try {
-    const response = await fetch(ADMIN_PAGES_API_URL, {
+    const response = await adminApiFetch(ADMIN_PAGES_API_URL, {
       headers: { Authorization: `Bearer ${adminSecret}` },
     });
     const result = await response.json();
@@ -2748,7 +2773,7 @@ function resetPagePreview() {
 }
 
 async function callPageApi(url, body) {
-  const response = await fetch(url, {
+  const response = await adminApiFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
     body: JSON.stringify(body),
@@ -2826,7 +2851,7 @@ async function openPageHistory() {
   pageHistoryList.innerHTML = "<p>Ładowanie historii...</p>";
   pageHistoryDialog.showModal();
   try {
-    const response = await fetch(`${ADMIN_PAGE_HISTORY_API_URL}?path=${encodeURIComponent(selectedPage.path)}`, { headers: { Authorization: `Bearer ${adminSecret}` } });
+    const response = await adminApiFetch(`${ADMIN_PAGE_HISTORY_API_URL}?path=${encodeURIComponent(selectedPage.path)}`);
     const result = await response.json();
     if (!response.ok || result.success !== true) throw new Error(result.message || "Nie udało się pobrać historii.");
     pageHistoryList.innerHTML = "";
@@ -2891,7 +2916,7 @@ async function openPageEditor(page) {
   savePostButton.disabled = true;
   savePostButton.textContent = "Pobieranie...";
   try {
-    const response = await fetch(`${ADMIN_PAGE_API_URL}?path=${encodeURIComponent(page.path)}`, {
+    const response = await adminApiFetch(`${ADMIN_PAGE_API_URL}?path=${encodeURIComponent(page.path)}`, {
       headers: { Authorization: `Bearer ${adminSecret}` },
     });
     const result = await response.json();
@@ -2931,7 +2956,7 @@ async function savePage() {
   savePostButton.disabled = true;
   savePostButton.textContent = "Zapisywanie...";
   try {
-    const response = await fetch(isCreatingNewPage ? ADMIN_CREATE_PAGE_API_URL : ADMIN_UPDATE_PAGE_API_URL, {
+    const response = await adminApiFetch(isCreatingNewPage ? ADMIN_CREATE_PAGE_API_URL : ADMIN_UPDATE_PAGE_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
       body: JSON.stringify(isCreatingNewPage
@@ -2970,7 +2995,7 @@ async function openPostEditor(post) {
   savePostButton.textContent = "Pobieranie...";
 
   try {
-    const response = await fetch(
+    const response = await adminApiFetch(
       `${ADMIN_POST_API_URL}?path=${encodeURIComponent(
         post.path
       )}`,
@@ -4490,7 +4515,7 @@ async function deleteSelectedMedia() {
   }, 450);
 
   try {
-    const response = await fetch(ADMIN_BULK_DELETE_MEDIA_API_URL, {
+    const response = await adminApiFetch(ADMIN_BULK_DELETE_MEDIA_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
       body: JSON.stringify({ items: items.map(({ name, path, sha }) => ({ name, path, sha })) }),
@@ -4565,7 +4590,7 @@ async function deleteSelectedMediaSequential() {
       const timeout = window.setTimeout(() => controller.abort(), 30000);
       let response;
       try {
-        response = await fetch(ADMIN_DELETE_MEDIA_API_URL, {
+        response = await adminApiFetch(ADMIN_DELETE_MEDIA_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
           body: JSON.stringify({ name: item.name, path: item.path, sha: item.sha }),
@@ -4895,7 +4920,7 @@ async function uploadImageFile(file, signal) {
   if (signal?.aborted) {
     throw new DOMException("Wysyłanie anulowane.", "AbortError");
   }
-  const response = await fetch(
+  const response = await adminApiFetch(
     ADMIN_UPLOAD_IMAGE_API_URL,
     {
       method: "POST",
@@ -5135,7 +5160,7 @@ async function loadMedia(forceRefresh = false) {
   showLoadingSkeleton(mediaGrid, 8);
 
   try {
-    const response = await fetch(
+    const response = await adminApiFetch(
       ADMIN_MEDIA_API_URL,
       {
         method: "GET",
