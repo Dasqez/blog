@@ -3,6 +3,8 @@ title: O tym, jak sobie robiłem upgrade biurka.
 layout: post-layout.html
 date: 2026-08-01T19:35:00.000+02:00
 ---
+<!-- cms-seo: {"title":"","description":"","image":"","canonical":"","robots":"index,follow","twitterCard":"summary_large_image"} -->
+
 To, że jestem zapierdziałym nerdem, to już wiecie, a jeśli nie wiecie, to powinniście wiedzieć. A oprócz tego, że jestem nerdem, to jak się na coś uprę, to klękajcie narody. No i tak ze 2 miesiące temu powstała u mnie myśl, że kurde, to moje biurko i sprzęty na nim to o kant dupy potłuc są. Mało miejsca, już wszystko niewydajne, stare i tak dalej. No chujowo się z tym czułem. Co z tego, że mam tysiąc konsol i innych sprzętów? Uparłem się na upgrade biurka i co za tym idzie peceta.
 
 <!-- more -->
