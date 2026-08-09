@@ -6,6 +6,10 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano globalną wyszukiwarkę administratora przeszukującą wpisy, strony, media, newslettery i subskrybentów.
+- Dodano grupowanie wyników, obsługę klawiatury, skrót `Ctrl/Cmd + K` oraz przechodzenie bezpośrednio do znalezionej treści.
+- Dodano chroniony endpoint Workera udostępniający panelowi listę subskrybentów do wyszukiwania.
+- Zwiększono odstęp między globalną wyszukiwarką a statusem połączenia, aby pole nie nachodziło na ikonę statusu.
 - Dodano Etap 7 SEO: edycję tytułu i opisu SEO, obrazu Open Graph, canonical, robots oraz rodzaju Twitter Card w edytorze wpisu.
 - Dodano analizę SEO przed zapisem z oceną długości tytułu i opisu, obecności obrazu, ustawień indeksowania oraz poprawności canonical.
 - Dodano generowanie metatagów description, canonical, Open Graph, Twitter Card i danych schema.org dla wpisów.

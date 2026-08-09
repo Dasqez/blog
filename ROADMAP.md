@@ -82,3 +82,12 @@ Status: gotowy do testów na localhost.
 - automatyczne metatagi Open Graph i Twitter oraz dane schema.org dla wpisów,
 - generowanie `sitemap.xml` i `robots.txt`,
 - analiza SEO z ostrzeżeniem przed zapisem wpisu.
+
+## Etap 8 — Wyszukiwarka administratora
+
+Status: gotowy do testów na localhost.
+
+- jedno pole wyszukujące wpisy, strony, media, newslettery i subskrybentów,
+- grupowanie wyników według rodzaju danych,
+- nawigacja klawiaturą oraz skrót `Ctrl/Cmd + K`,
+- bezpośrednie przejście z wyniku do właściwej sekcji CMS.

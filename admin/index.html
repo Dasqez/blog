@@ -197,6 +197,16 @@
           </div>
         </div>
 
+        <div class="global-search" id="globalSearch">
+          <label for="globalSearchInput" class="sr-only">Przeszukaj cały panel</label>
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="globalSearchInput" type="search" placeholder="Szukaj wszędzie…" autocomplete="off" aria-controls="globalSearchResults" aria-expanded="false">
+          <kbd>Ctrl K</kbd>
+          <div id="globalSearchResults" class="global-search-results" hidden>
+            <p class="global-search-empty">Wpisz co najmniej 2 znaki.</p>
+          </div>
+        </div>
+
         <div class="topbar-actions">
           <span class="connection-status" id="connectionStatus">
             <span class="status-dot"></span>

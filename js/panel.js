@@ -54,6 +54,8 @@ const ADMIN_SEND_NEWSLETTER_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/newsletter/send";
 const ADMIN_TEST_NEWSLETTER_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/newsletter/test";
+const ADMIN_SUBSCRIBERS_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/subscribers";
 
 const EDITOR_DRAFT_STORAGE_KEY = "mpzPanelEditorDraftV092";
 const EDITOR_AUTOSAVE_INTERVAL_MS = 30000;
@@ -128,6 +130,9 @@ const newsletterHtmlPreview = document.getElementById("newsletterHtmlPreview");
 const newsletterQueueList = document.getElementById("newsletterQueueList");
 const newsletterHistoryList = document.getElementById("newsletterHistoryList");
 const newsletterPreviewButtons = document.querySelectorAll("[data-newsletter-preview]");
+const globalSearch = document.getElementById("globalSearch");
+const globalSearchInput = document.getElementById("globalSearchInput");
+const globalSearchResults = document.getElementById("globalSearchResults");
 const pagesList = document.getElementById("pagesList");
 const pagesSearchInput = document.getElementById("pagesSearchInput");
 const reloadPagesButton = document.getElementById("reloadPagesButton");
@@ -341,6 +346,10 @@ let dashboardSummary = null;
 let mediaDeleteController = null;
 let mediaDeleteProgressTimer = null;
 let newslettersLoaded = false;
+let globalSearchSubscribers = [];
+let globalSearchNewsletterHistory = [];
+let globalSearchLoaded = false;
+let globalSearchActiveIndex = -1;
 
 /* =========================================================
    LISTENERY
@@ -365,6 +374,20 @@ newsletterTestEmail?.addEventListener("input", updateNewsletterActions);
 newsletterTestButton?.addEventListener("click", sendNewsletterTest);
 newsletterSendButton?.addEventListener("click", () => sendNewsletterCampaign(false));
 newsletterPreviewButtons.forEach((button) => button.addEventListener("click", () => setNewsletterPreviewMode(button.dataset.newsletterPreview)));
+globalSearchInput?.addEventListener("focus", openGlobalSearch);
+globalSearchInput?.addEventListener("input", renderGlobalSearchResults);
+globalSearchInput?.addEventListener("keydown", handleGlobalSearchKeydown);
+document.addEventListener("click", (event) => {
+  if (globalSearch && !globalSearch.contains(event.target)) closeGlobalSearch();
+});
+document.addEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    globalSearchInput?.focus();
+    openGlobalSearch();
+  }
+  if (event.key === "Escape" && !globalSearchResults?.hidden) closeGlobalSearch();
+});
 
 insertMediaButton?.addEventListener("click", insertSelectedMediaToEditor);
 
@@ -492,6 +515,7 @@ markdownPreview?.addEventListener(
 logoutButton.addEventListener("click", logout);
 
 refreshButton.addEventListener("click", async () => {
+  globalSearchLoaded = false;
   await loadDashboardData();
 });
 
@@ -1649,11 +1673,153 @@ async function loadNewsletterRecords() {
   newsletterHistoryList.innerHTML = '<p class="dashboard-empty">Pobieranie historii…</p>';
   try {
     const result = await newsletterApi(ADMIN_NEWSLETTERS_API_URL);
+    globalSearchNewsletterHistory = result.history || [];
     renderNewsletterRecords(newsletterQueueList, result.queue || [], false);
     renderNewsletterRecords(newsletterHistoryList, result.history || [], true);
   } catch (error) {
     newsletterQueueList.innerHTML = `<p class="global-message error">${escapePreviewHtml(error.message)}</p>`;
     newsletterHistoryList.innerHTML = `<p class="global-message error">${escapePreviewHtml(error.message)}</p>`;
+  }
+}
+
+/* =========================================================
+   GLOBALNA WYSZUKIWARKA ADMINISTRATORA
+   ========================================================= */
+
+async function openGlobalSearch() {
+  if (!globalSearchResults) return;
+  globalSearchResults.hidden = false;
+  globalSearchInput.setAttribute("aria-expanded", "true");
+  if (!globalSearchLoaded) {
+    globalSearchResults.innerHTML = '<p class="global-search-empty">Pobieranie danych…</p>';
+    await loadGlobalSearchData();
+  }
+  renderGlobalSearchResults();
+}
+
+function closeGlobalSearch() {
+  if (!globalSearchResults) return;
+  globalSearchResults.hidden = true;
+  globalSearchInput?.setAttribute("aria-expanded", "false");
+  globalSearchActiveIndex = -1;
+}
+
+async function loadGlobalSearchData(forceRefresh = false) {
+  if (globalSearchLoaded && !forceRefresh) return;
+  const newsletterRequest = newsletterApi(ADMIN_NEWSLETTERS_API_URL).catch(() => ({ history: [] }));
+  const subscribersRequest = newsletterApi(ADMIN_SUBSCRIBERS_API_URL).catch(() => ({ subscribers: [] }));
+  const [, , , newsletterData, subscribersData] = await Promise.all([
+    loadPosts(forceRefresh), loadPages(forceRefresh), loadMedia(forceRefresh), newsletterRequest, subscribersRequest,
+  ]);
+  globalSearchNewsletterHistory = newsletterData.history || [];
+  globalSearchSubscribers = subscribersData.subscribers || [];
+  globalSearchLoaded = true;
+}
+
+function getGlobalSearchResults(query) {
+  const normalizedQuery = normalizeGlobalSearchText(query);
+  if (normalizedQuery.length < 2) return [];
+  const matches = (...values) => normalizeGlobalSearchText(values.filter(Boolean).join(" ")).includes(normalizedQuery);
+  const results = [];
+  posts.filter((post) => matches(post.title, post.name, post.path, post.excerpt, getPostTags(post).join(" "))).slice(0, 8)
+    .forEach((post) => results.push({ type: "post", group: "Wpisy", icon: "fa-file-lines", title: post.title || post.name, detail: `${formatDate(post.date)} · ${post.path}`, data: post }));
+  pages.filter((page) => matches(page.title, page.name, page.path, page.excerpt)).slice(0, 8)
+    .forEach((page) => results.push({ type: "page", group: "Strony", icon: "fa-file", title: page.title || page.name, detail: page.path, data: page }));
+  mediaItems.filter((item) => matches(item.name, item.path, item.type)).slice(0, 8)
+    .forEach((item) => results.push({ type: "media", group: "Media", icon: "fa-image", title: item.name || "Obraz", detail: item.path, data: item }));
+  globalSearchNewsletterHistory.filter((item) => matches(item.postTitle, item.postId, item.postUrl, item.testEmail)).slice(0, 8)
+    .forEach((item) => results.push({ type: "newsletter", group: "Newsletter", icon: "fa-envelope", title: item.postTitle || "Newsletter", detail: item.isTest ? `Test · ${item.testEmail}` : `${formatDate(item.sentAt)} · ${item.recipientsCount || 0} odbiorców`, data: item }));
+  globalSearchSubscribers.filter((item) => matches(item.email, item.status)).slice(0, 8)
+    .forEach((item) => results.push({ type: "subscriber", group: "Subskrybenci", icon: "fa-user", title: item.email, detail: `${formatSubscriberStatus(item.status)} · ${formatDate(item.createdAt)}`, data: item }));
+  return results;
+}
+
+function normalizeGlobalSearchText(value) {
+  return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l");
+}
+
+function formatSubscriberStatus(status) {
+  return ({ active: "Aktywny", pending: "Oczekujący", unsubscribed: "Wypisany" })[status] || status || "Brak statusu";
+}
+
+function renderGlobalSearchResults() {
+  if (!globalSearchResults || globalSearchResults.hidden) return;
+  const query = globalSearchInput.value.trim();
+  globalSearchResults.innerHTML = "";
+  globalSearchActiveIndex = -1;
+  if (query.length < 2) {
+    globalSearchResults.innerHTML = '<p class="global-search-empty">Wpisz co najmniej 2 znaki.</p>';
+    return;
+  }
+  if (!globalSearchLoaded) {
+    globalSearchResults.innerHTML = '<p class="global-search-empty">Pobieranie danych…</p>';
+    return;
+  }
+  const results = getGlobalSearchResults(query);
+  if (!results.length) {
+    globalSearchResults.innerHTML = '<p class="global-search-empty">Brak wyników we wszystkich sekcjach.</p>';
+    return;
+  }
+  let previousGroup = "";
+  results.forEach((result) => {
+    if (result.group !== previousGroup) {
+      const heading = document.createElement("p");
+      heading.className = "global-search-group";
+      heading.textContent = result.group;
+      globalSearchResults.appendChild(heading);
+      previousGroup = result.group;
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "global-search-result";
+    button.innerHTML = `<i class="fa-regular ${result.icon}"></i><span><strong></strong><small></small></span>`;
+    button.querySelector("strong").textContent = result.title;
+    button.querySelector("small").textContent = result.detail;
+    button.addEventListener("click", () => activateGlobalSearchResult(result));
+    globalSearchResults.appendChild(button);
+  });
+}
+
+function handleGlobalSearchKeydown(event) {
+  const buttons = [...globalSearchResults.querySelectorAll(".global-search-result")];
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    event.preventDefault();
+    if (!buttons.length) return;
+    globalSearchActiveIndex = event.key === "ArrowDown"
+      ? (globalSearchActiveIndex + 1) % buttons.length
+      : (globalSearchActiveIndex - 1 + buttons.length) % buttons.length;
+    buttons.forEach((button, index) => button.classList.toggle("is-active", index === globalSearchActiveIndex));
+    buttons[globalSearchActiveIndex].scrollIntoView({ block: "nearest" });
+  } else if (event.key === "Enter" && globalSearchActiveIndex >= 0) {
+    event.preventDefault();
+    buttons[globalSearchActiveIndex]?.click();
+  }
+}
+
+async function activateGlobalSearchResult(result) {
+  closeGlobalSearch();
+  if (result.type === "post") {
+    openView("posts");
+    await loadPosts();
+    const item = postsList.querySelector(`[data-post-path="${CSS.escape(result.data.path || "")}"]`);
+    if (item) selectPost(result.data, item);
+  } else if (result.type === "page") {
+    openView("pages");
+    await loadPages();
+    const item = pagesList.querySelector(`[data-page-path="${CSS.escape(result.data.path || "")}"]`);
+    selectPage(result.data, item);
+  } else if (result.type === "media") {
+    openView("media");
+    await loadMedia();
+    mediaSearchInput.value = result.data.name || "";
+    renderMedia();
+    const card = mediaGrid.querySelector(`[data-media-path="${CSS.escape(result.data.path || "")}"]`);
+    if (card) selectMediaCard(card, result.data);
+  } else if (result.type === "newsletter") {
+    openView("newsletter");
+  } else if (result.type === "subscriber") {
+    openView("newsletter");
+    showToast({ title: "Subskrybent", message: `${result.data.email} · ${formatSubscriberStatus(result.data.status)}`, type: "info", duration: 5000 });
   }
 }
 
@@ -1785,6 +1951,7 @@ function renderPosts() {
 
     item.type = "button";
     item.className = "post-item";
+    item.dataset.postPath = post.path || "";
 
     const title = document.createElement("span");
     title.className = "post-title";
