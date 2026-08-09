@@ -520,6 +520,15 @@
 
       <button
         type="button"
+        class="primary-button"
+        id="newPageButton"
+      >
+        <i class="fa-solid fa-plus"></i>
+        Nowa strona
+      </button>
+
+      <button
+        type="button"
         class="secondary-button"
         id="reloadPagesButton"
       >
@@ -603,6 +612,18 @@
           Edytuj
         </button>
 
+        <button id="duplicatePageButton" type="button" class="secondary-button" disabled>
+          Duplikuj
+        </button>
+
+        <button id="pageHistoryButton" type="button" class="secondary-button" disabled>
+          Historia
+        </button>
+
+        <button id="deletePageButton" type="button" class="danger-button" disabled>
+          Usuń
+        </button>
+
       </div>
 
     </article>
@@ -610,6 +631,19 @@
   </section>
 
 </section>
+
+<dialog id="pageHistoryDialog" class="page-history-dialog">
+  <div class="page-history-header">
+    <div>
+      <p class="section-kicker">Historia wersji</p>
+      <h2 id="pageHistoryTitle">Historia strony</h2>
+    </div>
+    <button id="closePageHistoryButton" type="button" class="editor-close" aria-label="Zamknij historię">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div id="pageHistoryList" class="page-history-list"></div>
+</dialog>
 
 <aside
   id="editorPanel"

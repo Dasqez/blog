@@ -6,6 +6,17 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Ujednolicono kolejność stron w CMS z publiczną nawigacją: Strona główna jest przypięta na pierwszej pozycji, a pozostałe strony zachowują kolejność zapisaną w panelu.
+- Naprawiono publikację nowych stron: operacje tworzenia, duplikowania, usuwania i zmiany kolejności synchronizują teraz nawigację oraz sekcje publicznej strony głównej.
+- Dodano ponawianie zapisu publicznego `index.html` po konflikcie wersji GitHuba oraz przerwano zgłaszanie sukcesu, gdy synchronizacja strony faktycznie się nie powiedzie.
+- Naprawiono brakujący cudzysłów w generowanych klasach sekcji publicznych, który powodował uszkodzenie układu strony, oraz dodano walidację HTML przed zapisem.
+- Poprawiono pole slugu strony, aby podczas wpisywania można było pozostawić myślnik na końcu i kontynuować nazwę.
+- Naprawiono zablokowany przycisk „Utwórz stronę” i zastąpiono mylący kursor ładowania przy nieaktywnych akcjach stron czytelnym stanem niedostępności.
+
+- Rozbudowano zarządzanie stronami o tworzenie, usuwanie, duplikowanie i trwałą zmianę kolejności.
+- Dodano historię wersji stron z możliwością przywrócenia wybranej wersji jako nowego commita.
+- Dodano czytelne okno historii oraz przyciski operacji na stronie w panelu CMS.
+
 - Rozszerzono zarządzanie wpisami o edycję tagów, ich zapis w API oraz obsługę w lokalnych szkicach.
 - Dostosowano zapis tagów do istniejącego API Workera przez niewidoczne metadane w treści wpisu oraz dodano ich natychmiastowy zapis w szkicu lokalnym.
 - Dodano tagi i automatyczny czas czytania na liście oraz w podglądzie wpisów w CMS.

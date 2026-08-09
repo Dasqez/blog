@@ -25,6 +25,19 @@ const ADMIN_PAGE_API_URL =
 const ADMIN_UPDATE_PAGE_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/page/update";
 
+const ADMIN_CREATE_PAGE_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/page/create";
+const ADMIN_DELETE_PAGE_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/page/delete";
+const ADMIN_DUPLICATE_PAGE_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/page/duplicate";
+const ADMIN_REORDER_PAGES_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/pages/reorder";
+const ADMIN_PAGE_HISTORY_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/page/history";
+const ADMIN_PAGE_ROLLBACK_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/page/rollback";
+
 const ADMIN_UPLOAD_IMAGE_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/upload-image";  
 
@@ -100,6 +113,14 @@ const pagePreviewPath = document.getElementById("pagePreviewPath");
 const pagePreviewExcerpt = document.getElementById("pagePreviewExcerpt");
 const openPageButton = document.getElementById("openPageButton");
 const editPageButton = document.getElementById("editPageButton");
+const newPageButton = document.getElementById("newPageButton");
+const duplicatePageButton = document.getElementById("duplicatePageButton");
+const deletePageButton = document.getElementById("deletePageButton");
+const pageHistoryButton = document.getElementById("pageHistoryButton");
+const pageHistoryDialog = document.getElementById("pageHistoryDialog");
+const pageHistoryTitle = document.getElementById("pageHistoryTitle");
+const pageHistoryList = document.getElementById("pageHistoryList");
+const closePageHistoryButton = document.getElementById("closePageHistoryButton");
 const closeEditorButton =
     document.getElementById("closeEditorButton");  
 
@@ -255,6 +276,7 @@ let editedPage = null;
 let editorContentType = "post";
 let slugEditedManually = false;
 let isCreatingNewPost = false;
+let isCreatingNewPage = false;
 let activeSearchResultIndex = -1;
 let selectedPreviewImageWrapper = null;
 let selectedPreviewImage = null;
@@ -431,6 +453,11 @@ editPageButton?.addEventListener("click", async () => {
     await openPageEditor(selectedPage);
   }
 });
+newPageButton?.addEventListener("click", createNewPage);
+duplicatePageButton?.addEventListener("click", duplicateSelectedPage);
+deletePageButton?.addEventListener("click", deleteSelectedPage);
+pageHistoryButton?.addEventListener("click", openPageHistory);
+closePageHistoryButton?.addEventListener("click", () => pageHistoryDialog?.close());
 
 newPostButton.addEventListener("click", () => {
   createNewPost();
@@ -924,7 +951,7 @@ editorTitle.addEventListener("input", () => {
 
 editorSlug.addEventListener("input", () => {
   slugEditedManually = true;
-  editorSlug.value = createSlug(editorSlug.value);
+  editorSlug.value = createSlugWhileTyping(editorSlug.value);
 });
 
 editorBody.addEventListener("input", () => {
@@ -1640,6 +1667,10 @@ async function loadPages(forceRefresh = false) {
     }
 
     pages = Array.isArray(result.pages) ? result.pages : [];
+    const homePageIndex = pages.findIndex((page) => page.slug === "home");
+    if (homePageIndex > 0) {
+      pages.unshift(pages.splice(homePageIndex, 1)[0]);
+    }
     pagesLoaded = true;
 
     if (selectedPage) {
@@ -1669,7 +1700,9 @@ function renderPages() {
     return;
   }
 
-  pages.forEach((page) => {
+  pages.forEach((page, index) => {
+    const row = document.createElement("div");
+    row.className = "page-list-row";
     const item = document.createElement("button");
     item.type = "button";
     item.className = "post-item page-item";
@@ -1685,7 +1718,22 @@ function renderPages() {
 
     item.append(title, path);
     item.addEventListener("click", () => selectPage(page, item));
-    pagesList.appendChild(item);
+    const controls = document.createElement("span");
+    controls.className = "page-order-controls";
+    [["up", "Przenieś wyżej", "fa-arrow-up"], ["down", "Przenieś niżej", "fa-arrow-down"]].forEach(([direction, label, icon]) => {
+      const control = document.createElement("button");
+      control.type = "button";
+      control.title = label;
+      control.setAttribute("aria-label", label);
+      control.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+      const isHomePage = page.slug === "home";
+      const wouldMoveAboveHome = direction === "up" && index === 1 && pages[0]?.slug === "home";
+      control.disabled = isHomePage || wouldMoveAboveHome || (direction === "up" ? index === 0 : index === pages.length - 1);
+      control.addEventListener("click", () => movePage(index, direction === "up" ? -1 : 1));
+      controls.appendChild(control);
+    });
+    row.append(item, controls);
+    pagesList.appendChild(row);
 
     if (selectedPage?.path === page.path) selectPage(page, item);
   });
@@ -1696,7 +1744,7 @@ function renderPages() {
 function filterPages() {
   const search = (pagesSearchInput?.value || "").trim().toLowerCase();
   pagesList?.querySelectorAll(".page-item").forEach((item) => {
-    item.style.display = item.textContent.toLowerCase().includes(search) ? "" : "none";
+    item.closest(".page-list-row").style.display = item.textContent.toLowerCase().includes(search) ? "" : "none";
   });
 }
 
@@ -1718,6 +1766,9 @@ function selectPage(page, item) {
     openPageButton.removeAttribute("href");
   }
   editPageButton.disabled = false;
+  duplicatePageButton.disabled = false;
+  deletePageButton.disabled = false;
+  pageHistoryButton.disabled = false;
 }
 
 function resetPagePreview() {
@@ -1728,6 +1779,120 @@ function resetPagePreview() {
   openPageButton.hidden = true;
   openPageButton.removeAttribute("href");
   editPageButton.disabled = true;
+  duplicatePageButton.disabled = true;
+  deletePageButton.disabled = true;
+  pageHistoryButton.disabled = true;
+}
+
+async function callPageApi(url, body) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
+    body: JSON.stringify(body),
+  });
+  const result = await response.json();
+  if (!response.ok || result.success !== true) throw new Error(result.message || "Operacja na stronie nie powiodła się.");
+  return result;
+}
+
+function createNewPage() {
+  isCreatingNewPage = true;
+  isCreatingNewPost = false;
+  editedPost = null;
+  editedPage = { path: "", sha: null };
+  configureEditorForContentType("page");
+  editorHeading.textContent = "Nowa strona";
+  editorTitle.readOnly = false;
+  editorSlugField.hidden = false;
+  editorTitle.value = "";
+  editorSlug.value = "";
+  editorBody.value = "<section>\n  <h1>Nowa strona</h1>\n  <p>Treść strony.</p>\n</section>";
+  setEditorBaseline();
+  resetEditorHistory();
+  renderMarkdownPreview();
+  editorOverlay.hidden = false;
+  editorPanel.hidden = false;
+  savePostButton.disabled = false;
+  savePostButton.textContent = "Utwórz stronę";
+  editorTitle.focus();
+}
+
+async function duplicateSelectedPage() {
+  if (!selectedPage) return;
+  const slug = window.prompt("Slug kopii strony:", `${selectedPage.slug || "strona"}-kopia`);
+  if (!slug) return;
+  try {
+    await callPageApi(ADMIN_DUPLICATE_PAGE_API_URL, { path: selectedPage.path, slug });
+    pagesLoaded = false;
+    await loadPages(true);
+    showToast({ title: "Strony", message: "Utworzono kopię strony.", type: "success" });
+  } catch (error) { showToast({ title: "Błąd duplikowania", message: error.message, type: "error", duration: 5000 }); }
+}
+
+async function deleteSelectedPage() {
+  if (!selectedPage || !window.confirm(`Usunąć stronę „${selectedPage.title || selectedPage.name}”? Tej operacji nie można cofnąć w panelu.`)) return;
+  try {
+    await callPageApi(ADMIN_DELETE_PAGE_API_URL, { path: selectedPage.path, sha: selectedPage.sha });
+    resetPagePreview();
+    pagesLoaded = false;
+    await loadPages(true);
+    showToast({ title: "Strony", message: "Strona została usunięta.", type: "success" });
+  } catch (error) { showToast({ title: "Błąd usuwania", message: error.message, type: "error", duration: 5000 }); }
+}
+
+async function movePage(index, offset) {
+  const target = index + offset;
+  if (target < 0 || target >= pages.length) return;
+  if (pages[index]?.slug === "home" || pages[target]?.slug === "home") return;
+  const previous = [...pages];
+  [pages[index], pages[target]] = [pages[target], pages[index]];
+  renderPages();
+  try {
+    await callPageApi(ADMIN_REORDER_PAGES_API_URL, { paths: pages.map((page) => page.path) });
+    showToast({ title: "Strony", message: "Kolejność została zapisana.", type: "success" });
+  } catch (error) {
+    pages = previous;
+    renderPages();
+    showToast({ title: "Błąd kolejności", message: error.message, type: "error", duration: 5000 });
+  }
+}
+
+async function openPageHistory() {
+  if (!selectedPage) return;
+  pageHistoryTitle.textContent = selectedPage.title || selectedPage.name;
+  pageHistoryList.innerHTML = "<p>Ładowanie historii...</p>";
+  pageHistoryDialog.showModal();
+  try {
+    const response = await fetch(`${ADMIN_PAGE_HISTORY_API_URL}?path=${encodeURIComponent(selectedPage.path)}`, { headers: { Authorization: `Bearer ${adminSecret}` } });
+    const result = await response.json();
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Nie udało się pobrać historii.");
+    pageHistoryList.innerHTML = "";
+    (result.versions || []).forEach((version, index) => {
+      const row = document.createElement("div");
+      row.className = "page-history-item";
+      const info = document.createElement("div");
+      info.innerHTML = `<strong>${escapePreviewHtml(version.message || "Wersja strony")}</strong><small>${escapePreviewHtml(formatDate(version.date))} · ${escapePreviewHtml(version.author || "GitHub")}</small>`;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = index === 0 ? "Aktualna" : "Przywróć";
+      button.disabled = index === 0;
+      button.addEventListener("click", () => rollbackPage(version.sha));
+      row.append(info, button);
+      pageHistoryList.appendChild(row);
+    });
+    if (!result.versions?.length) pageHistoryList.innerHTML = "<p>Brak zapisanych wersji.</p>";
+  } catch (error) { pageHistoryList.innerHTML = `<p class="global-message error">${escapePreviewHtml(error.message)}</p>`; }
+}
+
+async function rollbackPage(commitSha) {
+  if (!selectedPage || !window.confirm("Przywrócić tę wersję jako nowy zapis?")) return;
+  try {
+    await callPageApi(ADMIN_PAGE_ROLLBACK_API_URL, { path: selectedPage.path, commitSha });
+    pageHistoryDialog.close();
+    pagesLoaded = false;
+    await loadPages(true);
+    showToast({ title: "Historia", message: "Przywrócono wybraną wersję strony.", type: "success" });
+  } catch (error) { showToast({ title: "Błąd przywracania", message: error.message, type: "error", duration: 5000 }); }
 }
 
 /* =========================================================
@@ -1738,10 +1903,10 @@ function configureEditorForContentType(type) {
   const isPage = type === "page";
   editorContentType = isPage ? "page" : "post";
   editorHeading.textContent = isPage ? "Edycja strony" : "Edycja wpisu";
-  editorTitle.readOnly = isPage;
+  editorTitle.readOnly = isPage && !isCreatingNewPage;
   editorTitle.setAttribute("aria-readonly", String(isPage));
   editorTitleField.hidden = false;
-  editorSlugField.hidden = isPage;
+  editorSlugField.hidden = isPage && !isCreatingNewPage;
   editorDateField.hidden = isPage;
   editorLayoutField.hidden = isPage;
   editorTagsField.hidden = isPage;
@@ -1753,6 +1918,7 @@ function configureEditorForContentType(type) {
 }
 
 async function openPageEditor(page) {
+  isCreatingNewPage = false;
   savePostButton.disabled = true;
   savePostButton.textContent = "Pobieranie...";
   try {
@@ -1796,10 +1962,12 @@ async function savePage() {
   savePostButton.disabled = true;
   savePostButton.textContent = "Zapisywanie...";
   try {
-    const response = await fetch(ADMIN_UPDATE_PAGE_API_URL, {
+    const response = await fetch(isCreatingNewPage ? ADMIN_CREATE_PAGE_API_URL : ADMIN_UPDATE_PAGE_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminSecret}` },
-      body: JSON.stringify({ path: editedPage.path, sha: editedPage.sha, body: editorBody.value }),
+      body: JSON.stringify(isCreatingNewPage
+        ? { title: editorTitle.value.trim(), slug: editorSlug.value.trim(), body: editorBody.value }
+        : { path: editedPage.path, sha: editedPage.sha, body: editorBody.value }),
     });
     const result = await response.json();
     if (!response.ok || result.success !== true) {
@@ -1809,7 +1977,11 @@ async function savePage() {
       editedPage.sha = result.page.sha;
       if (selectedPage) selectedPage.sha = result.page.sha;
     }
+    if (!isCreatingNewPage && pages.length) {
+      await callPageApi(ADMIN_REORDER_PAGES_API_URL, { paths: pages.map((page) => page.path) });
+    }
     pagesLoaded = false;
+    isCreatingNewPage = false;
     clearEditorDraft();
     await loadPages(true);
     closePostEditor({ force: true });
@@ -1974,6 +2146,7 @@ function closePostEditor(options = {}) {
 
   editedPost = null;
   editedPage = null;
+  isCreatingNewPage = false;
   configureEditorForContentType("post");
   isCreatingNewPost = false;
   slugEditedManually = false;
@@ -3045,6 +3218,12 @@ function updateEditorStatistics(markdown) {
   editorStatistics.textContent =
     `${words} słów · ${characters} znaków · ` +
     `${readingMinutes} min czytania`;
+}
+
+function createSlugWhileTyping(value) {
+  const hasTrailingSeparator = /[-\s]$/.test(String(value || ""));
+  const slug = createSlug(value);
+  return hasTrailingSeparator && slug ? `${slug}-` : slug;
 }
 
 function getPlainEditorText(source) {

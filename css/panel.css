@@ -57,7 +57,7 @@ button {
 }
 
 button:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.58;
 }
 
@@ -719,6 +719,16 @@ button:disabled {
   background: var(--text);
   color: #ffffff;
 }
+
+.page-list-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .45rem; align-items: stretch; }
+.page-list-row + .page-list-row { margin-top: .45rem; }
+.page-order-controls { display: grid; grid-template-rows: 1fr 1fr; gap: .2rem; }
+.page-order-controls button { min-width: 2.25rem; padding: .25rem; }
+.page-history-dialog { width: min(42rem, calc(100vw - 2rem)); max-height: 80vh; border: 1px solid var(--border-color, #d8d4cc); border-radius: 1rem; padding: 0; }
+.page-history-dialog::backdrop { background: rgba(0, 0, 0, .42); }
+.page-history-header, .page-history-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color, #e2ded6); }
+.page-history-list { max-height: 60vh; overflow: auto; }
+.page-history-item small { display: block; margin-top: .35rem; color: #6b6862; }
 
 .post-title {
   display: block;

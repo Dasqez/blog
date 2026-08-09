@@ -46,3 +46,12 @@ Status: gotowy do testów na localhost.
 - sprawdzanie linków i ostrzeżenia o dużych obrazach,
 - podgląd Open Graph,
 - zbiorcza ocena jakości treści.
+
+## Etap 4 — Strony
+
+Status: gotowy do testów na localhost.
+
+- tworzenie, usuwanie i duplikowanie stron,
+- trwała zmiana kolejności stron,
+- podgląd zmian w edytorze,
+- historia wersji z możliwością rollbacku.
