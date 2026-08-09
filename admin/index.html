@@ -987,6 +987,15 @@
 
     <div id="qualityToolkitBody" class="quality-toolkit-grid">
       <div>
+        <h4>Metadane SEO</h4>
+        <div class="seo-fields">
+          <label>Tytuł SEO<input id="editorSeoTitle" type="text" maxlength="70" placeholder="Domyślnie: tytuł wpisu"></label>
+          <label>Opis SEO<textarea id="editorSeoDescription" rows="3" maxlength="180" placeholder="120–160 znaków"></textarea></label>
+          <label>Obraz Open Graph<input id="editorSeoImage" type="url" placeholder="https://… lub /assets/images/…"></label>
+          <label>Adres canonical<input id="editorSeoCanonical" type="url" placeholder="Uzupełniany automatycznie"></label>
+          <label>Robots<select id="editorSeoRobots"><option value="index,follow">index, follow</option><option value="noindex,follow">noindex, follow</option><option value="noindex,nofollow">noindex, nofollow</option></select></label>
+          <label>Twitter Card<select id="editorSeoTwitterCard"><option value="summary_large_image">Duży obraz</option><option value="summary">Mała karta</option></select></label>
+        </div>
         <h4>Analiza i zalecenia</h4>
         <ul id="qualityChecks" class="quality-checks"></ul>
       </div>
@@ -994,6 +1003,7 @@
       <div>
         <h4>Podgląd Open Graph</h4>
         <article class="og-preview" aria-label="Podgląd udostępnienia wpisu">
+          <img id="ogPreviewImage" class="og-preview-image" alt="" hidden>
           <span class="og-preview-site">minimalistycznie.pages.dev</span>
           <strong id="ogPreviewTitle">Tytuł wpisu</strong>
           <p id="ogPreviewDescription">Opis wpisu pojawi się tutaj.</p>

@@ -25,6 +25,32 @@ export default function(eleventyConfig) {
     }
   });
 
+  eleventyConfig.addFilter("postSeo", function(content) {
+    const source = String(content || "").replace(/^\s*<!--\s*cms-tags:[\s\S]*?-->\s*/i, "");
+    const match = source.match(/^\s*<!--\s*cms-seo:\s*(\{[\s\S]*?\})\s*-->/i);
+    if (!match) return {};
+    try { return JSON.parse(match[1]) || {}; } catch { return {}; }
+  });
+
+  eleventyConfig.addFilter("seoDescription", function(content) {
+    return String(content || "")
+      .replace(/<!--\s*cms-(?:tags|seo):[\s\S]*?-->/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/[`*_>#~-]/g, " ")
+      .replace(/\s+/g, " ").trim().slice(0, 160);
+  });
+
+  eleventyConfig.addFilter("absoluteUrl", function(value) {
+    try { return new URL(String(value || ""), "https://minimalistycznie.pages.dev").href; }
+    catch { return "https://minimalistycznie.pages.dev/"; }
+  });
+
+  eleventyConfig.addFilter("json", function(value) {
+    return JSON.stringify(value == null ? "" : value).replace(/</g, "\\u003c");
+  });
+
   // Przekazywanie folderu panelu administratora
   eleventyConfig.addPassthroughCopy("admin");
 

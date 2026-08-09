@@ -6,6 +6,13 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano Etap 7 SEO: edycję tytułu i opisu SEO, obrazu Open Graph, canonical, robots oraz rodzaju Twitter Card w edytorze wpisu.
+- Dodano analizę SEO przed zapisem z oceną długości tytułu i opisu, obecności obrazu, ustawień indeksowania oraz poprawności canonical.
+- Dodano generowanie metatagów description, canonical, Open Graph, Twitter Card i danych schema.org dla wpisów.
+- Dodano automatyczne pliki `sitemap.xml` i `robots.txt`, wykluczenie panelu administratora oraz pomijanie wpisów `noindex` w mapie strony.
+- Naprawiono błędne uruchamianie ostrzeżenia SEO przy logowaniu i nawigacji; analiza pojawia się teraz wyłącznie przed zapisem wpisu.
+- Naprawiono przeskakiwanie edytora podczas wpisywania metadanych SEO przez oddzielenie podglądu SEO od pełnego renderowania Markdown.
+- Rozdzielono wygląd edytorów wpisów i stron: wpisy korzystają z jasnego, typograficznego trybu Markdown z miękkim zawijaniem, a strony z ciemnego edytora kodu HTML/Liquid bez zawijania.
 - Poprawiono walidację newslettera: wymagane są wpis, tytuł i własny opis, a przy wysyłce testowej także prawidłowy adres e-mail.
 - Usunięto automatyczne kopiowanie treści wpisu do opisu newslettera, poprawiono bezwzględny adres wpisu oraz dodano wyraźny komunikat udanej wysyłki.
 - Dodano testowe wysyłki do historii newsletterów i automatyczne odświeżanie historii bez przeładowania panelu.

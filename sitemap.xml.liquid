@@ -1,0 +1,10 @@
+---
+permalink: /sitemap.xml
+eleventyExcludeFromCollections: true
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://minimalistycznie.pages.dev/</loc></url>
+  {% for post in collections.posts %}{% assign postSeo = post.templateContent | postSeo %}{% unless postSeo.robots contains 'noindex' %}<url><loc>{{ post.url | absoluteUrl }}</loc><lastmod>{{ post.date | date: "%Y-%m-%d" }}</lastmod></url>{% endunless %}
+  {% endfor %}
+</urlset>

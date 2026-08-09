@@ -197,6 +197,14 @@ const qualityToggle = document.getElementById("qualityToggle");
 const ogPreviewTitle = document.getElementById("ogPreviewTitle");
 const ogPreviewDescription = document.getElementById("ogPreviewDescription");
 const ogPreviewUrl = document.getElementById("ogPreviewUrl");
+const ogPreviewImage = document.getElementById("ogPreviewImage");
+const editorSeoTitle = document.getElementById("editorSeoTitle");
+const editorSeoDescription = document.getElementById("editorSeoDescription");
+const editorSeoImage = document.getElementById("editorSeoImage");
+const editorSeoCanonical = document.getElementById("editorSeoCanonical");
+const editorSeoRobots = document.getElementById("editorSeoRobots");
+const editorSeoTwitterCard = document.getElementById("editorSeoTwitterCard");
+const editorSeoFields = [editorSeoTitle, editorSeoDescription, editorSeoImage, editorSeoCanonical, editorSeoRobots, editorSeoTwitterCard];
 const markdownToolbarButtons =
   document.querySelectorAll("[data-markdown-action]");  
 
@@ -730,13 +738,20 @@ function replaceAllEditorMatches() {
   refreshEditorFindMatches();
 }
 
-[editorTitle, editorSlug, editorDate, editorLayout, editorTags, editorBody].forEach(
+[editorTitle, editorSlug, editorDate, editorLayout, editorTags, editorBody, ...editorSeoFields].forEach(
   (field) => {
     field.addEventListener("input", scheduleEditorAutosave);
     field.addEventListener("change", scheduleEditorAutosave);
     field.addEventListener("input", () => setEditorSaveStatus("editing", "Niezapisane zmiany"));
   }
 );
+
+function refreshSeoToolkitOnly() {
+  updateQualityToolkit(editorBody.value || "");
+}
+
+editorSeoFields.forEach((field) => field?.addEventListener("input", refreshSeoToolkitOnly));
+editorSeoFields.forEach((field) => field?.addEventListener("change", refreshSeoToolkitOnly));
 
 editorTags.addEventListener("input", () => {
   window.clearTimeout(editorTagsDraftTimeout);
@@ -789,6 +804,8 @@ savePostButton.addEventListener("click", async () => {
     await savePage();
     return;
   }
+
+  if (!confirmSeoBeforeSave()) return;
 
   if (isCreatingNewPost) {
 
@@ -1442,6 +1459,7 @@ function openView(viewName) {
   if (viewName === "dashboard") {
     loadDashboardContentOverview();
   }
+
   if (viewName === "newsletter") {
     loadNewsletterWorkspace();
   }
@@ -2137,6 +2155,8 @@ async function rollbackPage(commitSha) {
 function configureEditorForContentType(type) {
   const isPage = type === "page";
   editorContentType = isPage ? "page" : "post";
+  editorPanel.classList.toggle("editor-type-page", isPage);
+  editorPanel.classList.toggle("editor-type-post", !isPage);
   editorHeading.textContent = isPage ? "Edycja strony" : "Edycja wpisu";
   editorTitle.readOnly = isPage && !isCreatingNewPage;
   editorTitle.setAttribute("aria-readonly", String(isPage));
@@ -2145,8 +2165,12 @@ function configureEditorForContentType(type) {
   editorDateField.hidden = isPage;
   editorLayoutField.hidden = isPage;
   editorTagsField.hidden = isPage;
-  if (editorFormatBadge) editorFormatBadge.textContent = isPage ? "HTML / Liquid" : "Markdown";
-  if (editorSourceLabel) editorSourceLabel.textContent = isPage ? "Kod strony" : "Markdown";
+  if (qualityToolkit) qualityToolkit.hidden = isPage;
+  editorBody.wrap = isPage ? "off" : "soft";
+  editorBody.spellcheck = !isPage;
+  editorBody.placeholder = isPage ? "Edytuj kod HTML / Liquid strony…" : "Zacznij pisać treść wpisu…";
+  if (editorFormatBadge) editorFormatBadge.textContent = isPage ? "Strona · HTML / Liquid" : "Wpis · Markdown";
+  if (editorSourceLabel) editorSourceLabel.textContent = isPage ? "Kod HTML / Liquid" : "Tekst Markdown";
   document.querySelector(".markdown-toolbar")?.setAttribute("aria-label", isPage ? "Narzędzia HTML i Liquid" : "Narzędzia Markdown");
   markdownToolbarButtons.forEach((button) => { button.hidden = isPage; });
   sourceActionButtons.forEach((button) => { button.hidden = !isPage; });
@@ -2275,8 +2299,10 @@ async function openPostEditor(post) {
 
     editorTags.value = getPostTags(result.post).join(", ");
 
+    setSeoEditorValues(extractPostSeoMetadata(result.post.body || ""));
+
     editorBody.value =
-      stripPostTagsMetadata(result.post.body || "");
+      stripPostMetadata(result.post.body || "");
 
     setEditorBaseline();
     restoreEditorDraft();
@@ -2322,6 +2348,7 @@ function createNewPost() {
     formatEditorDate(new Date());
   editorLayout.value = "post-layout.html";
   editorTags.value = "";
+  setSeoEditorValues({});
   editorBody.value = "";
   setEditorBaseline();
   restoreEditorDraft();
@@ -2391,6 +2418,7 @@ function closePostEditor(options = {}) {
   editorDate.value = "";
   editorLayout.value = "";
   editorTags.value = "";
+  setSeoEditorValues({});
   editorBody.value = "";
   editorBaseline = "";
   renderMarkdownPreview();
@@ -2412,6 +2440,7 @@ function getEditorValues() {
     date: editorDate.value,
     layout: editorLayout.value,
     tags: editorTags.value,
+    seo: getSeoEditorValues(),
     body: editorBody.value,
   };
 }
@@ -2542,6 +2571,7 @@ function restoreEditorDraft() {
   editorDate.value = draft.date || "";
   editorLayout.value = draft.layout || (editorContentType === "post" ? "post-layout.html" : "");
   editorTags.value = draft.tags || "";
+  setSeoEditorValues(draft.seo || {});
   editorBody.value = draft.body || "";
   slugEditedManually = editorContentType === "page" || Boolean(editorSlug.value);
   lastSavedDraftValues = serializeEditorValues();
@@ -3464,6 +3494,7 @@ function createSlugWhileTyping(value) {
 function getPlainEditorText(source) {
   return String(source || "")
     .replace(POST_TAGS_METADATA_PATTERN, "")
+    .replace(POST_SEO_METADATA_PATTERN, "")
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
@@ -3474,7 +3505,7 @@ function getPlainEditorText(source) {
 }
 
 function getEditorDescription(source) {
-  const withoutMetadata = stripPostTagsMetadata(source);
+  const withoutMetadata = stripPostMetadata(source);
   const beforeExcerpt = withoutMetadata.split("<!-- more -->")[0];
   return getPlainEditorText(beforeExcerpt).slice(0, 180);
 }
@@ -3522,10 +3553,11 @@ function hasHeadingOrderIssue(source) {
 function updateQualityToolkit(source) {
   if (!qualityToolkit || !qualityChecks || !qualityScore) return;
 
-  const title = editorTitle.value.trim();
+  const seo = getSeoEditorValues();
+  const title = seo.title || editorTitle.value.trim();
   const slug = editorSlug.value.trim();
   const text = getPlainEditorText(source);
-  const description = getEditorDescription(source);
+  const description = seo.description;
   const words = text ? text.split(/\s+/).length : 0;
   const sentences = text.split(/[.!?]+(?:\s|$)/).map((item) => item.trim()).filter(Boolean);
   const averageSentenceLength = sentences.length ? words / sentences.length : 0;
@@ -3545,6 +3577,9 @@ function updateQualityToolkit(source) {
   const checks = [
     { pass: title.length >= 30 && title.length <= 60, label: "Tytuł SEO", detail: `${title.length}/30–60 znaków` },
     { pass: description.length >= 120 && description.length <= 160, label: "Opis", detail: `${description.length}/120–160 znaków` },
+    { pass: Boolean(seo.image), label: "Obraz Open Graph", detail: seo.image ? "Ustawiony" : "Brak obrazu" },
+    { pass: !seo.canonical || /^https?:\/\//i.test(seo.canonical), label: "Canonical", detail: seo.canonical ? "Własny adres" : "Automatyczny adres wpisu" },
+    { pass: seo.robots === "index,follow", label: "Indeksowanie", detail: seo.robots.replace(",", ", ") },
     { pass: words >= 300, label: "Długość treści", detail: `${words}/min. 300 słów` },
     { pass: headings > 0 && !hasHeadingOrderIssue(source), label: "Struktura nagłówków", detail: headings ? `${headings} nagłówków` : "Brak nagłówków" },
     { pass: averageSentenceLength <= 22 || sentences.length === 0, label: "Czytelność zdań", detail: `${averageSentenceLength.toFixed(1)} słowa na zdanie` },
@@ -3568,7 +3603,24 @@ function updateQualityToolkit(source) {
 
   ogPreviewTitle.textContent = title || "Tytuł wpisu";
   ogPreviewDescription.textContent = description || "Opis wpisu pojawi się tutaj.";
-  ogPreviewUrl.textContent = `minimalistycznie.pages.dev/_posts/${slug || "adres-wpisu"}/`;
+  const generatedUrl = `https://minimalistycznie.pages.dev/_posts/${slug || "adres-wpisu"}/`;
+  ogPreviewUrl.textContent = (seo.canonical || generatedUrl).replace(/^https?:\/\//, "");
+  if (ogPreviewImage) {
+    ogPreviewImage.hidden = !seo.image;
+    ogPreviewImage.src = seo.image || "";
+  }
+}
+
+function confirmSeoBeforeSave() {
+  const seo = getSeoEditorValues();
+  const seoTitle = seo.title || editorTitle.value.trim();
+  const warnings = [];
+  if (seoTitle.length < 30 || seoTitle.length > 60) warnings.push(`tytuł SEO ma ${seoTitle.length} znaków zamiast 30–60`);
+  if (seo.description.length < 120 || seo.description.length > 160) warnings.push(`opis SEO ma ${seo.description.length} znaków zamiast 120–160`);
+  if (!seo.image) warnings.push("brakuje obrazu Open Graph");
+  if (seo.canonical && !/^https?:\/\//i.test(seo.canonical)) warnings.push("adres canonical jest nieprawidłowy");
+  if (!warnings.length) return true;
+  return window.confirm(`Analiza SEO wykryła problemy:\n\n• ${warnings.join("\n• ")}\n\nZapisać mimo to?`);
 }
 
 function showMessage(
@@ -4794,6 +4846,8 @@ function normalizePostTags(tags) {
 
 const POST_TAGS_METADATA_PATTERN =
   /^\s*<!--\s*cms-tags:\s*(\[[\s\S]*?\])\s*-->\s*/i;
+const POST_SEO_METADATA_PATTERN =
+  /^\s*<!--\s*cms-seo:\s*(\{[\s\S]*?\})\s*-->\s*/i;
 
 function extractPostTagsMetadata(content) {
   const match = String(content || "").match(POST_TAGS_METADATA_PATTERN);
@@ -4812,6 +4866,37 @@ function stripPostTagsMetadata(content) {
   return String(content || "").replace(POST_TAGS_METADATA_PATTERN, "");
 }
 
+function extractPostSeoMetadata(content) {
+  const withoutTags = stripPostTagsMetadata(content);
+  const match = withoutTags.match(POST_SEO_METADATA_PATTERN);
+  if (!match) return {};
+  try { return JSON.parse(match[1]) || {}; } catch { return {}; }
+}
+
+function stripPostMetadata(content) {
+  return stripPostTagsMetadata(content).replace(POST_SEO_METADATA_PATTERN, "");
+}
+
+function getSeoEditorValues() {
+  return {
+    title: editorSeoTitle?.value.trim() || "",
+    description: editorSeoDescription?.value.trim() || "",
+    image: editorSeoImage?.value.trim() || "",
+    canonical: editorSeoCanonical?.value.trim() || "",
+    robots: editorSeoRobots?.value || "index,follow",
+    twitterCard: editorSeoTwitterCard?.value || "summary_large_image",
+  };
+}
+
+function setSeoEditorValues(seo = {}) {
+  if (editorSeoTitle) editorSeoTitle.value = seo.title || "";
+  if (editorSeoDescription) editorSeoDescription.value = seo.description || "";
+  if (editorSeoImage) editorSeoImage.value = seo.image || "";
+  if (editorSeoCanonical) editorSeoCanonical.value = seo.canonical || "";
+  if (editorSeoRobots) editorSeoRobots.value = seo.robots || "index,follow";
+  if (editorSeoTwitterCard) editorSeoTwitterCard.value = seo.twitterCard || "summary_large_image";
+}
+
 function getPostTags(post) {
   const explicitTags = normalizePostTags(post?.tags);
   if (explicitTags.length) {
@@ -4822,12 +4907,13 @@ function getPostTags(post) {
 }
 
 function getPostBodyForSave() {
-  const body = stripPostTagsMetadata(editorBody.value);
+  const body = stripPostMetadata(editorBody.value);
   const tags = parsePostTags(editorTags.value);
-
-  return tags.length
-    ? `<!-- cms-tags: ${JSON.stringify(tags)} -->\n\n${body}`
-    : body;
+  const seo = getSeoEditorValues();
+  const metadata = [];
+  if (tags.length) metadata.push(`<!-- cms-tags: ${JSON.stringify(tags)} -->`);
+  metadata.push(`<!-- cms-seo: ${JSON.stringify(seo)} -->`);
+  return `${metadata.join("\n")}\n\n${body}`;
 }
 
 function parsePostTags(value) {

@@ -559,6 +559,15 @@ button:disabled {
 .newsletter-record small { color:var(--muted); }
 @media (max-width:1000px) { .newsletter-workspace,.newsletter-lists-grid { grid-template-columns:1fr; } }
 
+.seo-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:12px 0 24px; }
+.seo-fields label { display:flex; flex-direction:column; gap:6px; color:#665f55; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.seo-fields label:nth-child(2),.seo-fields label:nth-child(3),.seo-fields label:nth-child(4) { grid-column:1/-1; }
+.seo-fields input,.seo-fields textarea,.seo-fields select { width:100%; border:1px solid #d8d3ca; border-radius:8px; background:#fff; color:#171717; font:inherit; font-size:.9rem; font-weight:400; letter-spacing:0; line-height:1.5; padding:10px 12px; text-transform:none; }
+.seo-fields textarea { resize:vertical; }
+.og-preview-image { display:block; width:100%; aspect-ratio:1.91/1; margin:0 0 14px; border-radius:7px; object-fit:cover; }
+.og-preview-image[hidden] { display:none; }
+@media (max-width:700px) { .seo-fields { grid-template-columns:1fr; } .seo-fields label { grid-column:1!important; } }
+
 .activity-item p {
   margin: 5px 0 0;
   color: var(--muted);
@@ -2783,6 +2792,29 @@ button:disabled {
 .syntax-liquid { color: #c586c0; }
 .syntax-heading { color: #4ec9b0; font-weight: 700; }
 .syntax-comment { color: #6a9955; }
+
+/* Wpis — spokojny edytor tekstowy z miękkim zawijaniem akapitów. */
+.editor-type-post .source-editor { background:#fbfaf7; }
+.editor-type-post .editor-line-numbers,
+.editor-type-post .editor-highlight { display:none; }
+.editor-type-post .source-editor #editorBody {
+  padding:30px 34px;
+  background:#fbfaf7;
+  color:#26231f;
+  caret-color:#171717;
+  font:16px/1.85 "Lora",Georgia,serif;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  -webkit-text-fill-color:#26231f;
+}
+.editor-type-post .source-editor #editorBody::placeholder { color:#918b82; -webkit-text-fill-color:#918b82; }
+.editor-type-post .editor-format-badge { background:#edf7ef; color:#28613a; }
+.editor-type-post .markdown-editor-column { border-color:#d8d3ca; }
+
+/* Strona — techniczny edytor kodu bez zawijania linii. */
+.editor-type-page .editor-format-badge { background:#f3edff; color:#6535a5; }
+.editor-type-page .source-editor { box-shadow:inset 3px 0 0 #7c3aed; }
+.editor-type-page .markdown-column-heading { background:#f8f5ff; }
 
 .site-preview-frame {
   display: block;

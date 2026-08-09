@@ -73,3 +73,12 @@ Status: gotowy do testów na localhost.
 - testowa wysyłka na wskazany adres,
 - kolejka i historia newsletterów,
 - ponowna wysyłka oraz statystyki dostarczeń.
+
+## Etap 7 — SEO
+
+Status: gotowy do testów na localhost.
+
+- edycja tytułu, opisu, obrazu Open Graph, canonical, robots i Twitter Card,
+- automatyczne metatagi Open Graph i Twitter oraz dane schema.org dla wpisów,
+- generowanie `sitemap.xml` i `robots.txt`,
+- analiza SEO z ostrzeżeniem przed zapisem wpisu.
