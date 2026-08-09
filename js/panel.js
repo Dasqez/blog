@@ -56,6 +56,8 @@ const ADMIN_TEST_NEWSLETTER_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/newsletter/test";
 const ADMIN_SUBSCRIBERS_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/subscribers";
+const ADMIN_DELETE_SUBSCRIBER_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/subscriber/delete";
 const ADMIN_BACKUP_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/backup";
 const ADMIN_SETTINGS_API_URL =
@@ -132,6 +134,12 @@ const dashboardNewPost = document.getElementById("dashboardNewPost");
 const dashboardRecentContent = document.getElementById("dashboardRecentContent");
 const dashboardContentMetrics = document.getElementById("dashboardContentMetrics");
 const dashboardNewsletterMetrics = document.getElementById("dashboardNewsletterMetrics");
+const openSubscribersButton = document.getElementById("openSubscribersButton");
+const subscribersDialog = document.getElementById("subscribersDialog");
+const closeSubscribersButton = document.getElementById("closeSubscribersButton");
+const subscribersSearchInput = document.getElementById("subscribersSearchInput");
+const subscribersDialogSummary = document.getElementById("subscribersDialogSummary");
+const subscribersTableBody = document.getElementById("subscribersTableBody");
 const newsletterPostSelect = document.getElementById("newsletterPostSelect");
 const newsletterSubject = document.getElementById("newsletterSubject");
 const newsletterExcerpt = document.getElementById("newsletterExcerpt");
@@ -869,6 +877,9 @@ editorTags.addEventListener("input", () => {
   window.clearTimeout(editorTagsDraftTimeout);
   editorTagsDraftTimeout = window.setTimeout(saveEditorDraft, 500);
 });
+openSubscribersButton?.addEventListener("click", openSubscribersDialog);
+closeSubscribersButton?.addEventListener("click", () => subscribersDialog?.close());
+subscribersSearchInput?.addEventListener("input", renderSubscribersTable);
 editorPostStatus?.addEventListener("change", () => {
   updatePostSaveButtonLabel();
   renderMarkdownPreview();
@@ -2034,7 +2045,104 @@ function normalizeGlobalSearchText(value) {
 }
 
 function formatSubscriberStatus(status) {
-  return ({ active: "Aktywny", pending: "Oczekujący", unsubscribed: "Wypisany" })[status] || status || "Brak statusu";
+  return ({ active: "Aktywny", pending: "Oczekujący", inactive: "Nieaktywny", unsubscribed: "Wypisany" })[String(status || "").toLowerCase()] || status || "Brak statusu";
+}
+
+async function openSubscribersDialog() {
+  if (!subscribersDialog || !subscribersTableBody) return;
+  subscribersSearchInput.value = "";
+  subscribersTableBody.innerHTML = '<tr><td colspan="5" class="subscriber-empty">Pobieranie subskrybentów…</td></tr>';
+  subscribersDialogSummary.textContent = "Pobieranie danych…";
+  subscribersDialog.showModal();
+
+  try {
+    const result = await newsletterApi(ADMIN_SUBSCRIBERS_API_URL);
+    globalSearchSubscribers = Array.isArray(result.subscribers) ? result.subscribers : [];
+    renderSubscribersTable();
+  } catch (error) {
+    subscribersTableBody.innerHTML = `<tr><td colspan="5" class="subscriber-empty">${escapePreviewHtml(error instanceof Error ? error.message : "Nie udało się pobrać subskrybentów.")}</td></tr>`;
+    subscribersDialogSummary.textContent = "Błąd pobierania danych";
+  }
+}
+
+function getSubscriberUnsubscribedAt(subscriber) {
+  return subscriber?.unsubscribedAt || subscriber?.unsubscribed_at || subscriber?.inactiveAt || subscriber?.inactive_at || null;
+}
+
+function renderSubscribersTable() {
+  if (!subscribersTableBody) return;
+  const query = normalizeGlobalSearchText(subscribersSearchInput?.value || "");
+  const subscribers = globalSearchSubscribers.filter((subscriber) =>
+    !query || normalizeGlobalSearchText([subscriber.email, formatSubscriberStatus(subscriber.status)].join(" ")).includes(query)
+  );
+
+  subscribersDialogSummary.textContent = query
+    ? `Wyniki: ${subscribers.length} z ${globalSearchSubscribers.length}`
+    : `Łącznie: ${globalSearchSubscribers.length}`;
+  subscribersTableBody.innerHTML = "";
+
+  if (!subscribers.length) {
+    subscribersTableBody.innerHTML = `<tr><td colspan="5" class="subscriber-empty">${query ? "Nie znaleziono pasujących subskrybentów." : "Brak subskrybentów."}</td></tr>`;
+    return;
+  }
+
+  subscribers.forEach((subscriber) => {
+    const status = String(subscriber.status || "inactive").toLowerCase();
+    const row = document.createElement("tr");
+    const values = [
+      { value: subscriber.email || "—", className: "subscriber-email" },
+      { value: subscriber.createdAt || subscriber.created_at ? formatDate(subscriber.createdAt || subscriber.created_at) : "—" },
+      { value: getSubscriberUnsubscribedAt(subscriber) ? formatDate(getSubscriberUnsubscribedAt(subscriber)) : "—" },
+    ];
+    values.forEach(({ value, className }) => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      if (className) cell.className = className;
+      row.appendChild(cell);
+    });
+    const statusCell = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = `subscriber-status is-${["active", "pending", "inactive", "unsubscribed"].includes(status) ? status : "inactive"}`;
+    badge.textContent = formatSubscriberStatus(status);
+    statusCell.appendChild(badge);
+    row.appendChild(statusCell);
+    const actionsCell = document.createElement("td");
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "subscriber-delete-button";
+    deleteButton.innerHTML = '<i class="fa-regular fa-trash-can"></i> Usuń';
+    deleteButton.addEventListener("click", () => deleteSubscriber(subscriber, deleteButton));
+    actionsCell.appendChild(deleteButton);
+    row.appendChild(actionsCell);
+    subscribersTableBody.appendChild(row);
+  });
+}
+
+async function deleteSubscriber(subscriber, button) {
+  const email = String(subscriber?.email || "").trim();
+  if (!email) return;
+  if (!window.confirm(`Usunąć adres ${email} z bazy subskrybentów?\n\nTej operacji nie można cofnąć.`)) return;
+
+  button.disabled = true;
+  button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Usuwanie';
+  try {
+    const response = await adminApiFetch(ADMIN_DELETE_SUBSCRIBER_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: subscriber.id || null, email }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Nie udało się usunąć subskrybenta.");
+    globalSearchSubscribers = globalSearchSubscribers.filter((item) => String(item.email || "").toLowerCase() !== email.toLowerCase());
+    globalSearchLoaded = false;
+    renderSubscribersTable();
+    await loadDashboardData();
+    showToast({ title: "Subskrybenci", message: `Usunięto ${email} z bazy danych.`, type: "success", duration: 3500 });
+  } catch (error) {
+    button.disabled = false;
+    button.innerHTML = '<i class="fa-regular fa-trash-can"></i> Usuń';
+    showToast({ title: "Błąd usuwania", message: error instanceof Error ? error.message : "Nie udało się usunąć subskrybenta.", type: "error", duration: 5000 });
+  }
 }
 
 function renderGlobalSearchResults() {

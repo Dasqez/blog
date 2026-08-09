@@ -6,6 +6,7 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano klikalny i czytelniejszy licznik subskrybentów na Dashboardzie oraz modal z wyszukiwalną tabelą adresów, dat zapisu i wypisania oraz aktualnych statusów; każdy adres można po potwierdzeniu trwale usunąć z D1.
 - Dodano trwałe wersje robocze wpisów: pełna treść Markdown, obrazy, tagi i SEO zapisują się w repozytorium, wpis jest oznaczony w CMS i pozostaje całkowicie wykluczony z publicznego builda do chwili publikacji.
 - Naprawiono automatyzację newslettera: zapis wersji roboczej nie uruchamia wysyłki, publikacja draftu wysyła newsletter jeden raz, a późniejsza edycja opublikowanego wpisu nie powoduje ponownej wysyłki.
 - Dodano Etap 13 Stabilizacja: scentralizowano chronione wywołania API, usunięto nieużywane moduły starego panelu, dodano kontrolę przed wydaniem oraz dokumentację architektury i testów regresji.

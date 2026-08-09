@@ -285,13 +285,16 @@
               <p>Pliki w bibliotece mediów</p>
             </article>
 
-            <article class="stat-card">
+            <article class="stat-card subscriber-stat-card">
               <div class="stat-card-header">
                 <span>Subskrybenci</span>
                 <i class="fa-solid fa-users"></i>
               </div>
 
-              <strong id="totalSubscribers">—</strong>
+              <button type="button" id="openSubscribersButton" class="stat-card-value-button" aria-haspopup="dialog" aria-controls="subscribersDialog">
+                <strong id="totalSubscribers">—</strong>
+                <span>Zobacz listę</span>
+              </button>
               <p><span id="activeSubscribers">—</span> aktywnych · <span id="pendingSubscribers">—</span> oczekujących</p>
             </article>
 
@@ -1511,6 +1514,23 @@
     <div class="media-delete-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="mediaUploadProgressBar"></span></div>
     <strong id="mediaUploadProgressValue">0%</strong>
     <button id="cancelMediaUploadButton" type="button" class="secondary-button">Anuluj</button>
+  </div>
+</dialog>
+
+<dialog id="subscribersDialog" class="ux-dialog subscribers-dialog">
+  <div class="ux-dialog-header">
+    <div><span class="section-kicker">Newsletter</span><h2>Subskrybenci</h2></div>
+    <button type="button" class="icon-button" id="closeSubscribersButton" aria-label="Zamknij"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="subscribers-dialog-tools">
+    <label class="subscribers-search"><i class="fa-solid fa-magnifying-glass"></i><input id="subscribersSearchInput" type="search" placeholder="Szukaj adresu lub statusu…" autocomplete="off"></label>
+    <span id="subscribersDialogSummary">Pobieranie danych…</span>
+  </div>
+  <div class="subscribers-table-wrap">
+    <table class="subscribers-table">
+      <thead><tr><th>Adres e-mail</th><th>Data zapisu</th><th>Data wypisania</th><th>Status</th><th>Akcje</th></tr></thead>
+      <tbody id="subscribersTableBody"><tr><td colspan="5">Pobieranie subskrybentów…</td></tr></tbody>
+    </table>
   </div>
 </dialog>
 

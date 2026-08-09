@@ -20,6 +20,7 @@
 
 - logowanie, odświeżenie karty i wylogowanie działają,
 - Dashboard pokazuje aktualne liczniki,
+- kliknięcie liczby subskrybentów otwiera tabelę z danymi, statusami i działającym wyszukiwaniem; usunięcie testowego adresu wymaga potwierdzenia i odświeża licznik,
 - można utworzyć, edytować, zapisać i usunąć wpis testowy,
 - nowy wpis można zapisać jako wersję roboczą; jest oznaczony w CMS, zachowuje Markdown i obrazy, ale nie powstaje dla niego publiczny adres ani pozycja na stronie głównej i w sitemap,
 - zmiana statusu wersji roboczej na „Opublikowany” umieszcza wpis na blogu bez utraty treści,
