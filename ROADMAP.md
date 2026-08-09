@@ -111,3 +111,14 @@ Status: gotowy do testów na localhost.
 - konfiguracja Giscus i newslettera,
 - wybór jasnego, ciemnego lub automatycznego motywu,
 - zapis publicznej konfiguracji do repozytorium bez sekretów.
+
+## Etap 11 — UX
+
+Status: gotowy do testów na localhost.
+
+- powiadomienia toast, animacje i skeleton loading,
+- spójniejsze okna dialogowe,
+- jasny i ciemny motyw panelu zapamiętywany lokalnie,
+- skróty klawiaturowe oraz ich podręczna lista,
+- menu kontekstowe wpisów i stron,
+- poprawiona responsywność panelu i obsługa ograniczonych animacji.

@@ -163,6 +163,13 @@ const settingsFaviconPreview = document.getElementById("settingsFaviconPreview")
 const settingsSocialPreviews = {
   facebook: document.getElementById("settingsFacebookPreview"), instagram: document.getElementById("settingsInstagramPreview"), x: document.getElementById("settingsXPreview"), github: document.getElementById("settingsGithubPreview"),
 };
+const panelThemeButton = document.getElementById("panelThemeButton");
+const shortcutsButton = document.getElementById("shortcutsButton");
+const shortcutsDialog = document.getElementById("shortcutsDialog");
+const closeShortcutsButton = document.getElementById("closeShortcutsButton");
+const contentContextMenu = document.getElementById("contentContextMenu");
+const PANEL_THEME_STORAGE_KEY = "mpz-panel-theme";
+let contextMenuType = "";
 const pagesList = document.getElementById("pagesList");
 const pagesSearchInput = document.getElementById("pagesSearchInput");
 const reloadPagesButton = document.getElementById("reloadPagesButton");
@@ -318,6 +325,12 @@ const mediaDeleteProgressText = document.getElementById("mediaDeleteProgressText
 const mediaDeleteProgressBar = document.getElementById("mediaDeleteProgressBar");
 const mediaDeleteProgressValue = document.getElementById("mediaDeleteProgressValue");
 const cancelMediaDeleteButton = document.getElementById("cancelMediaDeleteButton");
+const mediaUploadProgressDialog = document.getElementById("mediaUploadProgressDialog");
+const mediaUploadProgressTitle = document.getElementById("mediaUploadProgressTitle");
+const mediaUploadProgressText = document.getElementById("mediaUploadProgressText");
+const mediaUploadProgressBar = document.getElementById("mediaUploadProgressBar");
+const mediaUploadProgressValue = document.getElementById("mediaUploadProgressValue");
+const cancelMediaUploadButton = document.getElementById("cancelMediaUploadButton");
 
 const copyMediaName =
     document.getElementById("copyMediaName");
@@ -375,6 +388,7 @@ let editorFindIndex = -1;
 let dashboardSummary = null;
 let mediaDeleteController = null;
 let mediaDeleteProgressTimer = null;
+let mediaUploadController = null;
 let newslettersLoaded = false;
 let globalSearchSubscribers = [];
 let globalSearchNewsletterHistory = [];
@@ -398,6 +412,15 @@ cancelMediaDeleteButton?.addEventListener("click", () => {
     mediaDeleteController.abort();
   } else {
     mediaDeleteProgressDialog?.close();
+  }
+});
+cancelMediaUploadButton?.addEventListener("click", () => {
+  if (mediaUploadController) {
+    cancelMediaUploadButton.disabled = true;
+    mediaUploadProgressText.textContent = "Anulowanie wysyłania…";
+    mediaUploadController.abort();
+  } else {
+    mediaUploadProgressDialog?.close();
   }
 });
 newsletterPostSelect?.addEventListener("change", selectNewsletterPost);
@@ -424,6 +447,15 @@ backupDownloadButtons.forEach((button) => button.addEventListener("click", () =>
 downloadAllBackupsButton?.addEventListener("click", downloadAllBackups);
 settingsForm?.addEventListener("input", updateSettingsPreview);
 saveSettingsButton?.addEventListener("click", saveSettings);
+panelThemeButton?.addEventListener("click", togglePanelTheme);
+shortcutsButton?.addEventListener("click", openShortcutsDialog);
+closeShortcutsButton?.addEventListener("click", () => shortcutsDialog?.close());
+shortcutsDialog?.addEventListener("click", (event) => { if (event.target === shortcutsDialog) shortcutsDialog.close(); });
+document.addEventListener("contextmenu", handleContentContextMenu);
+document.addEventListener("click", (event) => { if (!contentContextMenu?.contains(event.target)) closeContentContextMenu(); });
+contentContextMenu?.addEventListener("click", handleContextMenuAction);
+document.addEventListener("keydown", handleUxShortcuts);
+applyPanelTheme(localStorage.getItem(PANEL_THEME_STORAGE_KEY) || "light");
 
 insertMediaButton?.addEventListener("click", insertSelectedMediaToEditor);
 
@@ -1992,6 +2024,95 @@ async function saveSettings() {
   } finally { saveSettingsButton.disabled = false; }
 }
 
+/* =========================================================
+   ETAP 11 — UX
+   ========================================================= */
+
+function applyPanelTheme(theme) {
+  const normalized = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.panelTheme = normalized;
+  localStorage.setItem(PANEL_THEME_STORAGE_KEY, normalized);
+  if (panelThemeButton) {
+    panelThemeButton.innerHTML = normalized === "dark" ? '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
+    panelThemeButton.title = normalized === "dark" ? "Włącz jasny motyw panelu" : "Włącz ciemny motyw panelu";
+  }
+}
+
+function togglePanelTheme() {
+  applyPanelTheme(document.documentElement.dataset.panelTheme === "dark" ? "light" : "dark");
+}
+
+function openShortcutsDialog() {
+  if (shortcutsDialog && !shortcutsDialog.open) shortcutsDialog.showModal();
+}
+
+function showLoadingSkeleton(container, count = 4) {
+  if (!container) return;
+  container.innerHTML = `<div class="skeleton-list" aria-label="Ładowanie danych">${Array.from({ length: count }, () => '<span class="skeleton-row" aria-hidden="true"></span>').join("")}</div>`;
+}
+
+function closeContentContextMenu() {
+  if (contentContextMenu) contentContextMenu.hidden = true;
+  contextMenuType = "";
+}
+
+function handleContentContextMenu(event) {
+  const item = event.target.closest(".post-item");
+  if (!item || !contentContextMenu || editorPanel && !editorPanel.hidden) return;
+  event.preventDefault();
+  item.click();
+  contextMenuType = item.classList.contains("page-item") ? "page" : "post";
+  const duplicate = contentContextMenu.querySelector('[data-context-action="duplicate"]');
+  if (duplicate) duplicate.hidden = contextMenuType !== "page";
+  contentContextMenu.hidden = false;
+  const width = contentContextMenu.offsetWidth || 190;
+  const height = contentContextMenu.offsetHeight || 180;
+  contentContextMenu.style.left = `${Math.min(event.clientX, window.innerWidth - width - 10)}px`;
+  contentContextMenu.style.top = `${Math.min(event.clientY, window.innerHeight - height - 10)}px`;
+  contentContextMenu.querySelector("button:not([hidden])")?.focus();
+}
+
+function handleContextMenuAction(event) {
+  const action = event.target.closest("[data-context-action]")?.dataset.contextAction;
+  if (!action || !contextMenuType) return;
+  const controls = contextMenuType === "page"
+    ? { edit: editPageButton, open: openPageButton, duplicate: duplicatePageButton, delete: deletePageButton }
+    : { edit: editPostButton, open: openPostButton, delete: deletePostButton };
+  closeContentContextMenu();
+  controls[action]?.click();
+}
+
+function handleUxShortcuts(event) {
+  const target = event.target;
+  const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable;
+
+  if (event.key === "Escape") closeContentContextMenu();
+  if (typing && !(event.ctrlKey || event.metaKey) && event.key !== "Escape") return;
+
+  if (event.key === "?" && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    event.preventDefault(); openShortcutsDialog(); return;
+  }
+  if (event.shiftKey && event.key.toLowerCase() === "d") {
+    event.preventDefault(); togglePanelTheme(); return;
+  }
+  if (event.altKey && /^[1-7]$/.test(event.key)) {
+    event.preventDefault();
+    const views = ["dashboard", "posts", "pages", "newsletter", "media", "backup", "settings"];
+    openView(views[Number(event.key) - 1]); return;
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+    event.preventDefault();
+    if (!editorPanel.hidden) savePostButton?.click();
+    else if (document.getElementById("view-settings")?.classList.contains("active-view")) saveSettingsButton?.click();
+    return;
+  }
+  if (!typing && event.key.toLowerCase() === "n" && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    const activeView = document.querySelector(".panel-view.active-view")?.id;
+    if (activeView === "view-posts") { event.preventDefault(); newPostButton?.click(); }
+    if (activeView === "view-pages") { event.preventDefault(); newPageButton?.click(); }
+  }
+}
+
 async function downloadBackup(type, button = null, silent = false) {
   const originalText = button?.innerHTML;
   if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Przygotowanie…'; }
@@ -2083,7 +2204,7 @@ async function loadPosts(forceRefresh = false) {
     return;
   }
 
-  postsList.innerHTML = "<p>Ładowanie wpisów...</p>";
+  showLoadingSkeleton(postsList, 5);
   reloadPostsButton.disabled = true;
 
   try {
@@ -2307,7 +2428,7 @@ function resetPostPreview() {
 async function loadPages(forceRefresh = false) {
   if (pagesLoaded && !forceRefresh) return;
 
-  pagesList.innerHTML = "<p>Ładowanie stron...</p>";
+  showLoadingSkeleton(pagesList, 5);
   reloadPagesButton.disabled = true;
 
   try {
@@ -4571,7 +4692,7 @@ function highlightSearchResult(items, activeIndex) {
   });
 }
 
-async function uploadImageFile(file) {
+async function uploadImageFile(file, signal) {
   if (!file?.type?.startsWith("image/")) {
     throw new Error(
       `Plik "${file?.name || "bez nazwy"}" nie jest obrazem.`
@@ -4579,6 +4700,9 @@ async function uploadImageFile(file) {
   }
 
   const base64 = await fileToBase64(file);
+  if (signal?.aborted) {
+    throw new DOMException("Wysyłanie anulowane.", "AbortError");
+  }
   const response = await fetch(
     ADMIN_UPLOAD_IMAGE_API_URL,
     {
@@ -4592,6 +4716,7 @@ async function uploadImageFile(file) {
         mimeType: file.type,
         contentBase64: base64,
       }),
+      signal,
     }
   );
 
@@ -4605,6 +4730,14 @@ async function uploadImageFile(file) {
   }
 
   return result;
+}
+
+function setMediaUploadProgress(value, text) {
+  const progress = Math.max(0, Math.min(100, Math.round(value)));
+  if (mediaUploadProgressBar) mediaUploadProgressBar.style.width = `${progress}%`;
+  if (mediaUploadProgressValue) mediaUploadProgressValue.textContent = `${progress}%`;
+  if (mediaUploadProgressText && text) mediaUploadProgressText.textContent = text;
+  mediaUploadProgressDialog?.querySelector('[role="progressbar"]')?.setAttribute("aria-valuenow", String(progress));
 }
 
 async function uploadMediaFiles(fileList) {
@@ -4629,9 +4762,19 @@ async function uploadMediaFiles(fileList) {
   let uploadedCount = 0;
   const uploadedFiles = [];
   const errors = [];
+  let cancelled = false;
+  mediaUploadController = new AbortController();
+  cancelMediaUploadButton.disabled = false;
+  cancelMediaUploadButton.textContent = "Anuluj";
+  mediaUploadProgressTitle.textContent = files.length === 1
+    ? "Wysyłanie obrazu"
+    : `Wysyłanie ${files.length} obrazów`;
+  setMediaUploadProgress(0, "Przygotowanie plików…");
+  mediaUploadProgressDialog?.showModal();
 
-  for (const file of files) {
-    const currentFileNumber = uploadedCount + errors.length + 1;
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index];
+    const currentFileNumber = index + 1;
     mediaUploadButton.innerHTML = `
       <i class="fa-solid fa-spinner fa-spin"></i>
       Wysyłanie ${currentFileNumber}/${files.length}...
@@ -4640,17 +4783,29 @@ async function uploadMediaFiles(fileList) {
       mediaUploadStatus.textContent =
         `Wysyłanie ${currentFileNumber} z ${files.length}: ${file.name}`;
     }
+    setMediaUploadProgress(
+      (index / files.length) * 100,
+      `Wysyłanie ${currentFileNumber} z ${files.length}: ${file.name}`
+    );
     try {
-      const uploadResult = await uploadImageFile(file);
+      const uploadResult = await uploadImageFile(file, mediaUploadController.signal);
       uploadedCount++;
       uploadedFiles.push({ file, uploadResult });
     } catch (error) {
+      if (error?.name === "AbortError") {
+        cancelled = true;
+        break;
+      }
       errors.push(
         error instanceof Error
           ? error.message
           : `Nie udało się wysłać pliku "${file.name}".`
       );
     }
+    setMediaUploadProgress(
+      ((index + 1) / files.length) * 100,
+      `Przetworzono ${index + 1} z ${files.length} obrazów.`
+    );
   }
 
   try {
@@ -4677,14 +4832,34 @@ async function uploadMediaFiles(fileList) {
         duration: 5000,
       });
     }
+
+    const processedCount = uploadedCount + errors.length;
+    if (cancelled) {
+      mediaUploadProgressTitle.textContent = "Wysyłanie anulowane";
+      setMediaUploadProgress(
+        (processedCount / files.length) * 100,
+        `Dodano ${uploadedCount} z ${files.length} obrazów. Pozostałe pliki pominięto.`
+      );
+    } else if (errors.length > 0) {
+      mediaUploadProgressTitle.textContent = "Wysyłanie zakończone z błędami";
+      setMediaUploadProgress(100, `Dodano ${uploadedCount} z ${files.length} obrazów.`);
+    } else {
+      mediaUploadProgressTitle.textContent = "Wysyłanie zakończone";
+      setMediaUploadProgress(100, uploadedCount === 1 ? "Obraz dodano do biblioteki." : `Dodano ${uploadedCount} obrazów do biblioteki.`);
+    }
   } finally {
+    mediaUploadController = null;
+    cancelMediaUploadButton.disabled = false;
+    cancelMediaUploadButton.textContent = "Zamknij";
     mediaUploadButton.disabled = false;
     mediaChooseButton.disabled = false;
     mediaDropzone?.classList.remove("is-uploading");
     mediaUploadButton.innerHTML =
       originalUploadButtonHtml;
     if (mediaUploadStatus) {
-      mediaUploadStatus.textContent = errors.length > 0
+      mediaUploadStatus.textContent = cancelled
+        ? `Wysyłanie anulowano. Dodano ${uploadedCount} z ${files.length} obrazów.`
+        : errors.length > 0
         ? `Dodano ${uploadedCount} z ${files.length} obrazów.`
         : uploadedCount === 1
           ? "Dodano 1 obraz."
@@ -4765,12 +4940,7 @@ async function loadMedia(forceRefresh = false) {
     return;
   }
 
-  mediaGrid.innerHTML = `
-    <div class="media-placeholder">
-      <i class="fa-solid fa-spinner fa-spin"></i>
-      <strong>Ładowanie obrazów...</strong>
-    </div>
-  `;
+  showLoadingSkeleton(mediaGrid, 8);
 
   try {
     const response = await fetch(

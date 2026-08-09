@@ -6,6 +6,8 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano graficzny pasek postępu wysyłania obrazów do biblioteki mediów z licznikiem plików, nazwą aktualnie przesyłanego obrazu oraz możliwością anulowania pozostałej kolejki.
+- Dodano Etap 11 UX: ciemny motyw panelu, skróty klawiaturowe, menu kontekstowe wpisów i stron, skeleton loading, animacje oraz spójniejsze dialogi i responsywność.
 - Dodano natychmiastowy podgląd ustawień na otwartej stronie głównej localhost: motyw, nazwa, slogan, logo, favicona i ikony social reagują na zmiany w panelu przed publikacją.
 - Naprawiono brakującą ikonę X przez aktualizację Font Awesome, zabezpieczono puste adresy social media oraz dodano faviconę jako znak graficzny nagłówka, gdy osobne logo nie zostało ustawione.
 - Poprawiono podgląd wyboru motywu w ustawieniach CMS: jasny, ciemny i systemowy wariant są widoczne natychmiast przed zatwierdzeniem zmian.

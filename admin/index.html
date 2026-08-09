@@ -226,6 +226,8 @@
           >
             <i class="fa-solid fa-rotate"></i>
           </button>
+          <button type="button" class="icon-button" id="panelThemeButton" title="Zmień motyw panelu" aria-label="Zmień motyw panelu"><i class="fa-regular fa-moon"></i></button>
+          <button type="button" class="icon-button" id="shortcutsButton" title="Skróty klawiaturowe" aria-label="Pokaż skróty klawiaturowe"><i class="fa-regular fa-keyboard"></i></button>
         </div>
       </header>
 
@@ -1490,6 +1492,38 @@
     <button id="cancelMediaDeleteButton" type="button" class="secondary-button">Anuluj</button>
   </div>
 </dialog>
+
+<dialog id="mediaUploadProgressDialog" class="media-delete-progress-dialog">
+  <div class="media-delete-progress-content">
+    <span class="media-delete-progress-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+    <p class="section-kicker">Biblioteka mediów</p>
+    <h2 id="mediaUploadProgressTitle">Wysyłanie obrazów</h2>
+    <p id="mediaUploadProgressText">Przygotowanie plików…</p>
+    <div class="media-delete-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="mediaUploadProgressBar"></span></div>
+    <strong id="mediaUploadProgressValue">0%</strong>
+    <button id="cancelMediaUploadButton" type="button" class="secondary-button">Anuluj</button>
+  </div>
+</dialog>
+
+<dialog id="shortcutsDialog" class="ux-dialog shortcuts-dialog">
+  <div class="ux-dialog-header"><div><span class="section-kicker">Szybsza praca</span><h2>Skróty klawiaturowe</h2></div><button type="button" class="icon-button" id="closeShortcutsButton" aria-label="Zamknij"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="shortcuts-grid">
+    <span>Globalne wyszukiwanie</span><kbd>Ctrl K</kbd>
+    <span>Zapisz otwarty edytor lub ustawienia</span><kbd>Ctrl S</kbd>
+    <span>Nowy wpis albo strona</span><kbd>N</kbd>
+    <span>Dashboard / Wpisy / Strony…</span><kbd>Alt 1–7</kbd>
+    <span>Zmień motyw panelu</span><kbd>Shift D</kbd>
+    <span>Pokaż tę listę</span><kbd>?</kbd>
+    <span>Zamknij menu lub okno</span><kbd>Esc</kbd>
+  </div>
+</dialog>
+
+<div id="contentContextMenu" class="context-menu" role="menu" hidden>
+  <button type="button" role="menuitem" data-context-action="edit"><i class="fa-regular fa-pen-to-square"></i> Edytuj</button>
+  <button type="button" role="menuitem" data-context-action="open"><i class="fa-solid fa-arrow-up-right-from-square"></i> Otwórz</button>
+  <button type="button" role="menuitem" data-context-action="duplicate"><i class="fa-regular fa-copy"></i> Duplikuj</button>
+  <button type="button" role="menuitem" data-context-action="delete" class="context-danger"><i class="fa-regular fa-trash-can"></i> Usuń</button>
+</div>
 
     <div
     id="editorOverlay"
