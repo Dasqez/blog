@@ -5,7 +5,7 @@ date: 2026-08-09T15:25:00.000+02:00
 ---
 <!-- cms-status: draft -->
 <!-- cms-tags: ["technologie","życie","ai","hobby","programowanie"] -->
-<!-- cms-seo: {"title":"","description":"","image":"","canonical":"","robots":"index,follow","twitterCard":"summary_large_image"} -->
+<!-- cms-seo: {"title":"","description":"Wpis podsumowujący prawie 2 tygodnie nerwów, frustracji, godzin spędzonych w kodzie css, JS i html i o tym, jak z biednego dashboardu z jedną funkcją zrobiłem customowy CMS.","image":"","canonical":"","robots":"index,follow","twitterCard":"summary_large_image"} -->
 
 Dzień dobry. Pamiętacie jeszcze ten moment, kiedy pisałem, że chciałem sobie zrobić małego, prostego bloga? Takiego minimalistycznego. Bez WordPressa, bez gotowych szablonów, bez płatnego hostingu i bez miliona niepotrzebnych funkcji. Ot, kilka plików, parę wpisów i święty spokój.
 
@@ -50,7 +50,7 @@ Potem przyszła biblioteka mediów. Wrzucanie wielu zdjęć naraz, drag and drop
 
 Następnie wpisy dostały tagi i automatyczny czas czytania — widoczne nie tylko w panelu, ale też dla czytelnika. Może zwróciliście uwagę. Mała rzecz, a strona od razu zaczęła wyglądać jak coś bardziej kompletnego i yntelygentnego niż zbiór moich internetowych wysrywów.
 
-*Screen 2: dashboard z licznikami wpisów, stron, mediów i newslettera.*
+![20260809-134146-dashboard](/assets/images/20260809-134146-dashboard.png)
 
 Potem doszedł Quality Writing Toolkit. Co, kurwa, doszło? To jest taki moduł, który patrzy na tekst i z kamienną twarzą informuje mnie, że opis [SEO](https://pl.wikipedia.org/wiki/Optymalizacja_dla_wyszukiwarek_internetowych) jest za krótki, brakuje tekstu alternatywnego, nagłówki są źle ułożone, obraz jest wielki jak billboard przy autostradzie informujący o wazektomii, a ogólna jakość wpisu mogłaby być lepsza.
 
@@ -65,7 +65,8 @@ Strony statyczne dostały tworzenie, duplikowanie, zmianę kolejności, histori�
 
 SEO przestało oznaczać „może Google jakoś to znajdzie”. Każdy wpis może mieć własny tytuł i opis, obraz Open Graph, canonical, ustawienia robots i Twitter Card. Strona generuje sitemapę, robots.txt i dane schema.org. Przed zapisem panel ostrzega mnie, jeśli czegoś brakuje, ale nadal pozwala mi zignorować dobre praktyki i popełnić błąd na własną odpowiedzialność. Wolność przede wszystkim. Korwin byłby ze mnie dumny, kurwa jego mać.
 
-*Screen 3: edytor w widoku dzielonym, najlepiej z otwartą analizą jakości i podglądem Open Graph.*
+![20260809-134148-edycja-wpisu](/assets/images/20260809-134148-edycja-wpisu.png)
+
 
 Później pojawiła się globalna wyszukiwarka przeszukująca wpisy, strony, media, newslettery i subskrybentów. Doszedł kompletny backup repozytorium, bazy danych, ustawień i listy subskrybentów. Powstał panel ustawień, z którego mogę zmienić nazwę bloga, slogan, logo, favicon, social media, komentarze, newsletter i motyw strony bez ręcznego grzebania w kodzie.
 
@@ -82,7 +83,8 @@ Mogę usiąść, otworzyć panel, napisać tekst, wrzucić zdjęcia, sprawdzić 
 
 No dobra, czasem nadal trzeba się pomodlić. To jednak informatyka, nie przesadzajmy z optymizmem.
 
-*Screen 4: zestawienie końcowej strony publicznej i panelu albo ekran roadmapy z ukończonymi etapami.
+![20260809-134150-roadmapa-bloga-cms](/assets/images/20260809-134150-roadmapa-bloga-cms.png)
+
 
 ## Koniec roadmapy, początek bloga
 Najzabawniejsze jest to, że przez cały ten czas rozwijałem narzędzie służące do pisania, zamiast po prostu pisać. To trochę tak, jakbym przed zrobieniem kanapki postanowił najpierw zbudować własną piekarnię, wyhodować zboże i zaprojektować nóż.
