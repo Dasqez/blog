@@ -1135,6 +1135,7 @@ async function getAdminPosts(
         slug,
         title: parsed.title || slug,
         date: parsed.date || null,
+        updatedAt: parsed.updated || parsed.date || null,
         layout: parsed.layout || null,
         excerpt:
           createPlainExcerpt(parsed.body),
@@ -1149,16 +1150,16 @@ async function getAdminPosts(
     posts.sort(
       (firstPost, secondPost) => {
         const firstDate =
-          firstPost.date
+          firstPost.updatedAt
             ? new Date(
-                firstPost.date
+                firstPost.updatedAt
               ).getTime()
             : 0;
 
         const secondDate =
-          secondPost.date
+          secondPost.updatedAt
             ? new Date(
-                secondPost.date
+                secondPost.updatedAt
               ).getTime()
             : 0;
 
@@ -1335,6 +1336,8 @@ async function getAdminPost(
             parsed.title || "",
           date:
             parsed.date || "",
+          updatedAt:
+            parsed.updated || parsed.date || "",
           layout:
             parsed.layout || "",
           body:
@@ -1524,10 +1527,13 @@ async function updateAdminPost(
     const [owner, repository] =
       repositoryParts;
 
+    const updatedAt = new Date().toISOString();
+
     const markdownSource =
       buildMarkdownPost({
         title,
         date,
+        updated: updatedAt,
         layout,
         body: postBody,
       });
@@ -1619,6 +1625,7 @@ async function updateAdminPost(
           commitSha:
             githubData.commit?.sha ||
             null,
+          updatedAt,
         },
       },
       200,
@@ -1795,6 +1802,8 @@ async function createPost(
     const [owner, repository] =
       repositoryParts;
 
+    const updatedAt = new Date().toISOString();
+
     const fileDate =
       getPostFileDate(date);
 
@@ -1820,6 +1829,7 @@ async function createPost(
       buildMarkdownPost({
         title,
         date,
+        updated: updatedAt,
         layout,
         body: postBody,
       });
@@ -1913,6 +1923,7 @@ async function createPost(
             null,
           title,
           date,
+          updatedAt,
           layout,
           slug,
           githubUrl:
@@ -4405,6 +4416,7 @@ function parseMarkdownPost(source) {
   return {
     title: data.title || "",
     date: data.date || "",
+    updated: data.updated || "",
     layout: data.layout || "",
     body,
   };
@@ -4447,6 +4459,7 @@ function buildMarkdownPost(post) {
     `title: ${post.title}`,
     `layout: ${post.layout}`,
     `date: ${post.date}`,
+    `updated: ${post.updated || post.date}`,
     "---",
     post.body,
   ].join("\n");

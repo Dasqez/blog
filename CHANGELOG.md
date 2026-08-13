@@ -6,6 +6,7 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano niezależną datę ostatniej modyfikacji wpisu, aktualizowaną automatycznie przy każdym zapisie wersji roboczej i każdej publikacji; lista oraz podgląd w CMS pokazują teraz czas ostatniego zapisu i sortują wpisy według niego, bez zmieniania publicznej daty publikacji.
 - Dodano na końcu każdego wpisu responsywny panel udostępniania z ikonami Facebooka, X, LinkedIna, wiadomości e-mail i kopiowania linku oraz czytelnym potwierdzeniem skopiowania adresu.
 - Wyśrodkowano logo, nazwę bloga i motto w nagłówku otwartego wpisu, aby układ był spójny ze stroną główną.
 - Dodano prywatnościowy licznik unikalnych wyświetleń wpisów widoczny obok daty publikacji i czasu czytania na stronie głównej oraz wewnątrz artykułu; licznik wykorzystuje D1 i anonimowy skrót lokalnego identyfikatora przeglądarki, bez zapisywania surowego adresu IP.

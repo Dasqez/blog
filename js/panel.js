@@ -2803,7 +2803,7 @@ function renderPosts() {
 
     const date = document.createElement("span");
     date.className = "post-date";
-    date.textContent = formatDate(post.date);
+    date.textContent = formatDate(post.updatedAt || post.date);
 
     const meta = document.createElement("span");
     meta.className = "post-item-meta";
@@ -2877,7 +2877,7 @@ function selectPost(post, item) {
     post.title || post.name;
 
   previewDate.textContent =
-    formatDate(post.date);
+    formatDate(post.updatedAt || post.date);
 
   const tags = getPostTags(post);
   previewReadingTime.textContent =
