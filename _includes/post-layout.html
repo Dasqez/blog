@@ -8,269 +8,82 @@
   {% assign seoImage = seo.image | default: site.favicon | absoluteUrl: site.url %}
   {% assign robotsValue = seo.robots | default: 'index,follow' %}
   {% assign twitterCard = seo.twitterCard | default: 'summary_large_image' %}
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{{ seoTitle }} - {{ site.name }}</title>
-  <meta name="description" content="{{ seoDescription | escape }}" />
-  <meta name="robots" content="{{ robotsValue | escape }}" />
-  <link rel="canonical" href="{{ canonicalUrl }}" />
-  <meta property="og:type" content="article" />
-  <meta property="og:site_name" content="{{ site.name | escape }}" />
-  <meta property="og:title" content="{{ seoTitle | escape }}" />
-  <meta property="og:description" content="{{ seoDescription | escape }}" />
-  <meta property="og:url" content="{{ canonicalUrl }}" />
-  <meta property="og:image" content="{{ seoImage }}" />
-  <meta name="twitter:card" content="{{ twitterCard | escape }}" />
-  <meta name="twitter:title" content="{{ seoTitle | escape }}" />
-  <meta name="twitter:description" content="{{ seoDescription | escape }}" />
-  <meta name="twitter:image" content="{{ seoImage }}" />
+  <meta name="description" content="{{ seoDescription | escape }}">
+  <meta name="robots" content="{{ robotsValue | escape }}">
+  <link rel="canonical" href="{{ canonicalUrl }}">
+  <meta property="og:type" content="article"><meta property="og:site_name" content="{{ site.name | escape }}">
+  <meta property="og:title" content="{{ seoTitle | escape }}"><meta property="og:description" content="{{ seoDescription | escape }}">
+  <meta property="og:url" content="{{ canonicalUrl }}"><meta property="og:image" content="{{ seoImage }}">
+  <meta name="twitter:card" content="{{ twitterCard | escape }}"><meta name="twitter:title" content="{{ seoTitle | escape }}">
+  <meta name="twitter:description" content="{{ seoDescription | escape }}"><meta name="twitter:image" content="{{ seoImage }}">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":{{ seoTitle | json }},"description":{{ seoDescription | json }},"url":{{ canonicalUrl | json }},"image":{{ seoImage | json }},"datePublished":{{ date | date: "%Y-%m-%dT%H:%M:%S.000Z" | json }},"author":{"@type":"Person","name":"Dawid Pytel"},"publisher":{"@type":"Organization","name":{{ site.name | json }}}}</script>
-  {% if site.visibility.favicon != false %}<link rel="icon" href="{{ site.favicon }}" />{% endif %}
-  {% if site.googleAnalyticsId %}<script async src="https://www.googletagmanager.com/gtag/js?id={{ site.googleAnalyticsId }}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','{{ site.googleAnalyticsId }}');</script>{% endif %}
+  {% if site.visibility.favicon != false %}<link rel="icon" href="{{ site.favicon }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #222;
-      line-height: 1.6;
-      background: #ffffff;
-      margin: 0;
-      padding: 0;
-    }
-    .wrapper {
-      max-width: 680px;
-      margin: 50px auto;
-      padding: 0 20px;
-    }
-    header {
-      margin-bottom: 40px;
-    }
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0;
-    }
-    header h1 a {
-      color: #111;
-      text-decoration: none;
-    }
-    header p {
-      font-size: 0.9rem;
-      color: #666;
-      margin: 5px 0 20px 0;
-    }
-    hr {
-      border: 0;
-      border-top: 1px solid #eee;
-    }
-    article h1 {
-      font-family: 'Georgia', serif;
-      font-size: 2.2rem;
-      color: #111;
-      margin: 0 0 10px 0;
-      line-height: 1.3;
-    }
-    .post-date {
-      font-size: 0.85rem;
-      color: #888;
-      margin-bottom: 30px;
-    }
-    .post-meta-line {
-      display: flex;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-      gap: 8px 18px;
-      color: #888;
-      font-size: 0.85rem;
-    }
-    .post-tags {
-      display: flex;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .post-tags span {
-      padding: 4px 9px;
-      border: 1px solid #ddd;
-      border-radius: 999px;
-      color: #555;
-      font-size: 0.78rem;
-    }
-    .post-body {
-      font-size: 1.1rem;
-      line-height: 1.7;
-      color: #333;
-    }
-    .post-body p {
-      margin-bottom: 20px;
-    }
-    .back-link {
-      display: inline-block;
-      margin-top: 50px;
-      color: #555;
-      text-decoration: none;
-      font-size: 0.95rem;
-      border-bottom: 1px solid #ccc;
-    }
-    .back-link:hover {
-      color: #000;
-      border-color: #000;
-    }
-
-    /* STYLIZACJA LIGHTBOXA W ARTYKULE */
-.lightbox-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.95); /* Białe półprzezroczyste tło */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.lightbox-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.lightbox-overlay img {
-    max-width: 85%;
-    max-height: 85%;
-    object-fit: contain;
-    border-radius: 4px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    transform: scale(0.95);
-    transition: transform 0.3s ease;
-}
-
-.lightbox-overlay.active img {
-    transform: scale(1);
-}
-
-.lightbox-close {
-    position: absolute;
-    top: 30px;
-    right: 40px;
-    font-family: sans-serif;
-    font-size: 2rem;
-    color: #111;
-    cursor: pointer;
-}
-
-/* Eleganckie okiełznanie zdjęć wewnątrz treści artykułu */
-.post-body img {
-    max-width: 100% !important;    /* Bezwzględna maksymalna szerokość tekstu */
-    width: auto !important;         /* Wymuszenie zachowania proporcji */
-    height: auto !important;        /* Nadpisanie domyślnych wymiarów z CMS */
-    max-height: 450px !important;  /* Maksymalna wysokość, by zdjęcie nie zalało ekranu */
-    display: block !important;
-    margin: 2rem auto !important;  /* Wyśrodkowanie i marginesy */
-    border-radius: 6px; 
-    border: 1px solid #111;
-    object-fit: contain !important; /* Gwarancja braku zniekształceń */
-    transition: transform 0.2s ease;
-    cursor: pointer;
-}
-
-/* Subtelny efekt po najechaniu myszką, sugerujący klikalność */
-.post-body img:hover {
-    transform: scale(1.01);
-}
-  </style>
-  <style>
-    html[data-theme="dark"] body { background:#171717; color:#eee; }
-    html[data-theme="dark"] article h1,html[data-theme="dark"] header h1 a { color:#f3f0ea; }
-    html[data-theme="dark"] .post-body { color:#d8d4cd; }
-    html[data-theme="dark"] hr { border-color:#3b3b3b; }
-    @media (prefers-color-scheme:dark) {
-      html[data-theme="auto"] body { background:#171717; color:#eee; }
-      html[data-theme="auto"] article h1,html[data-theme="auto"] header h1 a { color:#f3f0ea; }
-      html[data-theme="auto"] .post-body { color:#d8d4cd; }
-    }
+    :root{--bg:#fff;--text:#242424;--muted:#777;--line:#e7e4df;--surface:#f6f4f0;--accent:#111}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:'Lora',Georgia,serif;line-height:1.7}
+    .reading-progress{position:fixed;inset:0 0 auto;z-index:1001;height:3px;background:transparent}.reading-progress span{display:block;width:0;height:100%;background:var(--accent);transition:width .08s linear}
+    .wrapper{max-width:760px;margin:52px auto;padding:0 28px}.site-header{margin-bottom:62px}.site-header img{display:block;max-width:150px;max-height:64px;object-fit:contain}.site-header h1{font:700 1.35rem 'Montserrat',sans-serif;margin:14px 0 0}.site-header a{color:inherit;text-decoration:none}.site-header p{margin:7px 0 24px;color:var(--muted);font:400 .82rem 'Montserrat',sans-serif}.site-header hr{border:0;border-top:1px solid var(--line)}
+    article>h1{margin:0 0 26px;font:700 clamp(2.15rem,6vw,3.1rem)/1.17 'Lora',Georgia,serif;letter-spacing:-.025em}.post-meta-line{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:44px;color:var(--muted);font:400 .78rem 'Montserrat',sans-serif}.post-tags{display:flex;flex-wrap:wrap;gap:7px;margin:-25px 0 44px}.post-tags span{padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font:400 .73rem 'Montserrat',sans-serif}
+    .post-body{font:400 1.1rem/1.9 'Lora',Georgia,serif}.post-body p{margin:0 0 1.65em}.post-body h2,.post-body h3{line-height:1.3;margin:2.2em 0 .8em}.post-body img{display:block;max-width:100%;width:auto;height:auto;max-height:620px;margin:0 auto;border-radius:8px;object-fit:contain;cursor:zoom-in;transition:transform .25s ease,box-shadow .25s ease}.post-body img:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.12)}.post-figure{margin:3rem 0}.post-figure figcaption{text-align:center;margin-top:10px;color:var(--muted);font:400 .8rem 'Montserrat',sans-serif}
+    .related-posts{margin-top:64px;padding-top:32px;border-top:1px solid var(--line)}.related-posts h2{font:700 1.4rem Georgia,serif}.related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.related-card{display:flex;flex-direction:column;min-height:132px;padding:18px;border:1px solid var(--line);border-radius:10px;color:inherit;text-decoration:none;transition:transform .2s ease,background .2s ease}.related-card:hover{transform:translateY(-3px);background:var(--surface)}.related-card strong{line-height:1.35}.related-card span{margin-top:auto;padding-top:12px;color:var(--muted);font-size:.78rem}
+    .comments-section{margin-top:64px;padding-top:34px;border-top:1px solid var(--line);font-family:'Montserrat',sans-serif}.comments-heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px}.comments-heading h2{margin:0;font:700 1.45rem 'Lora',serif}.comments-count{color:var(--muted);font-size:.78rem}.comment-form{display:grid;gap:13px;margin:24px 0 38px;padding:22px;background:var(--surface);border-radius:10px}.comment-form label{display:grid;gap:6px;font-size:.78rem;font-weight:600}.comment-form input,.comment-form textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text);font:400 .92rem 'Montserrat',sans-serif}.comment-form textarea{resize:vertical;min-height:120px}.comment-form-footer{display:flex;align-items:center;justify-content:space-between;gap:14px}.comment-submit{padding:10px 17px;border:0;border-radius:7px;background:var(--accent);color:var(--bg);font-weight:700;cursor:pointer}.comment-submit:disabled{opacity:.55;cursor:wait}.comment-form-status{margin:0;color:var(--muted);font-size:.78rem}.comment-privacy{margin:0;color:var(--muted);font-size:.72rem}.comment-honeypot{position:absolute!important;left:-10000px!important}.comments-list{display:grid;gap:16px}.comment-item{padding:18px 0;border-bottom:1px solid var(--line)}.comment-item.is-reply{margin-left:42px;padding:16px 18px;border-left:2px solid var(--line);border-bottom:0;background:var(--surface);border-radius:0 8px 8px 0}.comment-meta{display:flex;align-items:center;gap:9px;margin-bottom:8px}.comment-avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--surface);font-weight:700}.comment-author{font-size:.86rem}.comment-author-badge{padding:2px 6px;border-radius:999px;background:var(--accent);color:var(--bg);font-size:.62rem}.comment-date{margin-left:auto;color:var(--muted);font-size:.7rem}.comment-body{margin:0;white-space:pre-wrap;font:400 .92rem/1.65 'Montserrat',sans-serif}.comments-empty,.comments-loading{color:var(--muted);font-size:.86rem}
+    .back-link{display:inline-block;margin-top:48px;color:inherit;text-underline-offset:5px}.back-to-top{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--bg);color:var(--text);cursor:pointer;opacity:0;pointer-events:none;transform:translateY(8px);transition:.2s}.back-to-top.visible{opacity:1;pointer-events:auto;transform:none}
+    .lightbox{position:fixed;inset:0;z-index:1100;display:grid;grid-template-columns:64px minmax(0,1fr) 64px;align-items:center;background:rgba(12,12,12,.94);opacity:0;pointer-events:none;transition:opacity .25s}.lightbox.active{opacity:1;pointer-events:auto}.lightbox-stage{text-align:center;color:#fff}.lightbox img{max-width:90vw;max-height:82vh;object-fit:contain;border-radius:5px;transform:scale(.97);transition:transform .25s}.lightbox.active img{transform:scale(1)}.lightbox-caption{margin:10px auto 0;max-width:700px;color:#ddd;font-size:.9rem}.lightbox-count{display:block;margin-top:5px;color:#aaa;font-size:.75rem}.lightbox button{border:0;background:transparent;color:#fff;font-size:2rem;cursor:pointer}.lightbox-close{position:absolute;right:22px;top:16px}.reveal{opacity:0;transform:translateY(16px);animation:reveal .55s ease forwards}@keyframes reveal{to{opacity:1;transform:none}}
+    html[data-theme="dark"]{--bg:#171717;--text:#eeeae4;--muted:#aaa59d;--line:#3b3936;--surface:#232220;--accent:#f1eee8}@media(prefers-color-scheme:dark){html[data-theme="auto"]{--bg:#171717;--text:#eeeae4;--muted:#aaa59d;--line:#3b3936;--surface:#232220;--accent:#f1eee8}}
+    @media(max-width:680px){.wrapper{margin-top:28px;padding:0 20px}.site-header{margin-bottom:46px}article>h1{margin-bottom:22px}.post-meta-line{margin-bottom:36px}.related-grid{grid-template-columns:1fr}.lightbox{grid-template-columns:44px minmax(0,1fr) 44px}.lightbox img{max-width:100%;}.post-body{font-size:1.04rem;line-height:1.82}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.reveal{opacity:1;transform:none}}
   </style>
 </head>
 <body>
-
+  <div class="reading-progress" aria-hidden="true"><span id="readingProgress"></span></div>
   <div class="wrapper">
-    <header>
-      {% if site.logo != blank and site.visibility.logo != false %}<a href="/"><img src="{{ site.logo }}" alt="{{ site.name }}" style="max-width:150px;max-height:64px;object-fit:contain"></a>{% elsif site.favicon != blank and site.visibility.favicon != false %}<a href="/"><img src="{{ site.favicon }}" alt="" style="width:52px;height:52px;object-fit:contain"></a>{% endif %}
-      {% if site.visibility.name != false %}<h1><a href="/">{{ site.name }}</a></h1>{% endif %}
-      {% if site.visibility.slogan != false %}<p>{{ site.slogan }}</p>{% endif %}
-      <hr>
+    <header class="site-header reveal">
+      {% if site.logo != blank and site.visibility.logo != false %}<a href="/"><img src="{{ site.logo }}" alt="{{ site.name }}"></a>{% elsif site.favicon != blank and site.visibility.favicon != false %}<a href="/"><img src="{{ site.favicon }}" alt="" width="52" height="52"></a>{% endif %}
+      {% if site.visibility.name != false %}<h1><a href="/">{{ site.name }}</a></h1>{% endif %}{% if site.visibility.slogan != false %}<p>{{ site.slogan }}</p>{% endif %}<hr>
     </header>
-
     <main>
-      <article>
+      <article class="reveal">
         <h1>{{ title }}</h1>
-        <div class="post-meta-line">
-          <span>Opublikowano: {{ date | date: "%d.%m.%Y" }}</span>
-          <span>{{ content | readingTime }} min czytania</span>
-        </div>
-        {% assign visibleTags = tags %}
-        {% unless visibleTags %}{% assign visibleTags = content | postTags %}{% endunless %}
-        {% if visibleTags.size > 0 %}
-          <div class="post-tags" aria-label="Tagi wpisu">
-            {% for tag in visibleTags %}<span>#{{ tag }}</span>{% endfor %}
-          </div>
-        {% endif %}
-        
-        <div class="post-body">
-          {{ content }}
-        </div>
-        {% if site.giscus.enabled %}<script src="https://giscus.app/client.js"
-        data-repo="{{ site.giscus.repo }}"
-        data-repo-id="{{ site.giscus.repoId }}"
-        data-category="{{ site.giscus.category }}"
-        data-category-id="{{ site.giscus.categoryId }}"
-        data-mapping="pathname"
-        data-strict="0"
-        data-reactions-enabled="1"
-        data-emit-metadata="1"
-        data-input-position="bottom"
-        data-theme="preferred_color_scheme"
-        data-lang="pl"
-        crossorigin="anonymous"
-async>
-</script>{% endif %}
+        <div class="post-meta-line"><span>Opublikowano: {{ date | date: "%d.%m.%Y" }}</span><span>{{ content | readingTime }} min czytania</span></div>
+        {% assign visibleTags = tags %}{% unless visibleTags %}{% assign visibleTags = content | postTags %}{% endunless %}
+        {% if visibleTags.size > 0 %}<div class="post-tags" aria-label="Tagi wpisu">{% for tag in visibleTags %}<span>#{{ tag }}</span>{% endfor %}</div>{% endif %}
+        <div class="post-body" id="postBody">{{ content }}</div>
       </article>
-      
-      <a href="/" class="back-link">&larr; Powrót do strony głównej</a>
+      {% assign related = collections.posts | relatedPosts: page.url, visibleTags, 3 %}
+      {% if related.size > 0 %}<section class="related-posts" aria-labelledby="relatedTitle"><h2 id="relatedTitle">Może spodoba Ci się również</h2><div class="related-grid">{% for post in related %}<a class="related-card" href="{{ post.url }}"><strong>{{ post.data.title }}</strong><span>{{ post.date | date: "%d.%m.%Y" }} · {{ post.templateContent | readingTime }} min</span></a>{% endfor %}</div></section>{% endif %}
+      {% if site.comments.enabled %}<section class="comments-section" id="comments" data-comments-api="{{ site.comments.apiUrl }}" data-post-slug="{{ page.url }}" data-turnstile-site-key="{{ site.comments.turnstileSiteKey }}">
+        <div class="comments-heading"><h2>Komentarze</h2><span class="comments-count" id="commentsCount"></span></div>
+        <form class="comment-form" id="commentForm">
+          <label>Nick lub imię<input id="commentAuthor" name="authorName" maxlength="60" minlength="2" autocomplete="name" required></label>
+          <label>Komentarz<textarea id="commentBody" name="body" maxlength="2000" minlength="3" required></textarea></label>
+          <label class="comment-honeypot" aria-hidden="true">Strona internetowa<input name="website" tabindex="-1" autocomplete="off"></label>
+          {% if site.comments.turnstileSiteKey != blank %}<div id="commentTurnstile" data-sitekey="{{ site.comments.turnstileSiteKey }}"></div>{% endif %}
+          <div class="comment-form-footer"><p class="comment-form-status" id="commentFormStatus" role="status"></p><button class="comment-submit" type="submit">Dodaj komentarz</button></div>
+          <p class="comment-privacy">Komentarz pojawi się po zatwierdzeniu. Nick może zostać zapamiętany wyłącznie w tej przeglądarce.</p>
+        </form>
+        <div class="comments-list" id="commentsList"><p class="comments-loading">Pobieranie komentarzy…</p></div>
+      </section>{% endif %}
+      {% if site.giscus.enabled %}<script src="https://giscus.app/client.js" data-repo="{{ site.giscus.repo }}" data-repo-id="{{ site.giscus.repoId }}" data-category="{{ site.giscus.category }}" data-category-id="{{ site.giscus.categoryId }}" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="1" data-input-position="bottom" data-theme="preferred_color_scheme" data-lang="pl" crossorigin="anonymous" async></script>{% endif %}
+      <a href="/" class="back-link">← Powrót do strony głównej</a>
     </main>
   </div>
-<div id="postLightbox" class="lightbox-overlay" onclick="closePostLightbox()">
-    <span class="lightbox-close">&times;</span>
-    <img id="postLightboxImg" src="" alt="Powiększenie zdjęcia">
-</div>
-
-<script>
-    // 1. Automatycznie dodaj klasę i akcję kliknięcia do każdego zdjęcia w treści wpisu
-    document.querySelectorAll('.post-body img').forEach(img => {
-        img.style.cursor = 'pointer'; // Zmień kursor na rączkę
-        img.addEventListener('click', function() {
-            openPostLightbox(this.src);
-        });
-    });
-
-    // 2. Logika otwierania i zamykania
-    function openPostLightbox(imageSrc) {
-        const lightbox = document.getElementById('postLightbox');
-        const lightboxImg = document.getElementById('postLightboxImg');
-        
-        lightboxImg.src = imageSrc;
-        lightbox.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Blokada przewijania w tle
-    }
-
-    function closePostLightbox() {
-        const lightbox = document.getElementById('postLightbox');
-        lightbox.classList.remove('active');
-        document.body.style.overflow = ''; // Przywrócenie przewijania
-    }
-</script>
+  <button type="button" class="back-to-top" aria-label="Wróć na górę">↑</button>
+  <div class="lightbox" id="postLightbox" role="dialog" aria-modal="true" aria-label="Galeria zdjęć" aria-hidden="true"><button type="button" class="lightbox-close" aria-label="Zamknij">×</button><button type="button" class="lightbox-prev" aria-label="Poprzednie zdjęcie">‹</button><div class="lightbox-stage"><img src="" alt=""><div class="lightbox-caption"></div><span class="lightbox-count"></span></div><button type="button" class="lightbox-next" aria-label="Następne zdjęcie">›</button></div>
+  <script>
+    (()=>{const body=document.getElementById('postBody'),progress=document.getElementById('readingProgress'),topButton=document.querySelector('.back-to-top'),box=document.getElementById('postLightbox'),boxImage=box.querySelector('img'),caption=box.querySelector('.lightbox-caption'),count=box.querySelector('.lightbox-count');const images=[...body.querySelectorAll('img')];let active=0;
+      images.forEach((image,index)=>{image.loading=index?'lazy':'eager';image.decoding='async';image.tabIndex=0;const alt=image.alt.trim();if(alt&&!image.closest('figure')){const figure=document.createElement('figure');figure.className='post-figure';const parent=image.parentElement;if(parent?.tagName==='P'&&!parent.textContent.trim()){parent.before(figure);figure.append(image);parent.remove()}else{image.before(figure);figure.append(image)}const label=document.createElement('figcaption');label.textContent=alt;figure.append(label)}const open=()=>show(index);image.addEventListener('click',open);image.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open()}})});
+      function show(index){if(!images.length)return;active=(index+images.length)%images.length;boxImage.src=images[active].currentSrc||images[active].src;boxImage.alt=images[active].alt;caption.textContent=images[active].alt;caption.hidden=!images[active].alt;count.textContent=`${active+1} / ${images.length}`;box.classList.add('active');box.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';box.querySelector('.lightbox-close').focus()}
+      function close(){box.classList.remove('active');box.setAttribute('aria-hidden','true');document.body.style.overflow='';images[active]?.focus()}
+      box.querySelector('.lightbox-close').addEventListener('click',close);box.querySelector('.lightbox-prev').addEventListener('click',()=>show(active-1));box.querySelector('.lightbox-next').addEventListener('click',()=>show(active+1));box.addEventListener('click',event=>{if(event.target===box)close()});document.addEventListener('keydown',event=>{if(!box.classList.contains('active'))return;if(event.key==='Escape')close();if(event.key==='ArrowLeft')show(active-1);if(event.key==='ArrowRight')show(active+1)});
+      function update(){const article=body.getBoundingClientRect(),distance=Math.max(1,body.offsetHeight-window.innerHeight),value=Math.min(1,Math.max(0,-article.top/distance));progress.style.width=`${value*100}%`;topButton.classList.toggle('visible',scrollY>500)}addEventListener('scroll',update,{passive:true});addEventListener('resize',update);topButton.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));update();
+    })();
+  </script>
+  {% if site.comments.enabled %}{% if site.comments.turnstileSiteKey != blank %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>{% endif %}<script src="/js/comments.js" defer></script>{% endif %}
 </body>
 </html>

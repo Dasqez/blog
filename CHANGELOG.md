@@ -6,6 +6,13 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano własny system komentarzy bez logowania: publiczny formularz z nickiem, kolejkę moderacji i odpowiedzi autora w CMS, zapis w D1, bezpieczne renderowanie tekstu, limity częstotliwości, pułapkę na boty, ograniczenie domen oraz opcjonalną ochronę Cloudflare Turnstile; Giscus pozostaje wyłączonym domyślnie trybem awaryjnym.
+- Naprawiono lokalny podgląd ochrony komentarzy: localhost korzysta z oficjalnego klucza testowego Turnstile, natomiast publiczny blog nadal używa widgetu ograniczonego do domeny produkcyjnej.
+- Zastąpiono techniczny komunikat błędu połączenia komentarzy czytelną informacją o konieczności uruchomienia lokalnego Workera na porcie 8790.
+- Naprawiono lokalną moderację komentarzy: panel CMS na localhost korzysta z lokalnego Workera i lokalnej bazy D1, bez zależności od jeszcze niewdrożonych tras produkcyjnych.
+- W moderacji komentarzy zastąpiono techniczną ścieżkę wpisu jego pełnym tytułem, z czytelnym tekstem awaryjnym dla brakujących danych.
+- Dodano pakiet funkcji dla czytelników: subtelne animacje z obsługą ograniczonego ruchu, pasek postępu czytania i przycisk powrotu na górę, powiązane wpisy oraz galerię zdjęć z podpisami, nawigacją i obsługą klawiatury.
+- Przywrócono klasyczny układ strony głównej oraz poprawiono typografię i odstępy wpisu pomiędzy tytułem, datą publikacji i treścią.
 - Usunięto sekret Apps Script z konfiguracji Wranglera; wartość jest teraz wymagana jako zaszyfrowany sekret Cloudflare Workera.
 - Zintegrowano bezpieczne, krótkotrwałe sesje administratora z głównym Workerem i zastąpiono autoryzację tras administracyjnych stałym kluczem w każdym żądaniu.
 - Naprawiono parser metadanych CMS i SEO: obsługuje pełny JSON, w tym zagnieżdżone obiekty, oraz metadane zapisane w dowolnej kolejności na początku wpisu.

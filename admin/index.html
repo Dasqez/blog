@@ -136,6 +136,12 @@
           <span>Newsletter</span>
         </button>
 
+        <button type="button" class="nav-item" data-view="comments">
+          <i class="fa-regular fa-comments"></i>
+          <span>Komentarze</span>
+          <span class="nav-badge" id="pendingCommentsBadge" hidden>0</span>
+        </button>
+
         <button
           type="button"
           class="nav-item"
@@ -395,6 +401,9 @@
                 </button>
                 <button type="button" class="dashboard-action" data-open-view="media">
                   <i class="fa-regular fa-images"></i><span><strong>Media</strong><small>Przeglądaj bibliotekę</small></span>
+                </button>
+                <button type="button" class="dashboard-action" data-open-view="comments">
+                  <i class="fa-regular fa-comments"></i><span><strong>Komentarze</strong><small id="dashboardCommentsHint">Sprawdź nowe wypowiedzi</small></span>
                 </button>
               </div>
             </article>
@@ -1083,6 +1092,21 @@
 
 </aside>
 
+        <!-- KOMENTARZE -->
+        <section class="panel-view" id="view-comments" data-title="Komentarze">
+          <div class="page-intro"><div><p class="section-kicker">Społeczność</p><h2>Moderacja komentarzy</h2><p>Zatwierdzaj wypowiedzi czytelników, odpowiadaj jako autor oraz usuwaj spam.</p></div><button id="reloadCommentsButton" class="secondary-button" type="button"><i class="fa-solid fa-rotate"></i> Odśwież</button></div>
+          <div class="comment-admin-stats" id="commentAdminStats"></div>
+          <div class="comment-admin-toolbar" role="group" aria-label="Status komentarzy">
+            <button type="button" class="active" data-comment-status="all">Wszystkie</button>
+            <button type="button" data-comment-status="pending">Oczekujące</button>
+            <button type="button" data-comment-status="approved">Opublikowane</button>
+            <button type="button" data-comment-status="hidden">Ukryte</button>
+            <button type="button" data-comment-status="spam">Spam</button>
+          </div>
+          <div class="comment-admin-list" id="commentAdminList"><p class="dashboard-empty">Otwórz widok, aby pobrać komentarze.</p></div>
+          <p id="commentAdminStatus" class="media-upload-status" role="status"></p>
+        </section>
+
         <!-- NEWSLETTER -->
         <section
           class="panel-view"
@@ -1356,7 +1380,7 @@
             <section class="settings-card"><div><i class="fa-solid fa-heading"></i><h3>Tożsamość bloga</h3></div><label class="settings-field-with-toggle">Nazwa bloga<span class="settings-inline-visibility"><input id="settingNameVisible" type="checkbox"> Pokaż na stronie</span><input id="settingSiteName" type="text" required></label><label class="settings-field-with-toggle">Slogan<span class="settings-inline-visibility"><input id="settingSloganVisible" type="checkbox"> Pokaż na stronie</span><input id="settingSiteSlogan" type="text"></label><label>Adres bloga<input id="settingSiteUrl" type="url" required></label><label class="settings-field-with-toggle">Favicon<span class="settings-inline-visibility"><input id="settingFaviconVisible" type="checkbox"> Używaj na stronie</span><input id="settingFavicon" type="text" placeholder="/favicon.png"></label><label class="settings-field-with-toggle">Logo<span class="settings-inline-visibility"><input id="settingLogoVisible" type="checkbox"> Pokaż na stronie</span><input id="settingLogo" type="text" placeholder="/assets/images/logo.png"></label><label>Motyw<select id="settingTheme"><option value="light">Jasny</option><option value="dark">Ciemny</option><option value="auto">Zgodny z systemem</option></select><small class="settings-field-hint">Zmiana jest widoczna od razu w podglądzie. Zatwierdź ją przyciskiem „Zapisz ustawienia”.</small></label></section>
             <section class="settings-card"><div><i class="fa-solid fa-share-nodes"></i><h3>Social media</h3></div><label class="settings-field-with-toggle">Facebook<span class="settings-inline-visibility"><input id="settingFacebookVisible" type="checkbox"> Pokaż ikonę</span><input id="settingFacebook" type="url" placeholder="https://facebook.com/…"></label><label class="settings-field-with-toggle">Instagram<span class="settings-inline-visibility"><input id="settingInstagramVisible" type="checkbox"> Pokaż ikonę</span><input id="settingInstagram" type="url" placeholder="https://instagram.com/…"></label><label class="settings-field-with-toggle">X / Twitter<span class="settings-inline-visibility"><input id="settingXVisible" type="checkbox"> Pokaż ikonę</span><input id="settingX" type="url" placeholder="https://x.com/…"></label><label class="settings-field-with-toggle">GitHub<span class="settings-inline-visibility"><input id="settingGithubVisible" type="checkbox"> Pokaż ikonę</span><input id="settingGithub" type="url" placeholder="https://github.com/…"></label></section>
             <section class="settings-card"><div><i class="fa-solid fa-chart-simple"></i><h3>Analityka i newsletter</h3></div><label>Google Analytics<input id="settingGoogleAnalytics" type="text" placeholder="G-XXXXXXXXXX"></label><label class="settings-switch"><input id="settingNewsletterEnabled" type="checkbox"><span>Newsletter włączony</span></label></section>
-            <section class="settings-card"><div><i class="fa-regular fa-comments"></i><h3>Giscus</h3></div><label class="settings-switch"><input id="settingGiscusEnabled" type="checkbox"><span>Komentarze włączone</span></label><label>Repozytorium<input id="settingGiscusRepo" type="text" placeholder="właściciel/repo"></label><label>Repo ID<input id="settingGiscusRepoId" type="text"></label><label>Kategoria<input id="settingGiscusCategory" type="text"></label><label>Category ID<input id="settingGiscusCategoryId" type="text"></label></section>
+            <section class="settings-card"><div><i class="fa-regular fa-comments"></i><h3>Komentarze</h3></div><label class="settings-switch"><input id="settingCommentsEnabled" type="checkbox"><span>Własne komentarze włączone</span></label><label>Adres API komentarzy<input id="settingCommentsApiUrl" type="url" placeholder="https://newsletter.example.workers.dev"></label><label>Publiczny klucz Turnstile<input id="settingTurnstileSiteKey" type="text" placeholder="0x4AAAA..."><small class="settings-field-hint">Sekretny klucz Turnstile należy ustawić wyłącznie w Cloudflare Workerze.</small></label><label class="settings-switch"><input id="settingGiscusEnabled" type="checkbox"><span>Awaryjny Giscus włączony</span></label><details><summary>Ustawienia Giscus</summary><label>Repozytorium<input id="settingGiscusRepo" type="text" placeholder="właściciel/repo"></label><label>Repo ID<input id="settingGiscusRepoId" type="text"></label><label>Kategoria<input id="settingGiscusCategory" type="text"></label><label>Category ID<input id="settingGiscusCategoryId" type="text"></label></details></section>
           </form>
           <div class="settings-preview" id="settingsPreview" data-theme="light"><img id="settingsLogoPreview" alt="Podgląd logo" hidden><div><strong id="settingsNamePreview">Nazwa bloga</strong><span id="settingsSloganPreview">Slogan</span><nav class="settings-social-preview" aria-label="Podgląd ikon społecznościowych"><i id="settingsFacebookPreview" class="fa-brands fa-facebook" hidden></i><i id="settingsInstagramPreview" class="fa-brands fa-instagram" hidden></i><i id="settingsXPreview" class="fa-brands fa-x-twitter" hidden></i><i id="settingsGithubPreview" class="fa-brands fa-github" hidden></i></nav></div><img id="settingsFaviconPreview" alt="Podgląd favicony" hidden></div>
           <p id="settingsStatus" class="media-upload-status" role="status"></p>

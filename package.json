@@ -6,7 +6,7 @@
   "scripts": {
   "start": "npx @11ty/eleventy --serve",
   "build": "npx @11ty/eleventy",
-    "check:js": "node --check js/panel.js && node --check js/main.js && node --check js/newsletter.js && node --check js/admin-newsletter.js && node --check scripts/send-newsletter.mjs && node --check cloudflare/worker-stage12-security.js && node --check cloudflare/worker-ai-seo.js && node --check cloudflare/newsletter-worker.js",
+    "check:js": "node --check js/panel.js && node --check js/main.js && node --check js/newsletter.js && node --check js/comments.js && node --check js/admin-newsletter.js && node --check scripts/send-newsletter.mjs && node --check cloudflare/worker-stage12-security.js && node --check cloudflare/worker-ai-seo.js && node --check cloudflare/worker-comments.js && node --check cloudflare/newsletter-worker.js",
   "check": "npm run check:js && npm run build"
 },
   "repository": {

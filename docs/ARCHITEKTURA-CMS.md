@@ -1,5 +1,13 @@
 # Architektura CMS
 
+## Komentarze
+
+- Publiczne trasy `GET /comments` i `POST /comments` obsługuje główny Worker newslettera, a dane trafiają do tabel `comments` i `comment_rate_limits` w D1.
+- Nowe komentarze zawsze otrzymują status `pending`; publiczne API zwraca wyłącznie rekordy `approved`.
+- Panel CMS korzysta z chronionych sesją tras `/admin/comments` oraz `/admin/comment/*` do moderacji, odpowiedzi autora i usuwania.
+- `TURNSTILE_SECRET_KEY` należy ustawić jako sekret Workera, a publiczny klucz widgetu w `site.comments.turnstileSiteKey`. Bez sekretu Worker nadal stosuje honeypot, walidację, ograniczenie domen i limit trzech komentarzy na dziesięć minut.
+- Opcjonalny sekret `COMMENT_HASH_SECRET` służy do tworzenia nieodwracalnego skrótu źródła na potrzeby limitów. Pełne adresy IP nie są zapisywane.
+
 ## Przepływ danych
 
 Panel pod `/admin/` komunikuje się z Workerem `newsletter.dave-pytel.workers.dev`. Worker odpowiada za autoryzację administratora, dane D1, operacje na repozytorium GitHub, media, newslettery, backup i ustawienia.

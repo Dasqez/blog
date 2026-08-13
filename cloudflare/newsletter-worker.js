@@ -2,6 +2,14 @@ import {
   authorizeAdminRequest,
   handleAdminSecurityRoute,
 } from "./worker-stage12-security.js";
+import {
+  createPublicComment,
+  deleteAdminComment,
+  getAdminComments,
+  getPublicComments,
+  moderateAdminComment,
+  replyToAdminComment,
+} from "./worker-comments.js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -24,6 +32,25 @@ export default {
 
     const securityResponse = await handleAdminSecurityRoute(request, env, corsHeaders);
     if (securityResponse) return securityResponse;
+
+    if (url.pathname === "/comments" && request.method === "GET") {
+      return getPublicComments(url, env, corsHeaders);
+    }
+    if (url.pathname === "/comments" && request.method === "POST") {
+      return createPublicComment(request, env, corsHeaders);
+    }
+    if (url.pathname === "/admin/comments" && request.method === "GET") {
+      return getAdminComments(request, url, env, corsHeaders);
+    }
+    if (url.pathname === "/admin/comment/moderate" && request.method === "POST") {
+      return moderateAdminComment(request, env, corsHeaders);
+    }
+    if (url.pathname === "/admin/comment/reply" && request.method === "POST") {
+      return replyToAdminComment(request, env, corsHeaders);
+    }
+    if (url.pathname === "/admin/comment/delete" && request.method === "POST") {
+      return deleteAdminComment(request, env, corsHeaders);
+    }
 
         if (url.pathname === "/admin/subscriber/delete" && request.method === "POST") {
       return deleteAdminSubscriber(request, env, corsHeaders);
@@ -3990,7 +4017,8 @@ function getDefaultCmsSettings() {
     url: "https://minimalistycznie.pages.dev", favicon: "/favicon.png", logo: "", theme: "light",
     visibility: { name: true, slogan: true, favicon: true, logo: true, social: { facebook: true, instagram: true, x: true, github: true } },
     social: { facebook: "", instagram: "", x: "", github: "" }, googleAnalyticsId: "",
-    giscus: { enabled: true, repo: "Dasqez/blog", repoId: "R_kgDOS4j9FQ", category: "General", categoryId: "DIC_kwDOS4j9Fc4C_GFg" },
+    comments: { enabled: true, apiUrl: "https://newsletter.dave-pytel.workers.dev", turnstileSiteKey: "0x4AAAAAAEPCoXHkWU-XpqwM", moderationEnabled: true },
+    giscus: { enabled: false, repo: "Dasqez/blog", repoId: "R_kgDOS4j9FQ", category: "General", categoryId: "DIC_kwDOS4j9Fc4C_GFg" },
     newsletter: { enabled: true },
   };
 }
@@ -4018,8 +4046,14 @@ function normalizeCmsSettings(value) {
       x: normalizeText(input.social?.x).slice(0, 500), github: normalizeText(input.social?.github).slice(0, 500),
     },
     googleAnalyticsId: normalizeText(input.googleAnalyticsId).slice(0, 40),
+    comments: {
+      enabled: input.comments?.enabled !== false,
+      apiUrl: normalizeText(input.comments?.apiUrl).replace(/\/$/, "").slice(0, 500) || defaults.comments.apiUrl,
+      turnstileSiteKey: normalizeText(input.comments?.turnstileSiteKey).slice(0, 200),
+      moderationEnabled: true,
+    },
     giscus: {
-      enabled: input.giscus?.enabled !== false, repo: normalizeText(input.giscus?.repo).slice(0, 200),
+      enabled: input.giscus?.enabled === true, repo: normalizeText(input.giscus?.repo).slice(0, 200),
       repoId: normalizeText(input.giscus?.repoId).slice(0, 200), category: normalizeText(input.giscus?.category).slice(0, 200),
       categoryId: normalizeText(input.giscus?.categoryId).slice(0, 200),
     },

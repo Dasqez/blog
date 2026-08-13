@@ -1,3 +1,23 @@
+function parseCmsMetadata(content) {
+  let body = String(content || "");
+  const metadata = {};
+  const pattern = /^\s*<!--\s*cms-(status|tags|seo):\s*([\s\S]*?)\s*-->\s*/i;
+  let match;
+  while ((match = body.match(pattern))) {
+    const key = match[1].toLowerCase();
+    const value = match[2].trim();
+    if (key === "status") metadata.status = value.toLowerCase();
+    else { try { metadata[key] = JSON.parse(value); } catch { metadata[key] = key === "tags" ? [] : {}; } }
+    body = body.slice(match[0].length);
+  }
+  return { metadata, body };
+}
+
+function getPostTags(content) {
+  const tags = parseCmsMetadata(content).metadata.tags;
+  return Array.isArray(tags) ? [...new Set(tags.map((tag) => String(tag).trim()).filter(Boolean))] : [];
+}
+
 export default function(eleventyConfig) {
   eleventyConfig.addPreprocessor("cms-draft-posts", ["md"], function(data, content) {
     const normalizedPath = String(this.inputPath || "").replace(/\\/g, "/");
@@ -16,26 +36,28 @@ export default function(eleventyConfig) {
   });
 
   eleventyConfig.addFilter("postTags", function(content) {
-    const match = String(content || "").match(
-      /<!--\s*cms-tags:\s*(\[[\s\S]*?\])\s*-->/i
-    );
-    if (!match) return [];
+    return getPostTags(content);
+  });
 
-    try {
-      const tags = JSON.parse(match[1]);
-      return Array.isArray(tags)
-        ? [...new Set(tags.map((tag) => String(tag).trim()).filter(Boolean))]
-        : [];
-    } catch {
-      return [];
-    }
+  eleventyConfig.addFilter("relatedPosts", function(posts, currentUrl, currentTags = [], limit = 3) {
+    const normalizedTags = new Set((Array.isArray(currentTags) ? currentTags : [])
+      .map((tag) => String(tag).trim().toLowerCase()).filter(Boolean));
+    return (Array.isArray(posts) ? posts : [])
+      .filter((post) => post.url !== currentUrl)
+      .map((post) => {
+        const tags = Array.isArray(post.data?.tags) ? post.data.tags : getPostTags(post.templateContent);
+        const score = tags.reduce((total, tag) => total + (normalizedTags.has(String(tag).toLowerCase()) ? 1 : 0), 0);
+        return { post, score };
+      })
+      .filter(({ score }) => normalizedTags.size === 0 || score > 0)
+      .sort((left, right) => right.score - left.score || right.post.date - left.post.date)
+      .slice(0, Number(limit) || 3)
+      .map(({ post }) => post);
   });
 
   eleventyConfig.addFilter("postSeo", function(content) {
-    const source = String(content || "").replace(/^\s*<!--\s*cms-tags:[\s\S]*?-->\s*/i, "");
-    const match = source.match(/^\s*<!--\s*cms-seo:\s*(\{[\s\S]*?\})\s*-->/i);
-    if (!match) return {};
-    try { return JSON.parse(match[1]) || {}; } catch { return {}; }
+    const seo = parseCmsMetadata(content).metadata.seo;
+    return seo && typeof seo === "object" && !Array.isArray(seo) ? seo : {};
   });
 
   eleventyConfig.addFilter("seoDescription", function(content) {

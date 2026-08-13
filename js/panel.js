@@ -70,6 +70,13 @@ const ADMIN_SESSION_LOGOUT_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/session/logout";
 const ADMIN_AI_SEO_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/ai/seo";
+const COMMENTS_API_BASE_URL = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ? "http://127.0.0.1:8790"
+  : "https://newsletter.dave-pytel.workers.dev";
+const ADMIN_COMMENTS_API_URL = `${COMMENTS_API_BASE_URL}/admin/comments`;
+const ADMIN_MODERATE_COMMENT_API_URL = `${COMMENTS_API_BASE_URL}/admin/comment/moderate`;
+const ADMIN_REPLY_COMMENT_API_URL = `${COMMENTS_API_BASE_URL}/admin/comment/reply`;
+const ADMIN_DELETE_COMMENT_API_URL = `${COMMENTS_API_BASE_URL}/admin/comment/delete`;
 const LOCAL_SETTINGS_PREVIEW_KEY = "cms-local-site-settings-preview";
 const ADMIN_SESSION_STORAGE_KEY = "mpzPanelSessionV1";
 const ADMIN_SESSION_IDLE_MS = 30 * 60 * 1000;
@@ -155,6 +162,13 @@ const newsletterHtmlPreview = document.getElementById("newsletterHtmlPreview");
 const newsletterQueueList = document.getElementById("newsletterQueueList");
 const newsletterHistoryList = document.getElementById("newsletterHistoryList");
 const newsletterPreviewButtons = document.querySelectorAll("[data-newsletter-preview]");
+const commentAdminList = document.getElementById("commentAdminList");
+const commentAdminStats = document.getElementById("commentAdminStats");
+const commentAdminStatus = document.getElementById("commentAdminStatus");
+const reloadCommentsButton = document.getElementById("reloadCommentsButton");
+const commentStatusButtons = document.querySelectorAll("[data-comment-status]");
+const pendingCommentsBadge = document.getElementById("pendingCommentsBadge");
+const dashboardCommentsHint = document.getElementById("dashboardCommentsHint");
 const globalSearch = document.getElementById("globalSearch");
 const globalSearchInput = document.getElementById("globalSearchInput");
 const globalSearchResults = document.getElementById("globalSearchResults");
@@ -174,6 +188,7 @@ const settingsFields = {
   facebook: document.getElementById("settingFacebook"), instagram: document.getElementById("settingInstagram"), x: document.getElementById("settingX"), github: document.getElementById("settingGithub"), googleAnalyticsId: document.getElementById("settingGoogleAnalytics"), newsletterEnabled: document.getElementById("settingNewsletterEnabled"),
   facebookVisible: document.getElementById("settingFacebookVisible"), instagramVisible: document.getElementById("settingInstagramVisible"), xVisible: document.getElementById("settingXVisible"), githubVisible: document.getElementById("settingGithubVisible"),
   giscusEnabled: document.getElementById("settingGiscusEnabled"), giscusRepo: document.getElementById("settingGiscusRepo"), giscusRepoId: document.getElementById("settingGiscusRepoId"), giscusCategory: document.getElementById("settingGiscusCategory"), giscusCategoryId: document.getElementById("settingGiscusCategoryId"),
+  commentsEnabled: document.getElementById("settingCommentsEnabled"), commentsApiUrl: document.getElementById("settingCommentsApiUrl"), turnstileSiteKey: document.getElementById("settingTurnstileSiteKey"),
 };
 const settingsPreview = document.getElementById("settingsPreview");
 const settingsNamePreview = document.getElementById("settingsNamePreview");
@@ -1658,6 +1673,7 @@ async function loadDashboardData() {
     }
 
     renderData(result);
+    void refreshPendingCommentsCount();
 
     setConnectionState("connected");
     showMessage(loginMessage, "");
@@ -1735,6 +1751,124 @@ function renderData(data) {
 }
 
 /* =========================================================
+   MODERACJA KOMENTARZY
+   ========================================================= */
+
+let activeCommentStatus = "all";
+
+async function refreshPendingCommentsCount() {
+  try {
+    const response = await adminApiFetch(`${ADMIN_COMMENTS_API_URL}?status=pending`);
+    const result = await response.json();
+    if (!response.ok || !result.success) return;
+    const pending = (result.comments || []).length;
+    if (pendingCommentsBadge) { pendingCommentsBadge.textContent = String(pending); pendingCommentsBadge.hidden = pending === 0; }
+    if (dashboardCommentsHint) dashboardCommentsHint.textContent = pending ? `${pending} oczekuje na moderację` : "Brak nowych komentarzy";
+  } catch { /* licznik nie blokuje dashboardu */ }
+}
+
+function formatCommentDate(timestamp) {
+  return new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium", timeStyle: "short" })
+    .format(new Date(Number(timestamp) * 1000));
+}
+
+function getCommentPostTitle(postSlug) {
+  const normalized = String(postSlug || "").replace(/\/+$/, "") + "/";
+  const matchedPost = posts.find((post) => {
+    const slug = post.slug || String(post.name || "").replace(/\.md$/i, "").replace(/^\d{4}-\d{2}-\d{2}-/, "");
+    const url = post.url || `/_posts/${slug}/`;
+    return String(url).replace(/\/+$/, "") + "/" === normalized;
+  });
+  if (matchedPost) return matchedPost.title || matchedPost.name || "Wpis bez tytułu";
+  const slug = normalized.split("/").filter(Boolean).pop() || "wpis";
+  return slug.replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/-/g, " ").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function renderAdminComments(comments, counts) {
+  if (!commentAdminList || !commentAdminStats) return;
+  const countMap = Object.fromEntries((counts || []).map((item) => [item.status, Number(item.count || 0)]));
+  const pending = countMap.pending || 0;
+  if (pendingCommentsBadge) {
+    pendingCommentsBadge.textContent = String(pending);
+    pendingCommentsBadge.hidden = pending === 0;
+  }
+  commentAdminStats.innerHTML = [
+    ["Oczekujące", pending, "pending"], ["Opublikowane", countMap.approved || 0, "approved"],
+    ["Ukryte", countMap.hidden || 0, "hidden"], ["Spam", countMap.spam || 0, "spam"],
+  ].map(([label, value, status]) => `<button type="button" data-comment-status="${status}"><span>${label}</span><strong>${value}</strong></button>`).join("");
+  commentAdminList.replaceChildren();
+  if (!comments.length) {
+    commentAdminList.innerHTML = '<p class="dashboard-empty">Brak komentarzy w tej kategorii.</p>';
+    return;
+  }
+  comments.forEach((comment) => {
+    const card = document.createElement("article");
+    card.className = `comment-admin-card is-${comment.status}${Number(comment.isAuthor) ? " is-author" : ""}`;
+    const header = document.createElement("div"); header.className = "comment-admin-header";
+    const identity = document.createElement("div");
+    const author = document.createElement("strong"); author.textContent = comment.authorName;
+    const meta = document.createElement("span"); meta.textContent = `${formatCommentDate(comment.createdAt)} · ${getCommentPostTitle(comment.postSlug)}`;
+    identity.append(author, meta);
+    const badge = document.createElement("span"); badge.className = "comment-admin-badge"; badge.textContent = Number(comment.isAuthor) ? "Autor" : comment.status;
+    header.append(identity, badge);
+    const body = document.createElement("p"); body.className = "comment-admin-body"; body.textContent = comment.body;
+    const actions = document.createElement("div"); actions.className = "comment-admin-actions";
+    const buttons = [];
+    if (comment.status !== "approved") buttons.push(["Zatwierdź", "approved", "fa-check"]);
+    if (comment.status !== "hidden") buttons.push(["Ukryj", "hidden", "fa-eye-slash"]);
+    if (comment.status !== "spam") buttons.push(["Spam", "spam", "fa-ban"]);
+    buttons.forEach(([label, status, icon]) => actions.insertAdjacentHTML("beforeend", `<button type="button" data-comment-action="moderate" data-comment-id="${comment.id}" data-comment-target="${status}"><i class="fa-solid ${icon}"></i>${label}</button>`));
+    if (!Number(comment.isAuthor)) actions.insertAdjacentHTML("beforeend", `<button type="button" data-comment-action="reply" data-comment-id="${comment.id}"><i class="fa-solid fa-reply"></i>Odpowiedz</button>`);
+    actions.insertAdjacentHTML("beforeend", `<button type="button" class="danger" data-comment-action="delete" data-comment-id="${comment.id}"><i class="fa-solid fa-trash"></i>Usuń</button>`);
+    card.append(header, body, actions); commentAdminList.append(card);
+  });
+}
+
+async function loadAdminComments(status = activeCommentStatus) {
+  if (!commentAdminList) return;
+  if (!postsLoaded) await loadPosts();
+  activeCommentStatus = status;
+  commentAdminList.innerHTML = '<p class="dashboard-empty">Pobieranie komentarzy…</p>';
+  document.querySelectorAll("[data-comment-status]").forEach((button) => button.classList.toggle("active", button.dataset.commentStatus === status));
+  try {
+    const response = await adminApiFetch(`${ADMIN_COMMENTS_API_URL}?status=${encodeURIComponent(status)}`);
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || "Nie udało się pobrać komentarzy.");
+    renderAdminComments(result.comments || [], result.counts || []);
+  } catch (error) {
+    commentAdminList.innerHTML = `<p class="dashboard-empty">${escapePreviewHtml(error instanceof Error ? error.message : "Nie udało się pobrać komentarzy.")}</p>`;
+  }
+}
+
+async function sendCommentAdminAction(url, payload, successMessage) {
+  const response = await adminApiFetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.message || "Operacja nie powiodła się.");
+  if (commentAdminStatus) commentAdminStatus.textContent = successMessage;
+  await loadAdminComments();
+}
+
+async function handleCommentAdminClick(event) {
+  const filter = event.target.closest("[data-comment-status]");
+  if (filter) { await loadAdminComments(filter.dataset.commentStatus); return; }
+  const action = event.target.closest("[data-comment-action]");
+  if (!action) return;
+  try {
+    if (action.dataset.commentAction === "moderate") await sendCommentAdminAction(ADMIN_MODERATE_COMMENT_API_URL, { id: action.dataset.commentId, status: action.dataset.commentTarget }, "Status komentarza został zmieniony.");
+    if (action.dataset.commentAction === "reply") {
+      const body = window.prompt("Treść odpowiedzi autora:");
+      if (body?.trim()) await sendCommentAdminAction(ADMIN_REPLY_COMMENT_API_URL, { parentId: action.dataset.commentId, body }, "Odpowiedź została opublikowana.");
+    }
+    if (action.dataset.commentAction === "delete" && window.confirm("Trwale usunąć komentarz i wszystkie odpowiedzi?")) await sendCommentAdminAction(ADMIN_DELETE_COMMENT_API_URL, { id: action.dataset.commentId }, "Komentarz został usunięty.");
+  } catch (error) { if (commentAdminStatus) commentAdminStatus.textContent = error instanceof Error ? error.message : "Operacja nie powiodła się."; }
+}
+
+reloadCommentsButton?.addEventListener("click", () => loadAdminComments());
+commentAdminList?.addEventListener("click", handleCommentAdminClick);
+commentAdminStats?.addEventListener("click", handleCommentAdminClick);
+commentStatusButtons.forEach((button) => button.addEventListener("click", handleCommentAdminClick));
+
+/* =========================================================
    WIDOKI PANELU
    ========================================================= */
 
@@ -1805,6 +1939,10 @@ function openView(viewName) {
 
   if (viewName === "newsletter") {
     loadNewsletterWorkspace();
+  }
+
+  if (viewName === "comments") {
+    loadAdminComments();
   }
 
   if (viewName === "settings") {
@@ -2294,7 +2432,7 @@ function createSettingsBackup() {
    ========================================================= */
 
 function getDefaultSiteSettings() {
-  return { name: "Minimalistycznie Przez Życie", slogan: "Małe przygody w wielkim świecie", url: "https://minimalistycznie.pages.dev", favicon: "/favicon.png", logo: "", theme: "light", visibility: { name: true, slogan: true, favicon: true, logo: true, social: { facebook: true, instagram: true, x: true, github: true } }, social: { facebook: "", instagram: "", x: "", github: "" }, googleAnalyticsId: "", giscus: { enabled: true, repo: "Dasqez/blog", repoId: "R_kgDOS4j9FQ", category: "General", categoryId: "DIC_kwDOS4j9Fc4C_GFg" }, newsletter: { enabled: true } };
+  return { name: "Minimalistycznie Przez Życie", slogan: "Małe przygody w wielkim świecie", url: "https://minimalistycznie.pages.dev", favicon: "/favicon.png", logo: "", theme: "light", visibility: { name: true, slogan: true, favicon: true, logo: true, social: { facebook: true, instagram: true, x: true, github: true } }, social: { facebook: "", instagram: "", x: "", github: "" }, googleAnalyticsId: "", comments: { enabled: true, apiUrl: "https://newsletter.dave-pytel.workers.dev", turnstileSiteKey: "0x4AAAAAAEPCoXHkWU-XpqwM", moderationEnabled: true }, giscus: { enabled: false, repo: "Dasqez/blog", repoId: "R_kgDOS4j9FQ", category: "General", categoryId: "DIC_kwDOS4j9Fc4C_GFg" }, newsletter: { enabled: true } };
 }
 
 async function settingsApi(method = "GET", body = null) {
@@ -2322,17 +2460,18 @@ async function loadSettings(forceRefresh = false) {
 
 function fillSettingsForm(settings) {
   const defaults = getDefaultSiteSettings();
-  const value = { ...defaults, ...settings, visibility: { ...defaults.visibility, ...settings.visibility, social: { ...defaults.visibility.social, ...settings.visibility?.social } }, social: { ...defaults.social, ...settings.social }, giscus: { ...defaults.giscus, ...settings.giscus }, newsletter: { ...defaults.newsletter, ...settings.newsletter } };
+  const value = { ...defaults, ...settings, visibility: { ...defaults.visibility, ...settings.visibility, social: { ...defaults.visibility.social, ...settings.visibility?.social } }, social: { ...defaults.social, ...settings.social }, comments: { ...defaults.comments, ...settings.comments }, giscus: { ...defaults.giscus, ...settings.giscus }, newsletter: { ...defaults.newsletter, ...settings.newsletter } };
   settingsFields.name.value = value.name || ""; settingsFields.slogan.value = value.slogan || ""; settingsFields.url.value = value.url || ""; settingsFields.favicon.value = value.favicon || ""; settingsFields.logo.value = value.logo || ""; settingsFields.theme.value = value.theme || "light";
   settingsFields.nameVisible.checked = value.visibility.name !== false; settingsFields.sloganVisible.checked = value.visibility.slogan !== false; settingsFields.faviconVisible.checked = value.visibility.favicon !== false; settingsFields.logoVisible.checked = value.visibility.logo !== false;
   settingsFields.facebook.value = value.social.facebook || ""; settingsFields.instagram.value = value.social.instagram || ""; settingsFields.x.value = value.social.x || ""; settingsFields.github.value = value.social.github || ""; settingsFields.googleAnalyticsId.value = value.googleAnalyticsId || ""; settingsFields.newsletterEnabled.checked = value.newsletter.enabled !== false;
   settingsFields.facebookVisible.checked = value.visibility.social.facebook !== false; settingsFields.instagramVisible.checked = value.visibility.social.instagram !== false; settingsFields.xVisible.checked = value.visibility.social.x !== false; settingsFields.githubVisible.checked = value.visibility.social.github !== false;
   settingsFields.giscusEnabled.checked = value.giscus.enabled !== false; settingsFields.giscusRepo.value = value.giscus.repo || ""; settingsFields.giscusRepoId.value = value.giscus.repoId || ""; settingsFields.giscusCategory.value = value.giscus.category || ""; settingsFields.giscusCategoryId.value = value.giscus.categoryId || "";
+  settingsFields.commentsEnabled.checked = value.comments.enabled !== false; settingsFields.commentsApiUrl.value = value.comments.apiUrl || ""; settingsFields.turnstileSiteKey.value = value.comments.turnstileSiteKey || "";
   updateSettingsPreview();
 }
 
 function collectSettingsForm() {
-  return { name: settingsFields.name?.value.trim() || "", slogan: settingsFields.slogan?.value.trim() || "", url: settingsFields.url?.value.trim().replace(/\/$/, "") || "", favicon: settingsFields.favicon?.value.trim() || "/favicon.png", logo: settingsFields.logo?.value.trim() || "", theme: settingsFields.theme?.value || "light", visibility: { name: Boolean(settingsFields.nameVisible?.checked), slogan: Boolean(settingsFields.sloganVisible?.checked), favicon: Boolean(settingsFields.faviconVisible?.checked), logo: Boolean(settingsFields.logoVisible?.checked), social: { facebook: Boolean(settingsFields.facebookVisible?.checked), instagram: Boolean(settingsFields.instagramVisible?.checked), x: Boolean(settingsFields.xVisible?.checked), github: Boolean(settingsFields.githubVisible?.checked) } }, social: { facebook: settingsFields.facebook?.value.trim() || "", instagram: settingsFields.instagram?.value.trim() || "", x: settingsFields.x?.value.trim() || "", github: settingsFields.github?.value.trim() || "" }, googleAnalyticsId: settingsFields.googleAnalyticsId?.value.trim() || "", giscus: { enabled: Boolean(settingsFields.giscusEnabled?.checked), repo: settingsFields.giscusRepo?.value.trim() || "", repoId: settingsFields.giscusRepoId?.value.trim() || "", category: settingsFields.giscusCategory?.value.trim() || "", categoryId: settingsFields.giscusCategoryId?.value.trim() || "" }, newsletter: { enabled: Boolean(settingsFields.newsletterEnabled?.checked) } };
+  return { name: settingsFields.name?.value.trim() || "", slogan: settingsFields.slogan?.value.trim() || "", url: settingsFields.url?.value.trim().replace(/\/$/, "") || "", favicon: settingsFields.favicon?.value.trim() || "/favicon.png", logo: settingsFields.logo?.value.trim() || "", theme: settingsFields.theme?.value || "light", visibility: { name: Boolean(settingsFields.nameVisible?.checked), slogan: Boolean(settingsFields.sloganVisible?.checked), favicon: Boolean(settingsFields.faviconVisible?.checked), logo: Boolean(settingsFields.logoVisible?.checked), social: { facebook: Boolean(settingsFields.facebookVisible?.checked), instagram: Boolean(settingsFields.instagramVisible?.checked), x: Boolean(settingsFields.xVisible?.checked), github: Boolean(settingsFields.githubVisible?.checked) } }, social: { facebook: settingsFields.facebook?.value.trim() || "", instagram: settingsFields.instagram?.value.trim() || "", x: settingsFields.x?.value.trim() || "", github: settingsFields.github?.value.trim() || "" }, googleAnalyticsId: settingsFields.googleAnalyticsId?.value.trim() || "", comments: { enabled: Boolean(settingsFields.commentsEnabled?.checked), apiUrl: settingsFields.commentsApiUrl?.value.trim().replace(/\/$/, "") || "", turnstileSiteKey: settingsFields.turnstileSiteKey?.value.trim() || "", moderationEnabled: true }, giscus: { enabled: Boolean(settingsFields.giscusEnabled?.checked), repo: settingsFields.giscusRepo?.value.trim() || "", repoId: settingsFields.giscusRepoId?.value.trim() || "", category: settingsFields.giscusCategory?.value.trim() || "", categoryId: settingsFields.giscusCategoryId?.value.trim() || "" }, newsletter: { enabled: Boolean(settingsFields.newsletterEnabled?.checked) } };
 }
 
 function updateSettingsPreview() {

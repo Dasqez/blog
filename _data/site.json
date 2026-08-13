@@ -25,11 +25,17 @@
   },
   "googleAnalyticsId": "",
   "giscus": {
-    "enabled": true,
+    "enabled": false,
     "repo": "Dasqez/blog",
     "repoId": "R_kgDOS4j9FQ",
     "category": "General",
     "categoryId": "DIC_kwDOS4j9Fc4C_GFg"
+  },
+  "comments": {
+    "enabled": true,
+    "apiUrl": "https://newsletter.dave-pytel.workers.dev",
+    "turnstileSiteKey": "0x4AAAAAAEPCoXHkWU-XpqwM",
+    "moderationEnabled": true
   },
   "newsletter": {
     "enabled": true

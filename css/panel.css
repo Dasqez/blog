@@ -3042,8 +3042,17 @@ button:disabled {
 .subscriber-delete-button:hover { background:#dc2626; color:#fff; }
 .subscriber-delete-button:disabled { cursor:wait; opacity:.55; }
 
+.nav-badge { display:inline-grid; min-width:20px; height:20px; margin-left:auto; padding:0 6px; place-items:center; border-radius:999px; background:#dc2626; color:#fff; font-size:10px; }
+.comment-admin-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+.comment-admin-stats button { display:flex; padding:16px; align-items:center; justify-content:space-between; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); cursor:pointer; }
+.comment-admin-stats span { color:var(--muted); font-size:12px; }.comment-admin-stats strong { font-size:22px; }
+.comment-admin-toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }.comment-admin-toolbar button { padding:8px 12px; border:1px solid var(--border); border-radius:999px; background:var(--surface); color:var(--text); cursor:pointer; }.comment-admin-toolbar button.active { background:var(--text); color:var(--surface); }
+.comment-admin-list { display:grid; gap:12px; }.comment-admin-card { padding:18px; border:1px solid var(--border); border-left:4px solid #a8a29e; border-radius:10px; background:var(--surface); }.comment-admin-card.is-pending { border-left-color:#d97706; }.comment-admin-card.is-approved { border-left-color:#16a34a; }.comment-admin-card.is-spam { border-left-color:#dc2626; }.comment-admin-card.is-author { background:var(--surface-soft); }
+.comment-admin-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }.comment-admin-header>div { display:grid; gap:4px; }.comment-admin-header span { color:var(--muted); font-size:11px; }.comment-admin-badge { padding:4px 8px; border-radius:999px; background:var(--surface-soft); font:600 9px "Montserrat",sans-serif; text-transform:uppercase; }.comment-admin-body { margin:16px 0; white-space:pre-wrap; line-height:1.65; }.comment-admin-actions { display:flex; flex-wrap:wrap; gap:7px; }.comment-admin-actions button { display:inline-flex; padding:7px 10px; align-items:center; gap:6px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text); cursor:pointer; font-size:11px; }.comment-admin-actions button:hover { background:var(--surface-soft); }.comment-admin-actions button.danger { border-color:#fecaca; color:#b91c1c; }
+
 @media (max-width:900px) {
   .dashboard-content-grid,.dashboard-insights-grid { grid-template-columns:1fr; }
+  .comment-admin-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .editor-view-switcher span { display:none; }
 }
 
@@ -3057,4 +3066,5 @@ button:disabled {
   .editor-find-bar { margin-inline:16px; flex-wrap:wrap; }
   .editor-find-bar label { min-width:calc(50% - 4px); }
   .editor-heading-tools select { max-width:120px; }
+  .comment-admin-stats { grid-template-columns:1fr; }
 }
