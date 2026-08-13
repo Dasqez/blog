@@ -10,6 +10,7 @@ import {
   moderateAdminComment,
   replyToAdminComment,
 } from "./worker-comments.js";
+import { getPostViews, recordPostView } from "./worker-views.js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -35,6 +36,12 @@ export default {
 
     if (url.pathname === "/comments" && request.method === "GET") {
       return getPublicComments(url, env, corsHeaders);
+    }
+    if (url.pathname === "/views" && request.method === "GET") {
+      return getPostViews(url, env, corsHeaders);
+    }
+    if (url.pathname === "/views" && request.method === "POST") {
+      return recordPostView(request, env, corsHeaders);
     }
     if (url.pathname === "/comments" && request.method === "POST") {
       return createPublicComment(request, env, corsHeaders);

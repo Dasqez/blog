@@ -16,6 +16,7 @@
                 <div class="post-meta-line">
                     <span class="date">{{ post.date | date: "%d.%m.%Y" }}</span>
                     <span>{{ post.templateContent | readingTime }} min czytania</span>
+                    <span data-view-count data-view-slug="{{ post.url }}" data-view-api="{{ site.comments.apiUrl }}">… wyświetleń</span>
                 </div>
                 {% assign visibleTags = post.data.tags %}
                 {% unless visibleTags %}{% assign visibleTags = post.templateContent | postTags %}{% endunless %}

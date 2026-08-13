@@ -50,7 +50,7 @@
     <main>
       <article class="reveal">
         <h1>{{ title }}</h1>
-        <div class="post-meta-line"><span>Opublikowano: {{ date | date: "%d.%m.%Y" }}</span><span>{{ content | readingTime }} min czytania</span></div>
+        <div class="post-meta-line"><span>Opublikowano: {{ date | date: "%d.%m.%Y" }}</span><span>{{ content | readingTime }} min czytania</span><span data-view-count data-view-track data-view-slug="{{ page.url }}" data-view-api="{{ site.comments.apiUrl }}">… wyświetleń</span></div>
         {% assign visibleTags = tags %}{% unless visibleTags %}{% assign visibleTags = content | postTags %}{% endunless %}
         {% if visibleTags.size > 0 %}<div class="post-tags" aria-label="Tagi wpisu">{% for tag in visibleTags %}<span>#{{ tag }}</span>{% endfor %}</div>{% endif %}
         <div class="post-body" id="postBody">{{ content }}</div>
@@ -85,5 +85,6 @@
     })();
   </script>
   {% if site.comments.enabled %}{% if site.comments.turnstileSiteKey != blank %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>{% endif %}<script src="/js/comments.js" defer></script>{% endif %}
+  <script src="/js/views.js" defer></script>
 </body>
 </html>
