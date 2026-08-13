@@ -1,3 +1,8 @@
+import {
+  authorizeAdminRequest,
+  handleAdminSecurityRoute,
+} from "./worker-stage12-security.js";
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -16,6 +21,9 @@ export default {
         headers: corsHeaders,
       });
     }
+
+    const securityResponse = await handleAdminSecurityRoute(request, env, corsHeaders);
+    if (securityResponse) return securityResponse;
 
         if (url.pathname === "/admin/subscriber/delete" && request.method === "POST") {
       return deleteAdminSubscriber(request, env, corsHeaders);
@@ -956,7 +964,7 @@ async function getAdminPosts(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -1165,7 +1173,7 @@ async function getAdminPost(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -1338,7 +1346,7 @@ async function updateAdminPost(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -1614,7 +1622,7 @@ async function createPost(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -1912,7 +1920,7 @@ async function deletePost(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -2076,7 +2084,7 @@ async function uploadImage(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -2302,7 +2310,7 @@ async function getAdminPages(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -2499,7 +2507,7 @@ async function getAdminPage(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -2671,7 +2679,7 @@ async function updateAdminPage(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -2914,7 +2922,7 @@ async function updateAdminPage(
 /* Etap 4 — funkcje do włączenia do Workera newsletter. */
 
 async function requirePageAdmin(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
+  if (!(await isAuthorizedAdmin(request, env))) return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return jsonResponse({ success: false, message: "Brakuje konfiguracji GitHuba w Workerze." }, 500, corsHeaders);
   return null;
 }
@@ -3174,7 +3182,7 @@ async function listMedia(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -3378,7 +3386,7 @@ async function deleteMedia(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -3630,7 +3638,7 @@ async function deleteMedia(
 
 async function deleteMediaBulk(request, env, corsHeaders) {
   try {
-    if (!isAuthorizedAdmin(request, env)) return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
+    if (!(await isAuthorizedAdmin(request, env))) return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
     if (!isJsonRequest(request)) return jsonResponse({ success: false, message: "Nieprawidłowy format danych." }, 400, corsHeaders);
     if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return jsonResponse({ success: false, message: "Brakuje konfiguracji GitHuba w Workerze." }, 500, corsHeaders);
 
@@ -3703,7 +3711,7 @@ async function deleteMediaBulk(request, env, corsHeaders) {
 /* Etap 6 — funkcje i trasy do włączenia do Workera newsletter. */
 
 async function getAdminNewsletters(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) {
+  if (!(await isAuthorizedAdmin(request, env))) {
     return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   }
 
@@ -3764,7 +3772,7 @@ async function getAdminNewsletters(request, env, corsHeaders) {
 }
 
 async function testAdminNewsletter(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) {
+  if (!(await isAuthorizedAdmin(request, env))) {
     return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   }
   if (!isJsonRequest(request)) {
@@ -3823,7 +3831,7 @@ async function testAdminNewsletter(request, env, corsHeaders) {
 }
 
 async function sendAdminNewsletter(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) {
+  if (!(await isAuthorizedAdmin(request, env))) {
     return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   }
   if (!isJsonRequest(request)) {
@@ -3872,7 +3880,7 @@ async function sendAdminNewsletter(request, env, corsHeaders) {
 /* Etap 8 — dane subskrybentów dla globalnej wyszukiwarki CMS. */
 
 async function getAdminSubscribers(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) {
+  if (!(await isAuthorizedAdmin(request, env))) {
     return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   }
 
@@ -3903,7 +3911,7 @@ function escapeBackupCsv(value) {
 }
 
 async function getAdminBackup(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) {
+  if (!(await isAuthorizedAdmin(request, env))) {
     return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   }
 
@@ -4020,7 +4028,7 @@ function normalizeCmsSettings(value) {
 }
 
 async function getAdminSettings(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
+  if (!(await isAuthorizedAdmin(request, env))) return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   try {
     const repo = getPageRepository(env);
     if (!repo) throw new Error("Nieprawidłowa konfiguracja repozytorium.");
@@ -4035,7 +4043,7 @@ async function getAdminSettings(request, env, corsHeaders) {
 }
 
 async function saveAdminSettings(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
+  if (!(await isAuthorizedAdmin(request, env))) return jsonResponse({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   if (!isJsonRequest(request)) return jsonResponse({ success: false, message: "Nieprawidłowy format danych." }, 400, corsHeaders);
   try {
     const body = await request.json();
@@ -4131,7 +4139,7 @@ async function getAdminSummary(
   corsHeaders
 ) {
   try {
-    if (!isAuthorizedAdmin(request, env)) {
+    if (!(await isAuthorizedAdmin(request, env))) {
       return jsonResponse(
         {
           success: false,
@@ -4448,23 +4456,11 @@ function encodePath(value) {
    WALIDACJA I NARZĘDZIA
    ========================================================= */
 
-function isAuthorizedAdmin(
+async function isAuthorizedAdmin(
   request,
   env
 ) {
-  if (!env.ADMIN_API_SECRET) {
-    return false;
-  }
-
-  const authorization =
-    request.headers.get(
-      "Authorization"
-    ) || "";
-
-  const expected =
-    `Bearer ${env.ADMIN_API_SECRET}`;
-
-  return authorization === expected;
+  return Boolean(await authorizeAdminRequest(request, env));
 }
 
 function isAuthorizedTrigger(
@@ -4704,7 +4700,7 @@ function isAllowedImage(mimeType) {
 }
 
 async function deleteAdminSubscriber(request, env, corsHeaders) {
-  if (!isAuthorizedAdmin(request, env)) {
+  if (!(await isAuthorizedAdmin(request, env))) {
     return jsonResponse({ success: false, message: "Brak dostÄ™pu." }, 401, corsHeaders);
   }
   if (!isJsonRequest(request)) {
@@ -4752,7 +4748,7 @@ const AI_SEO_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
 const AI_SEO_MAX_CONTENT_LENGTH = 24000;
 
 async function generateAdminSeoWithAi(request, env, corsHeaders = {}) {
-  if (!isAuthorizedAdmin(request, env)) {
+  if (!(await isAuthorizedAdmin(request, env))) {
     return json({ success: false, message: "Brak dostępu." }, 401, corsHeaders);
   }
   const rate = await enforceAiSeoLimit(request, env);

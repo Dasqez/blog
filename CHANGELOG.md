@@ -6,6 +6,10 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Usunięto sekret Apps Script z konfiguracji Wranglera; wartość jest teraz wymagana jako zaszyfrowany sekret Cloudflare Workera.
+- Zintegrowano bezpieczne, krótkotrwałe sesje administratora z głównym Workerem i zastąpiono autoryzację tras administracyjnych stałym kluczem w każdym żądaniu.
+- Naprawiono parser metadanych CMS i SEO: obsługuje pełny JSON, w tym zagnieżdżone obiekty, oraz metadane zapisane w dowolnej kolejności na początku wpisu.
+
 - Przyspieszono publiczny zapis do newslettera: Worker odpowiada po zapisaniu adresu w D1, a wiadomość potwierdzającą wysyła w tle, dzięki czemu opóźniona odpowiedź Apps Script nie powoduje fałszywego komunikatu o błędzie; formularz otrzymał również limit czasu żądania.
 - Przeniesiono przycisk „Uzupełnij SEO z AI” do nagłówka sekcji „Ocena i wskazówki”, obok przełącznika szczegółów, oraz dopracowano jego układ na mniejszych ekranach.
 - Dodano automatyczną ponowną próbę generowania SEO bez wymuszonego schematu, gdy Workers AI nie potrafi spełnić JSON Mode dla konkretnej treści wpisu.

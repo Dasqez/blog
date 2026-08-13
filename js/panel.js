@@ -4392,9 +4392,7 @@ function createSlugWhileTyping(value) {
 }
 
 function getPlainEditorText(source) {
-  return String(source || "")
-    .replace(POST_TAGS_METADATA_PATTERN, "")
-    .replace(POST_SEO_METADATA_PATTERN, "")
+  return stripPostMetadata(source)
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
@@ -5793,48 +5791,51 @@ function normalizePostTags(tags) {
     .filter(Boolean))];
 }
 
-const POST_TAGS_METADATA_PATTERN =
-  /^\s*<!--\s*cms-tags:\s*(\[[\s\S]*?\])\s*-->\s*/i;
-const POST_SEO_METADATA_PATTERN =
-  /^\s*<!--\s*cms-seo:\s*(\{[\s\S]*?\})\s*-->\s*/i;
-const POST_STATUS_METADATA_PATTERN =
-  /^\s*<!--\s*cms-status:\s*(draft|published)\s*-->\s*/i;
+const POST_METADATA_PATTERN =
+  /^\s*<!--\s*cms-(status|tags|seo):\s*([\s\S]*?)\s*-->\s*/i;
+
+function parsePostMetadata(content) {
+  let body = String(content || "");
+  const metadata = {};
+  let match;
+
+  while ((match = body.match(POST_METADATA_PATTERN))) {
+    const key = match[1].toLowerCase();
+    const rawValue = match[2].trim();
+    if (key === "status") {
+      metadata.status = rawValue.toLowerCase() === "draft" ? "draft" : "published";
+    } else {
+      try { metadata[key] = JSON.parse(rawValue); } catch { metadata[key] = key === "tags" ? [] : {}; }
+    }
+    body = body.slice(match[0].length);
+  }
+
+  return { metadata, body };
+}
 
 function stripPostStatusMetadata(content) {
-  return String(content || "").replace(POST_STATUS_METADATA_PATTERN, "");
+  return parsePostMetadata(content).body;
 }
 
 function extractPostStatusMetadata(content) {
-  const match = String(content || "").match(POST_STATUS_METADATA_PATTERN);
-  return match?.[1]?.toLowerCase() === "draft" ? "draft" : "published";
+  return parsePostMetadata(content).metadata.status || "published";
 }
 
 function extractPostTagsMetadata(content) {
-  const match = stripPostStatusMetadata(content).match(POST_TAGS_METADATA_PATTERN);
-  if (!match) {
-    return [];
-  }
-
-  try {
-    return normalizePostTags(JSON.parse(match[1]));
-  } catch {
-    return [];
-  }
+  return normalizePostTags(parsePostMetadata(content).metadata.tags || []);
 }
 
 function stripPostTagsMetadata(content) {
-  return stripPostStatusMetadata(content).replace(POST_TAGS_METADATA_PATTERN, "");
+  return parsePostMetadata(content).body;
 }
 
 function extractPostSeoMetadata(content) {
-  const withoutTags = stripPostTagsMetadata(content);
-  const match = withoutTags.match(POST_SEO_METADATA_PATTERN);
-  if (!match) return {};
-  try { return JSON.parse(match[1]) || {}; } catch { return {}; }
+  const seo = parsePostMetadata(content).metadata.seo;
+  return seo && typeof seo === "object" && !Array.isArray(seo) ? seo : {};
 }
 
 function stripPostMetadata(content) {
-  return stripPostTagsMetadata(content).replace(POST_SEO_METADATA_PATTERN, "");
+  return parsePostMetadata(content).body;
 }
 
 function getSeoEditorValues() {
