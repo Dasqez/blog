@@ -30,11 +30,15 @@ document.addEventListener("DOMContentLoaded", () => {
         button.disabled = true;
         button.textContent = "Zapisywanie...";
 
+        const requestController = new AbortController();
+        const requestTimeout = window.setTimeout(() => requestController.abort(), 15000);
+
         try {
             const response = await fetch(NEWSLETTER_WORKER_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: emailInput.value.trim() }),
+                signal: requestController.signal,
             });
 
             const result = await response.json();
@@ -47,10 +51,13 @@ document.addEventListener("DOMContentLoaded", () => {
             form.reset();
         } catch (error) {
             showMessage(
-                error.message || "Wystąpił błąd. Spróbuj ponownie za chwilę.",
+                error.name === "AbortError"
+                    ? "Serwer odpowiada zbyt długo. Zapis mógł zostać przyjęty — sprawdź skrzynkę przed ponowną próbą."
+                    : (error.message || "Wystąpił błąd. Spróbuj ponownie za chwilę."),
                 "error"
             );
         } finally {
+            window.clearTimeout(requestTimeout);
             button.disabled = false;
             button.textContent = "Zapisz mnie";
         }

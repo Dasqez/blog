@@ -1,5 +1,5 @@
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     const corsHeaders = {
@@ -43,7 +43,8 @@ if (
         request,
         env,
         corsHeaders,
-        url
+        url,
+        ctx
       );
     }
 
@@ -286,7 +287,8 @@ async function subscribe(
   request,
   env,
   corsHeaders,
-  requestUrl
+  requestUrl,
+  ctx
 ) {
   try {
     if (!isJsonRequest(request)) {
@@ -381,37 +383,27 @@ async function subscribe(
       `${requestUrl.origin}/confirm?token=` +
       encodeURIComponent(confirmationToken);
 
-    const mailResult =
-      await sendAppsScriptRequest(env, {
+    const confirmationDelivery = sendAppsScriptRequest(env, {
         action: "confirmation",
         email,
         confirmationUrl,
+      }).then((mailResult) => {
+        if (!mailResult.success) {
+          console.error("Błąd Google Apps Script po zapisaniu adresu:", mailResult);
+        }
+      }).catch((error) => {
+        console.error("Błąd wysyłki potwierdzenia po zapisaniu adresu:", error);
       });
-
-    if (!mailResult.success) {
-      console.error(
-        "Błąd Google Apps Script:",
-        mailResult
-      );
-
-      return jsonResponse(
-        {
-          success: false,
-          message:
-            "Adres zapisano, ale nie udało się wysłać wiadomości. Spróbuj ponownie za chwilę.",
-        },
-        502,
-        corsHeaders
-      );
-    }
+    if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(confirmationDelivery);
+    else await confirmationDelivery;
 
     return jsonResponse(
       {
         success: true,
         message:
-          "Wysłaliśmy wiadomość potwierdzającą. Sprawdź skrzynkę oraz folder Spam.",
+          "Zapis przyjęty. Wysłaliśmy wiadomość potwierdzającą — sprawdź skrzynkę oraz folder Spam.",
       },
-      201,
+      202,
       corsHeaders
     );
   } catch (error) {

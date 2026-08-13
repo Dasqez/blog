@@ -6,6 +6,7 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Przyspieszono publiczny zapis do newslettera: Worker odpowiada po zapisaniu adresu w D1, a wiadomość potwierdzającą wysyła w tle, dzięki czemu opóźniona odpowiedź Apps Script nie powoduje fałszywego komunikatu o błędzie; formularz otrzymał również limit czasu żądania.
 - Przeniesiono przycisk „Uzupełnij SEO z AI” do nagłówka sekcji „Ocena i wskazówki”, obok przełącznika szczegółów, oraz dopracowano jego układ na mniejszych ekranach.
 - Dodano automatyczną ponowną próbę generowania SEO bez wymuszonego schematu, gdy Workers AI nie potrafi spełnić JSON Mode dla konkretnej treści wpisu.
 
