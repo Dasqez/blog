@@ -93,6 +93,10 @@ Ale narzędzie jest już gotowe. Roadmapa zamknięta. Trzynaście etapów zrobio
 
 No, prawie.
 
+## Bo mi Dżoana narzekała!
+
+A że Dżoana narzekała, że komentarze z Giscusa są jakieś takie obce, toporne i w ogóle „weź to zrób normalnie”, to oczywiście grzecznie przyjąłem konstruktywną krytykę, ponarzekałem pod nosem i zrobiłem po swojemu. Giscus wyleciał, a w jego miejsce powstał własny system komentarzy, zapisujący wszystko bezpośrednio w bazie danych. Przy okazji poprawiłem wygląd bloga, doszlifowałem kolory, odstępy, typografię i kilka elementów, które drażniły mnie za każdym razem, gdy na nie patrzyłem. Czyli klasycznie: miała być jedna drobna poprawka, a skończyło się na przebudowie połowy wizualnej warstwy strony i napisaniu kolejnego kawałka własnego systemu. Ale mam nadzieję, że Dżoana zadowolona, więc można uznać, że wdrożenie udane. Chociaż pewnie znowu coś wynajdzie..
+
 Bo oczywiście mam już kolejne pomysły. Lepsze zarządzanie szkicami, planowanie publikacji, automatyczne linkowanie wpisów, jeszcze lepsza obróbka zdjęć, a może kiedyś jakiś asystent AI, który pomoże mi poprawić tekst, ale nie odbierze mu mojego stylu i nie zamieni każdego zdania w korporacyjny bełkot o synergii oraz dowożeniu wartości. Tyle, że to może poczekać.
 
 Na dzisiaj wystarczy. Z małej strony powstał pełnoprawny, autorski CMS. Z projektu, który miał być prosty jak budowa cepa, wyszło coś, czego jeszcze kilka miesięcy temu nie potrafiłbym nawet sensownie zaplanować. I możecie się śmiać, odjebałeś sobie stronę, którą będą czytały 3 osoby. I wiecie co? CHUJ MNIE TO OBCHODZI. Zrobiłem to, bo chciałem. I mogłem. I była to fantastyczna przygoda, dzięki której lepiej poznałem AI, bo debilem nie jestem (albo jednak jestem), AI odwaliło tutaj 80% roboty. 
