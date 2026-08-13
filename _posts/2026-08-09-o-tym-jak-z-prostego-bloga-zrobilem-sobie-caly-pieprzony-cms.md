@@ -3,7 +3,7 @@ title: O tym, jak z prostego bloga zrobiłem sobie cały pieprzony CMS.
 layout: post-layout.html
 date: 2026-08-09T15:25:00.000+02:00
 ---
-<!-- cms-status: draft -->
+<!-- cms-status: published -->
 <!-- cms-tags: ["CMS","blog","programowanie","AI"] -->
 <!-- cms-seo: {"title":"O tym, jak z prostego bloga zrobiłem sobie cały pieprzony CM","description":"O tym, jak z prostego bloga zrobiłem sobie cały pieprzony CMS","image":"/assets/images/20260809-134146-dashboard.png","canonical":"","robots":"index,follow","twitterCard":"summary_large_image"} -->
 
