@@ -6,6 +6,7 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Wyśrodkowano logo, nazwę bloga i motto w nagłówku otwartego wpisu, aby układ był spójny ze stroną główną.
 - Dodano prywatnościowy licznik unikalnych wyświetleń wpisów widoczny obok daty publikacji i czasu czytania na stronie głównej oraz wewnątrz artykułu; licznik wykorzystuje D1 i anonimowy skrót lokalnego identyfikatora przeglądarki, bez zapisywania surowego adresu IP.
 - Zastąpiono dużą dolną belkę akcji kompaktowym paskiem przyklejonym u góry edytora, który utrzymuje status zapisu oraz przyciski zapisu, anulowania, pełnego ekranu i zamknięcia zawsze pod ręką; układ dopasowuje się do ekranów mobilnych.
 - Przyklejono pasek narzędzi Markdown bezpośrednio pod paskiem akcji, dzięki czemu formatowanie treści pozostaje dostępne podczas przewijania edytora.
