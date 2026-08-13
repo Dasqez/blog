@@ -6,7 +6,7 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
-- Naprawiono wysyłkę wiadomości potwierdzającej zapis do newslettera przez wykorzystanie sprawdzonej ścieżki wiadomości Google Apps Script z linkiem aktywacyjnym jako głównym odnośnikiem.
+- Naprawiono wiadomość potwierdzającą zapis do newslettera: zaktualizowano wdrożenie Google Apps Script do szablonu z przyciskiem „Potwierdzam zapis” oraz oddzielono ją od szablonu zwykłego newslettera.
 - Dodano klikalny i czytelniejszy licznik subskrybentów na Dashboardzie oraz modal z wyszukiwalną tabelą adresów, dat zapisu i wypisania oraz aktualnych statusów; każdy adres można po potwierdzeniu trwale usunąć z D1.
 - Dodano trwałe wersje robocze wpisów: pełna treść Markdown, obrazy, tagi i SEO zapisują się w repozytorium, wpis jest oznaczony w CMS i pozostaje całkowicie wykluczony z publicznego builda do chwili publikacji.
 - Naprawiono automatyzację newslettera: zapis wersji roboczej nie uruchamia wysyłki, publikacja draftu wysyła newsletter jeden raz, a późniejsza edycja opublikowanego wpisu nie powoduje ponownej wysyłki.
