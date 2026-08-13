@@ -1,0 +1,21 @@
+{
+  "name": "newsletter",
+  "main": "newsletter-worker.js",
+  "compatibility_date": "2026-08-02",
+  "workers_dev": true,
+  "ai": {
+    "binding": "AI"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "newsletter",
+      "database_id": "40b44f61-851b-4aa1-813e-670fd2cbde28"
+    }
+  ],
+  "vars": {
+    "APPS_SCRIPT_SECRET": "372ad829-8808-4978-aa12-32bfdc531391",
+    "APPS_SCRIPT_URL": "https://script.google.com/macros/s/AKfycbyg4JQ-5Lq8xG-Ag85e2P288jYhaxyXAa9B7gqDHYLZkcs9cWFzAdYfJGrFyi2qKMLo/exec",
+    "GITHUB_REPO": "Dasqez/blog"
+  }
+}

@@ -685,9 +685,28 @@ button:disabled {
 .seo-fields label:nth-child(2),.seo-fields label:nth-child(3),.seo-fields label:nth-child(4) { grid-column:1/-1; }
 .seo-fields input,.seo-fields textarea,.seo-fields select { width:100%; border:1px solid #d8d3ca; border-radius:8px; background:#fff; color:#171717; font:inherit; font-size:.9rem; font-weight:400; letter-spacing:0; line-height:1.5; padding:10px 12px; text-transform:none; }
 .seo-fields textarea { resize:vertical; }
+.seo-ai-button { display:inline-flex; min-height:38px; padding:0 13px; align-items:center; gap:8px; border:1px solid #171717; border-radius:8px; background:#171717; color:#fff; font:700 .68rem "Montserrat",sans-serif; cursor:pointer; }
+.seo-ai-button:hover { background:#333; }
+.seo-ai-button:disabled { cursor:wait; opacity:.65; }
+.seo-ai-status { min-height:1.35em; margin:8px 0; color:var(--muted); font-size:.76rem; }
+.seo-ai-status.is-error { color:#b91c1c; }
+.seo-ai-status.is-success { color:#15803d; }
+.seo-ai-proposal { margin:10px 0 16px; padding:14px; border:1px solid #c7d2fe; border-radius:10px; background:#f5f7ff; }
+.seo-ai-proposal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.seo-ai-proposal-header h5 { margin:2px 0 0; font:600 .95rem "Lora",serif; }
+.seo-ai-proposal-fields { display:grid; margin-top:12px; gap:8px; }
+.seo-ai-proposal-field { display:grid; grid-template-columns:22px 110px minmax(0,1fr); align-items:start; gap:8px; font-size:.78rem; }
+.seo-ai-proposal-field input { margin-top:2px; accent-color:#171717; }
+.seo-ai-proposal-field strong { font:700 .68rem "Montserrat",sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+.seo-ai-proposal-field span { overflow-wrap:anywhere; }
+.seo-ai-reason { margin:12px 0 0; color:#4b5563; font-size:.76rem; line-height:1.5; }
+.seo-ai-actions { display:flex; margin-top:12px; flex-wrap:wrap; gap:8px; }
+.seo-ai-actions button { min-height:36px; padding:0 11px; border:1px solid #aaa; border-radius:7px; background:#fff; font:700 .64rem "Montserrat",sans-serif; cursor:pointer; }
+.seo-ai-actions button:first-child { border-color:#171717; background:#171717; color:#fff; }
 .og-preview-image { display:block; width:100%; aspect-ratio:1.91/1; margin:0 0 14px; border-radius:7px; object-fit:cover; }
 .og-preview-image[hidden] { display:none; }
 @media (max-width:700px) { .seo-fields { grid-template-columns:1fr; } .seo-fields label { grid-column:1!important; } }
+@media (max-width:700px) { .seo-ai-proposal-field { grid-template-columns:22px minmax(0,1fr); } .seo-ai-proposal-field strong { grid-column:2; } .seo-ai-proposal-field span { grid-column:2; } }
 
 .activity-item p {
   margin: 5px 0 0;
@@ -2829,6 +2848,7 @@ button:disabled {
 .quality-toolkit { display:block; min-height:66px; margin:20px 32px 0; flex:0 0 auto; overflow:hidden; border:1px solid var(--border); border-radius:12px; background:var(--surface); visibility:visible; }
 .quality-toolkit-header { display:flex; padding:15px 18px; align-items:center; justify-content:space-between; gap:14px; border-bottom:1px solid var(--border); background:var(--surface-soft); }
 .quality-toolkit-header h3 { margin:2px 0 0; font:600 1rem "Lora",serif; }
+.quality-toolkit-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; }
 .quality-score { display:flex; min-width:74px; height:34px; padding:0 11px; align-items:baseline; justify-content:center; border:1px solid #fecaca; border-radius:999px; background:#fef2f2; color:#991b1b; }
 .quality-score strong { align-self:center; font:700 1rem "Montserrat",sans-serif; }
 .quality-score span { align-self:center; font:600 .58rem "Montserrat",sans-serif; }
@@ -2836,6 +2856,11 @@ button:disabled {
 .quality-score.is-warning { border-color:#fde68a; background:#fffbeb; color:#92400e; }
 .quality-toggle { display:inline-flex; min-height:34px; padding:0 11px; align-items:center; gap:7px; border:1px solid var(--border); border-radius:7px; background:var(--surface); color:var(--text); font:600 .66rem "Montserrat",sans-serif; cursor:pointer; }
 .quality-toggle:hover { border-color:var(--text); }
+@media (max-width:760px) {
+  .quality-toolkit-header { align-items:flex-start; flex-wrap:wrap; }
+  .quality-toolkit-actions { width:100%; justify-content:flex-start; flex-wrap:wrap; }
+  .seo-ai-button { min-height:34px; }
+}
 .quality-toolkit.is-collapsed .quality-toolkit-header { border-bottom:0; }
 .quality-toolkit.is-collapsed .quality-toolkit-grid { display:none; }
 .quality-toolkit-grid { display:grid; padding:18px; grid-template-columns:minmax(0,1.6fr) minmax(250px,.75fr); gap:18px; }

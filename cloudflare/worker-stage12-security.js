@@ -54,6 +54,7 @@ export async function enforceAdminRateLimit(request, env, bucket = "read") {
   const limits = {
     login: { max: 5, window: 15 * 60 },
     refresh: { max: 20, window: 15 * 60 },
+    ai: { max: 10, window: 60 * 60 },
     read: { max: 240, window: 60 },
     write: { max: 60, window: 60 },
   };

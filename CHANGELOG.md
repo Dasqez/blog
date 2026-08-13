@@ -6,6 +6,12 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Przeniesiono przycisk „Uzupełnij SEO z AI” do nagłówka sekcji „Ocena i wskazówki”, obok przełącznika szczegółów, oraz dopracowano jego układ na mniejszych ekranach.
+- Dodano automatyczną ponowną próbę generowania SEO bez wymuszonego schematu, gdy Workers AI nie potrafi spełnić JSON Mode dla konkretnej treści wpisu.
+
+- Dodano bezpłatnego asystenta SEO opartego na Cloudflare Workers AI: przygotowuje propozycje tytułu, opisu, obrazu Open Graph, slugu i tagów, pozwala zastosować wszystkie lub wybrane pola i nigdy nie zapisuje ani nie publikuje wpisu automatycznie.
+- Naprawiono generowanie propozycji SEO przez użycie modelu obsługującego wymuszony schemat JSON oraz obsługę zarówno tekstowej, jak i obiektowej odpowiedzi Workers AI.
+
 - Naprawiono wiadomość potwierdzającą zapis do newslettera: zaktualizowano wdrożenie Google Apps Script do szablonu z przyciskiem „Potwierdzam zapis” oraz oddzielono ją od szablonu zwykłego newslettera.
 - Dodano klikalny i czytelniejszy licznik subskrybentów na Dashboardzie oraz modal z wyszukiwalną tabelą adresów, dat zapisu i wypisania oraz aktualnych statusów; każdy adres można po potwierdzeniu trwale usunąć z D1.
 - Dodano trwałe wersje robocze wpisów: pełna treść Markdown, obrazy, tagi i SEO zapisują się w repozytorium, wpis jest oznaczony w CMS i pozostaje całkowicie wykluczony z publicznego builda do chwili publikacji.

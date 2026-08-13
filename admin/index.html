@@ -1005,18 +1005,38 @@
         <span class="section-kicker">Quality Writing Toolkit</span>
         <h3>Ocena i wskazówki</h3>
       </div>
-      <div id="qualityScore" class="quality-score" aria-live="polite">
-        <strong>0</strong><span>/100</span>
+      <div class="quality-toolkit-actions">
+        <div id="qualityScore" class="quality-score" aria-live="polite">
+          <strong>0</strong><span>/100</span>
+        </div>
+        <button id="generateSeoAiButton" class="seo-ai-button" type="button">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          Uzupełnij SEO z AI
+        </button>
+        <button id="qualityToggle" class="quality-toggle" type="button" aria-expanded="true" aria-controls="qualityToolkitBody">
+          <span>Ukryj szczegóły</span>
+          <i class="fa-solid fa-chevron-up"></i>
+        </button>
       </div>
-      <button id="qualityToggle" class="quality-toggle" type="button" aria-expanded="true" aria-controls="qualityToolkitBody">
-        <span>Ukryj szczegóły</span>
-        <i class="fa-solid fa-chevron-up"></i>
-      </button>
     </div>
 
     <div id="qualityToolkitBody" class="quality-toolkit-grid">
       <div>
         <h4>Metadane SEO</h4>
+        <p id="seoAiStatus" class="seo-ai-status" aria-live="polite"></p>
+        <section id="seoAiProposal" class="seo-ai-proposal" hidden>
+          <div class="seo-ai-proposal-header">
+            <div><span class="section-kicker">Propozycja AI</span><h5>Sprawdź przed zastosowaniem</h5></div>
+            <button id="dismissSeoAiButton" class="icon-button" type="button" aria-label="Odrzuć propozycję"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div id="seoAiProposalFields" class="seo-ai-proposal-fields"></div>
+          <p id="seoAiReason" class="seo-ai-reason"></p>
+          <div class="seo-ai-actions">
+            <button id="applyAllSeoAiButton" type="button">Zastosuj wszystko</button>
+            <button id="applySelectedSeoAiButton" type="button">Zastosuj wybrane</button>
+            <button id="regenerateSeoAiButton" type="button">Wygeneruj ponownie</button>
+          </div>
+        </section>
         <div class="seo-fields">
           <label>Tytuł SEO<input id="editorSeoTitle" type="text" maxlength="70" placeholder="Domyślnie: tytuł wpisu"></label>
           <label>Opis SEO<textarea id="editorSeoDescription" rows="3" maxlength="180" placeholder="120–160 znaków"></textarea></label>

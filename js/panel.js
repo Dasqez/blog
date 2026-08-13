@@ -68,6 +68,8 @@ const ADMIN_SESSION_REFRESH_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/session/refresh";
 const ADMIN_SESSION_LOGOUT_API_URL =
   "https://newsletter.dave-pytel.workers.dev/admin/session/logout";
+const ADMIN_AI_SEO_API_URL =
+  "https://newsletter.dave-pytel.workers.dev/admin/ai/seo";
 const LOCAL_SETTINGS_PREVIEW_KEY = "cms-local-site-settings-preview";
 const ADMIN_SESSION_STORAGE_KEY = "mpzPanelSessionV1";
 const ADMIN_SESSION_IDLE_MS = 30 * 60 * 1000;
@@ -266,7 +268,17 @@ const editorSeoImage = document.getElementById("editorSeoImage");
 const editorSeoCanonical = document.getElementById("editorSeoCanonical");
 const editorSeoRobots = document.getElementById("editorSeoRobots");
 const editorSeoTwitterCard = document.getElementById("editorSeoTwitterCard");
+const generateSeoAiButton = document.getElementById("generateSeoAiButton");
+const regenerateSeoAiButton = document.getElementById("regenerateSeoAiButton");
+const applyAllSeoAiButton = document.getElementById("applyAllSeoAiButton");
+const applySelectedSeoAiButton = document.getElementById("applySelectedSeoAiButton");
+const dismissSeoAiButton = document.getElementById("dismissSeoAiButton");
+const seoAiStatus = document.getElementById("seoAiStatus");
+const seoAiProposal = document.getElementById("seoAiProposal");
+const seoAiProposalFields = document.getElementById("seoAiProposalFields");
+const seoAiReason = document.getElementById("seoAiReason");
 const editorSeoFields = [editorSeoTitle, editorSeoDescription, editorSeoImage, editorSeoCanonical, editorSeoRobots, editorSeoTwitterCard];
+let seoAiSuggestion = null;
 const markdownToolbarButtons =
   document.querySelectorAll("[data-markdown-action]");  
 
@@ -872,6 +884,12 @@ function refreshSeoToolkitOnly() {
 
 editorSeoFields.forEach((field) => field?.addEventListener("input", refreshSeoToolkitOnly));
 editorSeoFields.forEach((field) => field?.addEventListener("change", refreshSeoToolkitOnly));
+
+generateSeoAiButton?.addEventListener("click", generateSeoWithAi);
+regenerateSeoAiButton?.addEventListener("click", generateSeoWithAi);
+applyAllSeoAiButton?.addEventListener("click", () => applySeoAiSuggestion(false));
+applySelectedSeoAiButton?.addEventListener("click", () => applySeoAiSuggestion(true));
+dismissSeoAiButton?.addEventListener("click", dismissSeoAiSuggestion);
 
 editorTags.addEventListener("input", () => {
   window.clearTimeout(editorTagsDraftTimeout);
@@ -5837,6 +5855,90 @@ function setSeoEditorValues(seo = {}) {
   if (editorSeoCanonical) editorSeoCanonical.value = seo.canonical || "";
   if (editorSeoRobots) editorSeoRobots.value = seo.robots || "index,follow";
   if (editorSeoTwitterCard) editorSeoTwitterCard.value = seo.twitterCard || "summary_large_image";
+}
+
+function setSeoAiStatus(message = "", type = "") {
+  if (!seoAiStatus) return;
+  seoAiStatus.textContent = message;
+  seoAiStatus.className = `seo-ai-status${type ? ` is-${type}` : ""}`;
+}
+
+function dismissSeoAiSuggestion() {
+  seoAiSuggestion = null;
+  if (seoAiProposal) seoAiProposal.hidden = true;
+  setSeoAiStatus();
+}
+
+function renderSeoAiSuggestion(suggestion) {
+  const fields = [
+    ["title", "Tytuł SEO"], ["description", "Opis SEO"], ["image", "Obraz OG"],
+    ["slug", "Slug"], ["tags", "Tagi"],
+  ];
+  seoAiProposalFields.innerHTML = "";
+  fields.forEach(([key, label]) => {
+    const value = Array.isArray(suggestion[key]) ? suggestion[key].join(", ") : suggestion[key];
+    if (!value) return;
+    const row = document.createElement("label");
+    row.className = "seo-ai-proposal-field";
+    row.innerHTML = `<input type="checkbox" data-seo-ai-field="${key}" checked><strong></strong><span></span>`;
+    row.querySelector("strong").textContent = label;
+    row.querySelector("span").textContent = value;
+    seoAiProposalFields.appendChild(row);
+  });
+  seoAiReason.textContent = suggestion.reason || "Propozycję przygotowano na podstawie tytułu i treści wpisu.";
+  seoAiProposal.hidden = false;
+}
+
+function applySeoAiSuggestion(selectedOnly) {
+  if (!seoAiSuggestion) return;
+  const selected = new Set([...seoAiProposalFields.querySelectorAll("[data-seo-ai-field]:checked")].map((item) => item.dataset.seoAiField));
+  const shouldApply = (key) => !selectedOnly || selected.has(key);
+  if (shouldApply("title") && seoAiSuggestion.title) editorSeoTitle.value = seoAiSuggestion.title;
+  if (shouldApply("description") && seoAiSuggestion.description) editorSeoDescription.value = seoAiSuggestion.description;
+  if (shouldApply("image") && seoAiSuggestion.image) editorSeoImage.value = seoAiSuggestion.image;
+  if (shouldApply("slug") && seoAiSuggestion.slug) {
+    editorSlug.value = createSlug(seoAiSuggestion.slug);
+    slugEditedManually = true;
+  }
+  if (shouldApply("tags") && seoAiSuggestion.tags?.length) editorTags.value = seoAiSuggestion.tags.join(", ");
+  editorSeoTitle.dispatchEvent(new Event("input", { bubbles: true }));
+  scheduleEditorAutosave();
+  seoAiProposal.hidden = true;
+  setSeoAiStatus("Zastosowano propozycję. Sprawdź pola przed zapisaniem wpisu.", "success");
+}
+
+async function generateSeoWithAi() {
+  const title = editorTitle.value.trim();
+  const content = stripPostMetadata(editorBody.value).trim();
+  if (!title || !content) {
+    setSeoAiStatus("Najpierw uzupełnij tytuł i treść wpisu.", "error");
+    return;
+  }
+  const buttons = [generateSeoAiButton, regenerateSeoAiButton].filter(Boolean);
+  buttons.forEach((button) => { button.disabled = true; });
+  setSeoAiStatus("AI analizuje wpis i przygotowuje propozycję…");
+  try {
+    const response = await adminApiFetch(ADMIN_AI_SEO_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        slug: editorSlug.value.trim(),
+        content: content.slice(0, 24000),
+        images: analyzeEditorImages(content).map((image) => image.src).filter(Boolean).slice(0, 12),
+        currentSeo: getSeoEditorValues(),
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success || !result.suggestion) throw new Error(result.message || "Nie udało się przygotować SEO.");
+    seoAiSuggestion = result.suggestion;
+    renderSeoAiSuggestion(seoAiSuggestion);
+    setSeoAiStatus("Propozycja jest gotowa. Nic nie zostanie zapisane bez Twojej decyzji.", "success");
+  } catch (error) {
+    setSeoAiStatus(error.message || "Usługa AI jest chwilowo niedostępna.", "error");
+  } finally {
+    buttons.forEach((button) => { button.disabled = false; });
+  }
 }
 
 function getPostTags(post) {
