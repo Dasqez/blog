@@ -101,7 +101,7 @@ Bo oczywiście mam już kolejne pomysły. Lepsze zarządzanie szkicami, planowan
 
 Na dzisiaj wystarczy. Z małej strony powstał pełnoprawny, autorski CMS. Z projektu, który miał być prosty jak budowa cepa, wyszło coś, czego jeszcze kilka miesięcy temu nie potrafiłbym nawet sensownie zaplanować. I możecie się śmiać, odjebałeś sobie stronę, którą będą czytały 3 osoby. I wiecie co? CHUJ MNIE TO OBCHODZI. Zrobiłem to, bo chciałem. I mogłem. I była to fantastyczna przygoda, dzięki której lepiej poznałem AI, bo debilem nie jestem (albo jednak jestem), AI odwaliło tutaj 80% roboty. 
 
-Ale najlepsze jest to, że nadal jest mój. Od pierwszego pliku HTML, przez wszystkie błędy, nieudane wdrożenia i kolejne „a może jeszcze tylko jedna funkcja”, aż po ostatni punkt roadmapy.
+Ale najlepsze jest to, że nadal jest to mój projekt. Od pierwszego pliku HTML, przez wszystkie błędy, nieudane wdrożenia i kolejne „a może jeszcze tylko jedna funkcja”, aż po ostatni punkt roadmapy. Ze wszystkimi pomysłami, OCD bo się coś rozjechało albo nie wygląda tak, jakby to moja zryta bańka sobie wymarzyła.
 
 Teraz wypadałoby w końcu zacząć regularnie pisać.
 
