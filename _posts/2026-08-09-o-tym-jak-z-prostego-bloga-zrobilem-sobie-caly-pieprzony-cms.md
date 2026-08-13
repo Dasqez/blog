@@ -4,8 +4,8 @@ layout: post-layout.html
 date: 2026-08-09T15:25:00.000+02:00
 ---
 <!-- cms-status: draft -->
-<!-- cms-tags: ["technologie","życie","ai","hobby","programowanie"] -->
-<!-- cms-seo: {"title":"","description":"Wpis podsumowujący prawie 2 tygodnie nerwów, frustracji, godzin spędzonych w kodzie css, JS i html i o tym, jak z biednego dashboardu z jedną funkcją zrobiłem customowy CMS.","image":"","canonical":"","robots":"index,follow","twitterCard":"summary_large_image"} -->
+<!-- cms-tags: ["CMS","blog","programowanie","AI"] -->
+<!-- cms-seo: {"title":"O tym, jak z prostego bloga zrobiłem sobie cały pieprzony CM","description":"O tym, jak z prostego bloga zrobiłem sobie cały pieprzony CMS","image":"/assets/images/20260809-134146-dashboard.png","canonical":"","robots":"index,follow","twitterCard":"summary_large_image"} -->
 
 Dzień dobry. Pamiętacie jeszcze ten moment, kiedy pisałem, że chciałem sobie zrobić małego, prostego bloga? Takiego minimalistycznego. Bez WordPressa, bez gotowych szablonów, bez płatnego hostingu i bez miliona niepotrzebnych funkcji. Ot, kilka plików, parę wpisów i święty spokój.
 
