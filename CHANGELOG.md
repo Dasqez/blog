@@ -8,6 +8,7 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 - Zastąpiono dużą dolną belkę akcji kompaktowym paskiem przyklejonym u góry edytora, który utrzymuje status zapisu oraz przyciski zapisu, anulowania, pełnego ekranu i zamknięcia zawsze pod ręką; układ dopasowuje się do ekranów mobilnych.
 - Przyklejono pasek narzędzi Markdown bezpośrednio pod paskiem akcji, dzięki czemu formatowanie treści pozostaje dostępne podczas przewijania edytora.
+- W komunikacie po zapisie do newslettera dodano wyraźną, pogrubioną informację o konieczności sprawdzenia skrzynki e-mail i kliknięcia linku potwierdzającego.
 - Dodano własny system komentarzy bez logowania: publiczny formularz z nickiem, kolejkę moderacji i odpowiedzi autora w CMS, zapis w D1, bezpieczne renderowanie tekstu, limity częstotliwości, pułapkę na boty, ograniczenie domen oraz opcjonalną ochronę Cloudflare Turnstile; Giscus pozostaje wyłączonym domyślnie trybem awaryjnym.
 - Naprawiono lokalny podgląd ochrony komentarzy: localhost korzysta z oficjalnego klucza testowego Turnstile, natomiast publiczny blog nadal używa widgetu ograniczonego do domeny produkcyjnej.
 - Zastąpiono techniczny komunikat błędu połączenia komentarzy czytelną informacją o konieczności uruchomienia lokalnego Workera na porcie 8790.

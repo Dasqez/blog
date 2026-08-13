@@ -47,7 +47,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(result.message || "Nie udało się zapisać do newslettera.");
             }
 
-            showMessage(result.message, "success");
+            showMessage(
+                result.message || "Dziękuję! Twój adres został zapisany.",
+                "success",
+                "Sprawdź swoją skrzynkę e-mail i kliknij link, aby potwierdzić zapis."
+            );
             form.reset();
         } catch (error) {
             showMessage(
@@ -63,8 +67,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    function showMessage(text, type) {
+    function showMessage(text, type, confirmationText = "") {
         message.textContent = text;
         message.className = `newsletter-message ${type}`;
+
+        if (confirmationText) {
+            const confirmation = document.createElement("strong");
+            confirmation.className = "newsletter-confirmation-reminder";
+            confirmation.textContent = confirmationText;
+            message.append(confirmation);
+        }
     }
 });

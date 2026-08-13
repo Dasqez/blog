@@ -69,6 +69,14 @@
         .newsletter-message.success { color: #176b2c; }
         .newsletter-message.error { color: #a40000; }
 
+        .newsletter-confirmation-reminder {
+            display: block;
+            margin-top: 8px;
+            font-size: 1.08rem;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
         .newsletter-honeypot {
             position: absolute !important;
             width: 1px !important;
