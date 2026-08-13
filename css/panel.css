@@ -1088,8 +1088,8 @@ button:disabled {
   top: 0;
   z-index: 6;
   display: flex;
-  min-height: 82px;
-  padding: 20px 32px;
+  min-height: 62px;
+  padding: 9px 32px;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
@@ -1100,8 +1100,11 @@ button:disabled {
 
 .editor-header h2 {
   margin: 0;
-  font-size: 1.55rem;
+  overflow: hidden;
+  font-size: 1.2rem;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .editor-close {
@@ -1230,6 +1233,9 @@ button:disabled {
    ========================================================= */
 
 .markdown-toolbar {
+  position: sticky;
+  top: 62px;
+  z-index: 5;
   display: flex;
   min-height: 66px;
   margin: 0 32px 18px;
@@ -1240,6 +1246,7 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface-soft);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
 }
 
 .markdown-toolbar button {
@@ -1463,26 +1470,10 @@ button:disabled {
    EDITOR 2.0 — STOPKA
    ========================================================= */
 
-.editor-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 6;
-  display: flex;
-  min-height: 82px;
-  margin-top: 24px;
-  padding: 16px 32px;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
-}
-
-.editor-actions button {
+.editor-header-button {
   display: inline-flex;
-  min-height: 46px;
-  padding: 11px 20px;
+  min-height: 38px;
+  padding: 8px 14px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-dark);
@@ -1501,20 +1492,19 @@ button:disabled {
     transform 0.18s ease;
 }
 
-.editor-actions button:hover {
+.editor-header-button:hover {
   border-color: var(--text);
   transform: translateY(-1px);
 }
 
-.editor-actions button:disabled {
+.editor-header-button:disabled {
   cursor: wait;
   opacity: 0.55;
   transform: none;
 }
 
 #savePostButton {
-  order: 2;
-  min-width: 145px;
+  min-width: 112px;
   border-color: var(--text);
   background: var(--text);
   color: #ffffff;
@@ -1675,12 +1665,12 @@ button:disabled {
   }
 
   .editor-header {
-    min-height: 70px;
-    padding: 14px 18px;
+    min-height: 58px;
+    padding: 8px 18px;
   }
 
   .editor-header h2 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
   }
 
   .editor-meta {
@@ -1699,6 +1689,7 @@ button:disabled {
   }
 
   .markdown-toolbar {
+    top: 58px;
     margin-right: 18px;
     margin-left: 18px;
   }
@@ -1708,9 +1699,6 @@ button:disabled {
     margin-left: 18px;
   }
 
-  .editor-actions {
-    padding: 14px 18px;
-  }
 }
 
 @media (max-width: 520px) {
@@ -1750,24 +1738,13 @@ button:disabled {
     padding: 20px;
   }
 
-  .editor-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .editor-actions button,
-  #savePostButton,
-  #cancelEditButton {
-    width: 100%;
-  }
-
-  #savePostButton {
-    order: 1;
-  }
-
-  #cancelEditButton {
-    order: 2;
-  }
+  .editor-header { gap: 10px; }
+  .editor-header h2 { max-width: 34vw; font-size: 1rem; }
+  .editor-header-actions { gap: 5px; }
+  .editor-header-actions .editor-save-status,
+  .editor-header-button-secondary { display: none; }
+  .editor-header-button-primary { min-width: 0; padding-inline: 11px; }
+  .editor-close { width: 38px; height: 38px; flex-basis: 38px; }
 }
 
 /* ==========================================
@@ -2823,7 +2800,8 @@ button:disabled {
   }
 }
 
-.editor-header-actions { display: flex; align-items: center; gap: 8px; }
+.editor-header-actions { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.editor-header-actions .editor-save-status { margin: 0 4px 0 0; white-space: nowrap; }
 
 .editor-context-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 32px 10px; }
 .editor-format-badge { padding:4px 9px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }

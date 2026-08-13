@@ -705,6 +705,27 @@
     <h2 id="editorHeading">Edycja wpisu</h2>
 
     <div class="editor-header-actions">
+      <span id="editorSaveStatus" class="editor-save-status is-saved" role="status" aria-live="polite">
+        <i class="fa-solid fa-check"></i> Zapisano
+      </span>
+
+      <button
+        id="cancelEditButton"
+        class="editor-header-button editor-header-button-secondary"
+        type="button"
+      >
+        Anuluj
+      </button>
+
+      <button
+        id="savePostButton"
+        class="editor-header-button editor-header-button-primary"
+        type="button"
+        disabled
+      >
+        Zapisz
+      </button>
+
       <button
         id="editorFullscreenButton"
         class="editor-close"
@@ -809,9 +830,6 @@
       <button type="button" data-editor-view="split" class="active" title="Kod i podgląd"><i class="fa-solid fa-table-columns"></i><span>Oba</span></button>
       <button type="button" data-editor-view="preview" title="Tylko podgląd"><i class="fa-regular fa-eye"></i><span>Podgląd</span></button>
     </div>
-    <span id="editorSaveStatus" class="editor-save-status is-saved" role="status" aria-live="polite">
-      <i class="fa-solid fa-check"></i> Zapisano
-    </span>
   </div>
 
   <div
@@ -1070,25 +1088,6 @@
       </div>
     </div>
   </section>
-
-  <div class="editor-actions">
-
-    <button
-      id="savePostButton"
-      type="button"
-      disabled
-    >
-      Zapisz
-    </button>
-
-    <button
-      id="cancelEditButton"
-      type="button"
-    >
-      Anuluj
-    </button>
-
-  </div>
 
 </aside>
 
