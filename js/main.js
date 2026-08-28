@@ -133,6 +133,41 @@ function updateGiscusCounters() {
     if (script) console.log("Giscus został załadowany.");
 }
 
+function formatCommentCount(value) {
+    const count = Math.max(0, Number(value) || 0);
+    const lastTwoDigits = count % 100;
+    const lastDigit = count % 10;
+    const noun = count === 1
+        ? "komentarz"
+        : lastDigit >= 2 && lastDigit <= 4 && !(lastTwoDigits >= 12 && lastTwoDigits <= 14)
+            ? "komentarze"
+            : "komentarzy";
+    return `${new Intl.NumberFormat("pl-PL").format(count)} ${noun}`;
+}
+
+async function loadHomeCommentCounts() {
+    const counters = [...document.querySelectorAll("[data-comment-count][data-comment-slug][data-comment-api]")];
+    if (!counters.length) return;
+
+    const localPreview = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+    const apiUrl = localPreview ? "http://127.0.0.1:8790" : counters[0].dataset.commentApi.replace(/\/$/, "");
+    const query = new URLSearchParams();
+    [...new Set(counters.map((counter) => counter.dataset.commentSlug).filter(Boolean))]
+        .forEach((slug) => query.append("post", slug));
+
+    try {
+        const response = await fetch(`${apiUrl}/comment-counts?${query}`);
+        const result = await response.json();
+        if (!response.ok || result.success !== true) throw new Error(result.message || "Nie udało się pobrać liczby komentarzy.");
+        counters.forEach((counter) => {
+            counter.textContent = formatCommentCount(result.counts[counter.dataset.commentSlug]);
+        });
+    } catch (error) {
+        console.warn("Liczniki komentarzy są chwilowo niedostępne.", error);
+        counters.forEach((counter) => { counter.textContent = "— komentarzy"; });
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     loadLocalSettingsPreview();
     document.querySelectorAll("nav [data-page]").forEach((link) => {
@@ -176,4 +211,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateGiscusCounters();
+    loadHomeCommentCounts();
 });

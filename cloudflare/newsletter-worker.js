@@ -6,6 +6,7 @@ import {
   createPublicComment,
   deleteAdminComment,
   getAdminComments,
+  getPublicCommentCounts,
   getPublicComments,
   moderateAdminComment,
   replyToAdminComment,
@@ -36,6 +37,9 @@ export default {
 
     if (url.pathname === "/comments" && request.method === "GET") {
       return getPublicComments(url, env, corsHeaders);
+    }
+    if (url.pathname === "/comment-counts" && request.method === "GET") {
+      return getPublicCommentCounts(url, env, corsHeaders);
     }
     if (url.pathname === "/views" && request.method === "GET") {
       return getPostViews(url, env, corsHeaders);

@@ -91,6 +91,21 @@ export async function getPublicComments(url, env, corsHeaders) {
   return response({ success: true, comments: results || [] }, 200, corsHeaders, { "Cache-Control": "public, max-age=30" });
 }
 
+export async function getPublicCommentCounts(url, env, corsHeaders) {
+  const posts = [...new Set(url.searchParams.getAll("post").map(postSlug).filter(Boolean))].slice(0, 100);
+  if (!posts.length) return response({ success: false, message: "Brak wpisów." }, 400, corsHeaders);
+
+  await ensureTables(env);
+  const placeholders = posts.map(() => "?").join(",");
+  const { results } = await env.DB.prepare(`SELECT post_slug AS postSlug, COUNT(*) AS comments
+    FROM comments WHERE status = 'approved' AND post_slug IN (${placeholders}) GROUP BY post_slug`)
+    .bind(...posts).all();
+  const counts = Object.fromEntries(posts.map((post) => [post, 0]));
+  for (const row of results || []) counts[row.postSlug] = Number(row.comments || 0);
+
+  return response({ success: true, counts }, 200, corsHeaders, { "Cache-Control": "public, max-age=30" });
+}
+
 export async function createPublicComment(request, env, corsHeaders) {
   if (!isAllowedOrigin(request, env)) return response({ success: false, message: "Niedozwolone źródło żądania." }, 403, corsHeaders);
   if (!isJson(request)) return response({ success: false, message: "Wymagany jest format JSON." }, 415, corsHeaders);

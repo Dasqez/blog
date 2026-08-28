@@ -6,6 +6,7 @@ Ten plik opisuje rozwój bloga i panelu CMS. Jest aktualizowany przy każdej zmi
 
 ### Panel CMS i zarządzanie treścią
 
+- Dodano na stronie głównej licznik zatwierdzonych komentarzy dla każdego wpisu, pobierany zbiorczo z D1 i wyświetlany obok daty, czasu czytania oraz liczby wyświetleń.
 - Zmieniono szerokość otwartego wpisu na płynną i zależną od rozdzielczości: treść rozszerza się na większych ekranach do czytelnego limitu 980 px, zachowując bezpieczne marginesy na tabletach i telefonach.
 - Dodano niezależną datę ostatniej modyfikacji wpisu, aktualizowaną automatycznie przy każdym zapisie wersji roboczej i każdej publikacji; lista oraz podgląd w CMS pokazują teraz czas ostatniego zapisu i sortują wpisy według niego, bez zmieniania publicznej daty publikacji.
 - Dodano na końcu każdego wpisu responsywny panel udostępniania z ikonami Facebooka, X, LinkedIna, wiadomości e-mail i kopiowania linku oraz czytelnym potwierdzeniem skopiowania adresu.
