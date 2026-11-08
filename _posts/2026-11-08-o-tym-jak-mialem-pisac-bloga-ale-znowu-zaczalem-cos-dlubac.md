@@ -2,9 +2,9 @@
 title: O tym, jak miałem pisać bloga, ale znowu zacząłem coś dłubać.
 layout: post-layout.html
 date: 2026-11-08T10:49:00.000+01:00
-updated: 2026-11-08T10:14:06.937Z
+updated: 2026-11-08T10:15:39.591Z
 ---
-<!-- cms-status: draft -->
+<!-- cms-status: published -->
 <!-- cms-tags: ["ai","technologie","życie"] -->
 <!-- cms-seo: {"title":"","description":"","image":"","canonical":"","robots":"index,follow","twitterCard":"summary_large_image"} -->
 
